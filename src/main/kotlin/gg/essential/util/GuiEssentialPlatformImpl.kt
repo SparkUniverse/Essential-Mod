@@ -418,7 +418,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         GlFrameBufferImpl(width, height, colorFormat, depthFormat)
 
     override fun newGpuTexture(width: Int, height: Int, format: GpuTexture.Format): GpuTexture =
-        OwnedGlGpuTexture(width, height, format)
+        OwnedGpuTextureImpl(width, height, format)
 
     override val mcFrameBufferColorTexture: GpuTexture
         get() {
@@ -447,7 +447,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
             )
             val textureView = UGraphics.getDevice().createTextureView(texture)
             //#endif
-            return UnownedGlGpuTexture(GpuTexture.Format.RGBA8, textureView)
+            return UnownedGpuTextureImpl(GpuTexture.Format.RGBA8, textureView)
         }
 
     override val mcFrameBufferDepthTexture: GpuTexture?
@@ -464,7 +464,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
             //$$ val texture = UGraphics.getPlatformAdapter().texture(fb.depthAttachment!!)
             //$$ val textureView = UGraphics.getDevice().createTextureView(texture)
             //#endif
-        //$$     return UnownedGlGpuTexture(GpuTexture.Format.DEPTH32, textureView)
+        //$$     return UnownedGpuTextureImpl(GpuTexture.Format.DEPTH32, textureView)
         //$$ }
         //#else
         get() = null
@@ -473,12 +473,12 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
     //#if MC>=12106
     //$$ override val outputColorTextureOverride: GpuTexture?
     //$$     get() = RenderSystem.outputColorTextureOverride?.let { tex ->
-    //$$         UnownedGlGpuTexture(GpuTexture.Format.RGBA8, UGraphics.getPlatformAdapter().textureView(tex))
+    //$$         UnownedGpuTextureImpl(GpuTexture.Format.RGBA8, UGraphics.getPlatformAdapter().textureView(tex))
     //$$     }
     //$$
     //$$ override val outputDepthTextureOverride: GpuTexture?
     //$$     get() = RenderSystem.outputDepthTextureOverride?.let { tex ->
-    //$$         UnownedGlGpuTexture(GpuTexture.Format.DEPTH32, UGraphics.getPlatformAdapter().textureView(tex))
+    //$$         UnownedGpuTextureImpl(GpuTexture.Format.DEPTH32, UGraphics.getPlatformAdapter().textureView(tex))
     //$$     }
     //#else
     override val outputColorTextureOverride: GpuTexture? get() = null
@@ -560,8 +560,21 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         }
     }
 
-    override fun openSocialMenu(channelId: Long?) {
-        GuiUtil.openScreen(SocialMenu::class.java) { SocialMenu(channelId) }
+    override fun openSocialMenu(channelId: Long?, user: UUID?) {
+        fun configureScreen(screen: SocialMenu) {
+            if (channelId != null) {
+                screen.openMessageScreen(channelId)
+            }
+            if (user != null) {
+                screen.openMessageScreen(user)
+            }
+        }
+        val openedScreen = GuiUtil.openedScreen()
+        if (openedScreen is SocialMenu) {
+            configureScreen(openedScreen)
+        } else {
+            GuiUtil.openScreen { SocialMenu().also(::configureScreen) }
+        }
     }
 
     override fun openScreenshotBrowser() {
@@ -701,7 +714,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         //$$ device.createCommandEncoder().clearColorAndDepthTextures(texture.texture, clearColor, texture.depthTexture, 1.0)
         //$$ AdvancedDrawContext.drawToTexture(texture, block)
         //$$ val uGpuTextureView = UGraphics.getPlatformAdapter().textureView(texture.textureView)
-        //$$ return object : GpuTexture by UnownedGlGpuTexture(GpuTexture.Format.RGBA8, uGpuTextureView) {
+        //$$ return object : GpuTexture by UnownedGpuTextureImpl(GpuTexture.Format.RGBA8, uGpuTextureView) {
         //$$     override fun close() {
         //$$         texture.close()
         //$$     }
@@ -735,9 +748,11 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
             //#endif
             //$$ val modelViewStack = RenderSystem.getModelViewStack()
             //#if MC >= 1.20.5
+            //$$ modelViewStack.pushMatrix()
             //$$ modelViewStack.identity()
             //$$ modelViewStack.translate(0f, 0f, -2000f)
             //#else
+            //$$ modelViewStack.push()
             //$$ modelViewStack.loadIdentity()
             //$$ modelViewStack.translate(0.0, 0.0, -2000.0)
             //#endif
@@ -756,6 +771,17 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
             block(UMatrixStack())
             //#if MC == 1.21.5
             //$$ mc.`essential$setFramebufferOverride`(null)
+            //#endif
+
+            //#if MC >= 1.17
+            //#if MC >= 1.20.5
+            //$$ modelViewStack.popMatrix()
+            //#else
+            //$$ modelViewStack.pop()
+            //#endif
+            //#if MC < 1.21.2
+            //$$ RenderSystem.applyModelViewMatrix()
+            //#endif
             //#endif
         }
         return object : GpuTexture by framebuffer.texture {

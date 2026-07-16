@@ -23,8 +23,11 @@ import gg.essential.config.EssentialConfig.friendRequestPrivacyState
 import gg.essential.config.EssentialConfig.ownCosmeticsVisibleStateWithSource
 import gg.essential.config.EssentialConfig.shareProfileLastOnline
 import gg.essential.config.EssentialConfig.chatFilterWithSource
+import gg.essential.config.EssentialConfig.appearOffline
+import gg.essential.connectionmanager.common.packet.Packet
 import gg.essential.connectionmanager.common.packet.chat.ChatUnfilteredContentSettingPacket
 import gg.essential.connectionmanager.common.packet.cosmetic.ClientCosmeticsUserEquippedVisibilityTogglePacket
+import gg.essential.connectionmanager.common.packet.profile.ClientProfileAppearOfflineStateTogglePacket
 import gg.essential.connectionmanager.common.packet.profile.ClientProfileLastDisconnectVisibilityTogglePacket
 import gg.essential.connectionmanager.common.packet.relationships.privacy.FriendRequestPrivacySettingPacket
 import gg.essential.connectionmanager.common.packet.response.ResponseActionPacket
@@ -33,6 +36,7 @@ import gg.essential.data.OnboardingData
 import gg.essential.data.OnboardingData.hasAcceptedTos
 import gg.essential.elementa.components.Window
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.elementa.state.v2.MutableState
 import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl
 import gg.essential.gui.elementa.state.v2.onChange
 import gg.essential.gui.modal.discord.DiscordActivityStatusModal
@@ -124,26 +128,44 @@ object McEssentialConfig {
             }
         }
 
-        shareProfileLastOnline.onChange(referenceHolder) { (state, updateInfra) ->
-            if (!updateInfra) return@onChange
-            if (Essential.getInstance().connectionManager.isAuthenticated) {
-                Essential.getInstance().connectionManager.connectionScope.launch {
-                    val successful = Essential.getInstance().connectionManager.call(
-                        ClientProfileLastDisconnectVisibilityTogglePacket(state)
-                    ).awaitResponseActionPacket()
-                    if (!successful) {
-                        Notifications.error(
-                            "Error",
-                            "Failed to update 'Share last online time with friends' setting. Try again."
-                        )
-                        shareProfileLastOnline.set(!state to false)
+        fun linkToggleSettingToInfra(
+            name: String,
+            setting: MutableState<Pair<Boolean, Boolean>>,
+            packet: (Boolean) -> Packet,
+        ) {
+            setting.onChange(referenceHolder) { (state, updateInfra) ->
+                if (!updateInfra) return@onChange
+                if (Essential.getInstance().connectionManager.isAuthenticated) {
+                    Essential.getInstance().connectionManager.connectionScope.launch {
+                        val successful = Essential.getInstance().connectionManager.call(
+                            packet(state)
+                        ).awaitResponseActionPacket()
+                        if (!successful) {
+                            Notifications.error(
+                                "Error",
+                                "Failed to update '$name' setting. Try again."
+                            )
+                            setting.set(!state to false)
+                        }
                     }
+                } else {
+                    displayNotConnectedInformation()
+                    setting.set(!state to false)
                 }
-            } else {
-                displayNotConnectedInformation()
-                shareProfileLastOnline.set(!state to false)
             }
         }
+
+        linkToggleSettingToInfra(
+            "Share last online time with friends",
+            shareProfileLastOnline,
+            ::ClientProfileLastDisconnectVisibilityTogglePacket,
+        )
+
+        linkToggleSettingToInfra(
+            "Appear offline",
+            appearOffline,
+            ::ClientProfileAppearOfflineStateTogglePacket,
+        )
 
         var lastCollectOptionalTelemetryFromSystemSource = true
 

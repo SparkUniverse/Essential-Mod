@@ -12,14 +12,13 @@
 package gg.essential.network.connectionmanager.profile;
 
 import com.google.common.collect.Maps;
-import com.sparkuniverse.toolbox.chat.enums.ChannelType;
-import com.sparkuniverse.toolbox.chat.model.Channel;
 import gg.essential.config.EssentialConfig;
 import gg.essential.connectionmanager.common.enums.ActivityType;
 import gg.essential.connectionmanager.common.enums.ProfileStatus;
 import gg.essential.connectionmanager.common.model.profile.ProfilePunishmentStatus;
 import gg.essential.connectionmanager.common.packet.profile.ClientProfileActivityPacket;
 import gg.essential.connectionmanager.common.packet.profile.ServerProfileActivityPacket;
+import gg.essential.connectionmanager.common.packet.profile.ServerProfileAppearOfflineStatePacket;
 import gg.essential.connectionmanager.common.packet.profile.ServerProfileLastDisconnectVisibilityPacket;
 import gg.essential.connectionmanager.common.packet.profile.ServerProfileStatusPacket;
 import gg.essential.connectionmanager.common.packet.profile.trustedhosts.ServerProfileTrustedHostsClearPacket;
@@ -32,8 +31,6 @@ import gg.essential.gui.EssentialPalette;
 import gg.essential.gui.elementa.state.v2.MutableState;
 import gg.essential.gui.elementa.state.v2.collections.MutableTrackedList;
 import gg.essential.gui.elementa.state.v2.collections.TrackedList;
-import gg.essential.gui.friends.SocialMenu;
-import gg.essential.gui.friends.previews.ChannelPreview;
 import gg.essential.gui.friends.state.IStatusManager;
 import gg.essential.gui.multiplayer.EssentialMultiplayerGui;
 import gg.essential.gui.notification.ExtensionsKt;
@@ -55,7 +52,7 @@ import gg.essential.network.connectionmanager.social.ProfileSuspension;
 import gg.essential.network.connectionmanager.subscription.SubscriptionManager;
 import gg.essential.profiles.model.TrustedHost;
 import gg.essential.util.CachedAvatarImage;
-import gg.essential.util.GuiUtil;
+import gg.essential.util.GuiEssentialPlatform;
 import gg.essential.util.HttpUtils;
 import gg.essential.util.Multithreading;
 import gg.essential.util.StringsKt;
@@ -128,6 +125,10 @@ public class ProfileManager extends StateCallbackManager<IStatusManager> impleme
         connectionManager.registerPacketHandler(ServerProfileTrustedHostsRemovePacket.class, new ServerProfileTrustedHostsRemovePacketHandler());
         connectionManager.registerPacketHandler(ServerProfileLastDisconnectVisibilityPacket.class, packet -> {
             EssentialConfig.INSTANCE.getShareProfileLastOnline().set(new Pair<>(packet.getState(), false));
+            return Unit.INSTANCE;
+        });
+        connectionManager.registerPacketHandler(ServerProfileAppearOfflineStatePacket.class, packet -> {
+            EssentialConfig.INSTANCE.getAppearOffline().set(new Pair<>(packet.getState(), false));
             return Unit.INSTANCE;
         });
     }
@@ -222,23 +223,8 @@ public class ProfileManager extends StateCallbackManager<IStatusManager> impleme
                     "",
                     4f,
                     () -> {
-                        SocialMenu gui = SocialMenu.getInstance();
-                        Channel channel = null;
-                        for (Channel value : connectionManager.getChatManager().getChannels().values()) {
-                            if (value.getType() == ChannelType.DIRECT_MESSAGE && value.getMembers().contains(uuid)) {
-                                channel = value;
-                                break;
-                            }
-                        }
-                        if (gui == null) {
-                            Long channelId = channel == null ? null : channel.getId();
-                            GuiUtil.openScreen(SocialMenu.class, () -> new SocialMenu(channelId));
-                        } else if (channel != null) {
-                            ChannelPreview cbp = gui.getChatTab().get(channel.getId());
-                            if (cbp != null) {
-                                gui.openMessageScreen(cbp);
-                            }
-                        }
+                        GuiEssentialPlatform.Companion.getPlatform()
+                            .openSocialMenu(null, uuid);
                         return Unit.INSTANCE;
                     },
                     () -> Unit.INSTANCE,

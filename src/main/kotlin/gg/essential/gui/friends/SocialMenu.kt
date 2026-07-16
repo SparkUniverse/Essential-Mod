@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.friends
 
-import com.sparkuniverse.toolbox.chat.model.Channel
 import gg.essential.Essential
 import gg.essential.api.gui.GuiRequiresTOS
 import gg.essential.elementa.ElementaVersion
@@ -51,9 +50,7 @@ import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.collections.filter
 
-class SocialMenu(
-    channelIdToOpen: Long? = null
-): InternalEssentialGUI(
+class SocialMenu : InternalEssentialGUI(
     ElementaVersion.V10,
     "Social",
     discordActivityDescription = "Messaging friends",
@@ -135,16 +132,7 @@ class SocialMenu(
             }
         }
 
-        if (channelIdToOpen != null) {
-            val preview = chatTab[connectionManager.chatManager.mergeAnnouncementChannel(channelIdToOpen)]
-            if (preview != null) {
-                openMessageScreen(preview)
-            } else {
-                Essential.logger.error("Unable to find channel with ID $channelIdToOpen")
-            }
-        } else {
-            chatTab.openTopChannel()
-        }
+        chatTab.openTopChannel()
 
         socialMenuState.messages.registerResetListener {
             channelToRestore = chatTab.currentMessageView.get()?.preview?.channel?.id
@@ -160,7 +148,7 @@ class SocialMenu(
                 // must be after the chatTab has processed channels after connect.
                 Window.enqueueRenderOperation {
                     Window.enqueueRenderOperation {
-                        openMessageScreen(it)
+                        openMessageScreen(it.id)
                     }
                 }
             }
@@ -215,8 +203,9 @@ class SocialMenu(
         selectedTab.set(Tab.CHAT)
     }
 
-    override fun openMessageScreen(channel: Channel) {
-        chatTab[channel.id]?.let { openMessageScreen(it) }
+    override fun openMessageScreen(channelId: Long) {
+        val frontendChannelId = connectionManager.chatManager.mergeAnnouncementChannel(channelId)
+        chatTab[frontendChannelId]?.let { openMessageScreen(it) }
     }
 
     override fun openMessageScreen(user: UUID) {

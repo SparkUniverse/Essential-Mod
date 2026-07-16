@@ -14,8 +14,8 @@ package gg.essential.mixins.transformers.client.gui;
 import com.llamalad7.mixinextras.sugar.Local;
 import gg.essential.universal.UGraphics;
 import gg.essential.util.GuiRendererInfo;
-import gg.essential.util.OwnedGlGpuTexture;
-import gg.essential.util.UnownedGlGpuTexture;
+import gg.essential.util.OwnedGpuTextureImpl;
+import gg.essential.util.UnownedGpuTextureImpl;
 import gg.essential.util.image.GpuTexture;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gui.render.GuiRenderer;
@@ -37,7 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class Mixin_GuiRenderer_WorkaroundBlurPassGlitch {
 
     @Unique
-    private OwnedGlGpuTexture clearTex = null;
+    private OwnedGpuTextureImpl clearTex = null;
 
     @Inject(method = "renderPreparedDraws", at = @At(value = "INVOKE",
             // right after the clear call
@@ -50,7 +50,7 @@ public class Mixin_GuiRenderer_WorkaroundBlurPassGlitch {
             var glTex = framebuffer.getDepthAttachmentView();
             if (!(glTex instanceof GlTextureView)) return; // in case of third party mod changes
 
-            var tex = new UnownedGlGpuTexture(
+            var tex = new UnownedGpuTextureImpl(
                     GpuTexture.Format.DEPTH32,
                     UGraphics.getPlatformAdapter().textureView(glTex)
             );
@@ -58,7 +58,7 @@ public class Mixin_GuiRenderer_WorkaroundBlurPassGlitch {
             // ensure clearTex is ready and clear
             if (clearTex == null || clearTex.getWidth() != tex.getWidth() || clearTex.getHeight() != tex.getHeight()) {
                 if (clearTex != null) clearTex.close();
-                clearTex = new OwnedGlGpuTexture(tex.getWidth(), tex.getHeight(), GpuTexture.Format.DEPTH32);
+                clearTex = new OwnedGpuTextureImpl(tex.getWidth(), tex.getHeight(), GpuTexture.Format.DEPTH32);
                 //#if MC >= 26.2
                 //$$ clearTex.clearDepth(0f);
                 //#else

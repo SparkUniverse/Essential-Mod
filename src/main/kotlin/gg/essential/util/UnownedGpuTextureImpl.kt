@@ -15,10 +15,10 @@ import gg.essential.universal.render.UGpuTexture
 import gg.essential.universal.render.UGpuTextureView
 import gg.essential.util.image.GpuTexture
 
-class UnownedGlGpuTexture(
+class UnownedGpuTextureImpl(
     format: GpuTexture.Format,
     override val ucView: UGpuTextureView,
-) : GlGpuTexture(format) {
+) : GpuTextureImpl(format) {
     override val uc: UGpuTexture
         get() = ucView.texture
     override val width: Int

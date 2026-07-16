@@ -11,13 +11,12 @@
  */
 package gg.essential.gui.friends.message
 
-import com.sparkuniverse.toolbox.chat.model.Channel
 import gg.essential.gui.common.ContextOptionMenu
 import gg.essential.gui.friends.previews.ChannelPreview
 import java.util.UUID
 
 interface SocialMenuActions {
-    fun openMessageScreen(channel: Channel)
+    fun openMessageScreen(channelId: Long)
     fun openMessageScreen(user: UUID)
 
     fun showManagementDropdown(

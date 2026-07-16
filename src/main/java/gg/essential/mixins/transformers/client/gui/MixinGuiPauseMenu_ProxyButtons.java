@@ -14,6 +14,7 @@ package gg.essential.mixins.transformers.client.gui;
 
 import gg.essential.gui.proxies.ScreenWithProxiesHandler;
 import gg.essential.gui.proxies.ScreenWithVanillaProxyElementsExt;
+import gg.essential.handlers.PauseMenuDisplay;
 import net.minecraft.client.gui.GuiIngameMenu;
 import net.minecraft.client.gui.GuiScreen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,15 +36,20 @@ public class MixinGuiPauseMenu_ProxyButtons implements ScreenWithVanillaProxyEle
     //#endif
 
     @Unique
-    private final ScreenWithProxiesHandler proxyHandler = ScreenWithProxiesHandler.forPauseMenu((GuiScreen) (Object) this);
+    private ScreenWithProxiesHandler proxyHandler;
 
     @Inject(method = "initGui", at = @At("TAIL"))
     private void addProxyButtons(CallbackInfo ci) {
         //#if MC >= 11600
-        //$$ if (this.isFullMenu) proxyHandler.initGui();
-        //#else
-        proxyHandler.initGui();
+        //$$ if (!this.isFullMenu) return;
         //#endif
+
+        if (PauseMenuDisplay.isEnabled()) {
+            proxyHandler = ScreenWithProxiesHandler.forPauseMenu((GuiScreen) (Object) this);
+            proxyHandler.initGui();
+        } else {
+            proxyHandler = null;
+        }
     }
 
     @Override

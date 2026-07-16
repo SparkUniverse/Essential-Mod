@@ -37,11 +37,6 @@ class ShadowEffect(private val shadowColorState: State<Color>) : Effect() {
                 // Copied from UIText
                 val text = boundComponent.getText()
 
-                // Don't draw if the boundComponent wouldn't draw
-                if (text.isEmpty() || boundComponent.getColor().alpha <= 10) {
-                    return
-                }
-
                 val constraints = boundComponent.constraints
                 val scale = constraints.getTextScale()
                 val fontProvider = constraints.fontProvider
@@ -68,10 +63,6 @@ class ShadowEffect(private val shadowColorState: State<Color>) : Effect() {
                 )
             }
             is UIBlock, is UIContainer -> {
-                // Don't draw if the boundComponent wouldn't draw
-                if (boundComponent.getColor().alpha == 0) {
-                    return
-                }
                 val x = boundComponent.getLeft().toDouble()
                 val y = boundComponent.getTop().toDouble()
                 val x2 = boundComponent.getRight().toDouble()

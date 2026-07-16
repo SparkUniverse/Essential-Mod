@@ -15,24 +15,19 @@ import gg.essential.connectionmanager.common.model.knownserver.KnownServer
 import gg.essential.connectionmanager.common.packet.knownservers.ClientKnownServersRequestPacket
 import gg.essential.connectionmanager.common.packet.knownservers.ServerKnownServersResponsePacket
 import gg.essential.gui.elementa.state.v2.State
-import gg.essential.gui.elementa.state.v2.combinators.map
 import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.network.CMConnection
 import gg.essential.network.connectionmanager.NetworkedManager
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
+import kotlin.collections.map
 
-class KnownServersManager(val connectionManager: CMConnection) : NetworkedManager {
-    private val mutableKnownServers = mutableStateOf(listOf<KnownServer>())
-    val knownServers: State<List<KnownServer>> = mutableKnownServers
-
-    private val serversByAddress = knownServers.map { servers ->
-        servers.flatMap { server -> server.addresses.filter { !isRegex(it) }.map { it to server } }.toMap()
-    }
-
-    private val serversByRegex = knownServers.map { servers ->
-        servers.flatMap { server -> server.addresses.filter{ isRegex(it) }.map { Pattern.compile(it) to server } }.toMap()
-    }
+class KnownServersManager(val connectionManager: CMConnection) : NetworkedManager, KnownServers {
+    private val mutableState = mutableStateOf(KnownServersImpl(emptyList()))
+    val state: State<KnownServers> = mutableState
 
     override fun onConnected() {
         connectionManager.connectionScope.launch { refreshKnownServers() }
@@ -43,24 +38,33 @@ class KnownServersManager(val connectionManager: CMConnection) : NetworkedManage
             connectionManager.call(ClientKnownServersRequestPacket())
                 .exponentialBackoff()
                 .await<ServerKnownServersResponsePacket>()
-        mutableKnownServers.set(response.knownServers)
+        mutableState.set(KnownServersImpl(response.knownServers))
     }
 
-    fun findServerByAddress(address: String): KnownServer? {
-        serversByAddress.getUntracked()[address]?.let { return it }
+    override fun findServerByAddress(address: String): KnownServer? = state.getUntracked().findServerByAddress(address)
 
-        for ((pattern, server) in serversByRegex.getUntracked()) {
-            if (pattern.matcher(address).matches()) {
-                return server
+    override fun normalizeAddress(address: String): String = state.getUntracked().normalizeAddress(address)
+
+    private data class KnownServersImpl(val servers: List<KnownServer>) : KnownServers {
+        private val serversByAddress = servers.flatMap { server -> server.addresses.filter { !isRegex(it) }.map { it to server } }.toMap()
+        private val serversByRegex = servers.flatMap { server -> server.addresses.filter { isRegex(it) }.map { Pattern.compile(it) to server } }.toMap()
+
+        override fun findServerByAddress(address: String): KnownServer? {
+            serversByAddress[address]?.let { return it }
+
+            for ((pattern, server) in serversByRegex) {
+                if (pattern.matcher(address).matches()) {
+                    return server
+                }
             }
+
+            return null
         }
 
-        return null
-    }
-
-    fun normalizeAddress(address: String): String {
-        findServerByAddress(address)?.let { return it.addresses[0] }
-        return address
+        override fun normalizeAddress(address: String): String {
+            findServerByAddress(address)?.let { return it.addresses[0] }
+            return address
+        }
     }
 
     companion object {

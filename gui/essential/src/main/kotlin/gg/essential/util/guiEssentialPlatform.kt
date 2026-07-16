@@ -217,7 +217,7 @@ interface GuiEssentialPlatform {
 
     fun openWardrobe(highlight: ItemId? = null)
 
-    fun openSocialMenu(channelId: Long? = null)
+    fun openSocialMenu(channelId: Long? = null, user: UUID? = null)
 
     fun openScreenshotBrowser()
 

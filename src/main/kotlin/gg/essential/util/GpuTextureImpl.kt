@@ -57,7 +57,7 @@ import net.minecraft.client.renderer.OpenGlHelper.glFramebufferTexture2D
 import net.minecraft.client.renderer.OpenGlHelper.glGenFramebuffers
 //#endif
 
-abstract class GlGpuTexture(private val format: GpuTexture.Format) : GpuTexture {
+abstract class GpuTextureImpl(private val format: GpuTexture.Format) : GpuTexture {
     override val glId: Int
         //#if MC >= 1.21.5
         //$$ get() = (UGraphics.getPlatformAdapter().texture(uc) as GlTexture).glId
@@ -77,7 +77,7 @@ abstract class GlGpuTexture(private val format: GpuTexture.Format) : GpuTexture 
         //$$     return copyFromOpenGl(sources)
         //$$ }
         //$$ for ((src, srcX, srcY, destX, destY, width, height) in sources) {
-        //$$     src as GlGpuTexture
+        //$$     src as GpuTextureImpl
         //$$     RenderSystem.getDevice().createCommandEncoder()
         //$$         .copyTextureToTexture(src.b3d, this.b3d, 0, destX, destY, srcX, srcY, width, height)
         //$$ }
@@ -133,7 +133,7 @@ abstract class GlGpuTexture(private val format: GpuTexture.Format) : GpuTexture 
         //#else
         GlStateManager.colorMask(true, true, true, true)
         //#endif
-        UGraphics.clearColor(color.r.toFloat() / 255, color.r.toFloat() / 255, color.r.toFloat() / 255, color.a.toFloat() / 255)
+        UGraphics.clearColor(color.r.toFloat() / 255, color.g.toFloat() / 255, color.b.toFloat() / 255, color.a.toFloat() / 255)
         glClear(GL11.GL_COLOR_BUFFER_BIT)
 
         glFramebufferTexture2D(GL30.GL_DRAW_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, 0, 0)

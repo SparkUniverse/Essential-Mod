@@ -169,6 +169,7 @@
     "compatibility.vanilla.Mixin_DisconnectPlayersOnServerClose",
     "compatibility.vanilla.Mixin_FixArrowsStuckInUnusedPlayerModelPart",
     "compatibility.vanilla.Mixin_FixBufferBuilderSortReset",
+    "compatibility.vanilla.Mixin_FixDisconnectDuringResourcePackReload",
     "compatibility.vanilla.Mixin_FixIntegratedServerShutdownThreading",
     "compatibility.vanilla.Mixin_FixKeyboardNavigation",
     "compatibility.vanilla.Mixin_FixPacketHandlingPastServerShutdown",

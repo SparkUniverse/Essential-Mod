@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.proxies
 
-import gg.essential.config.EssentialConfig
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.Window
@@ -36,12 +35,6 @@ class ScreenWithProxiesHandler(
     private val access = screen as GuiScreenAccessor
 
     fun initGui() {
-        // FIXME this is a temporary workaround to fix the fancymenu buttons showing up when they shouldn't
-        if (buttonIds === mainMenuButtons || buttonIds === pauseMenuButtons) {
-            if (!EssentialConfig.essentialEnabled) return
-            if (EssentialConfig.essentialMenuLayout == EssentialConfig.EssentialMenuLayout.OFF) return
-        }
-
         val proxies = mutableListOf<EssentialProxyElement<*>>()
         buttonIds.mapTo(proxies) { MenuButtonProxy(it.key, it.value) }
         flagIds.mapTo(proxies) { NoticeFlagProxy(it.key, it.value) }
@@ -114,7 +107,11 @@ class ScreenWithProxiesHandler(
                     block() // may setup any components, even none or conditional ones
                 }
             }
-            proxyHandler?.proxiesById?.get(id)?.acceptNewEssentialContainer(container, mounted)
+            if (proxyHandler != null) {
+                val proxy = proxyHandler.proxiesById[id]
+                    ?: throw IllegalArgumentException("No proxy found for `$id`. Did you forget to add it to the label-to-id mapping in `ScreenWithProxiesHandler`?")
+                proxy.acceptNewEssentialContainer(container, mounted)
+            }
         }
 
         // menu components
@@ -133,6 +130,7 @@ class ScreenWithProxiesHandler(
             "pictures" to 7,
             "settings" to 8,
             "account" to 9,
+            null,
             null,
         ).toMap()
         private val mainMenuFlags = listOfNotNull(
@@ -153,6 +151,7 @@ class ScreenWithProxiesHandler(
             "wardrobe_2" to 6,
             "pictures" to 7,
             "settings" to 8,
+            null,
         ).toMap()
         private val pauseMenuFlags = mapOf(
             "beta" to 11,

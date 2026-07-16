@@ -27,7 +27,7 @@ import gg.essential.universal.shader.BlendState
 import gg.essential.universal.utils.ReleasedDynamicTexture
 import gg.essential.universal.vertex.UVertexConsumer
 import gg.essential.util.OptiFineAccessor
-import gg.essential.util.UnownedGlGpuTexture
+import gg.essential.util.UnownedGpuTextureImpl
 import gg.essential.util.identifier
 import gg.essential.util.image.GpuTexture
 import net.minecraft.client.renderer.GlStateManager
@@ -90,7 +90,7 @@ object MinecraftRenderBackend : RenderBackend {
 
     override fun blitTexture(dst: RenderBackend.Texture, ops: Iterable<RenderBackend.BlitOp>) {
         val textureManager = getMinecraft().textureManager
-        fun RenderBackend.Texture.gpuTexture(): UnownedGlGpuTexture {
+        fun RenderBackend.Texture.gpuTexture(): UnownedGpuTextureImpl {
             val mcTexture = textureManager.getTexture((this as MinecraftTexture).identifier)!!
             //#if MC >= 1.21.6
             //$$ val textureView = UGraphics.getPlatformAdapter().textureView(mcTexture.glTextureView)
@@ -102,7 +102,7 @@ object MinecraftRenderBackend : RenderBackend {
             //#endif
             val textureView = UGraphics.getDevice().createTextureView(texture)
             //#endif
-            return UnownedGlGpuTexture(GpuTexture.Format.RGBA8, textureView)
+            return UnownedGpuTextureImpl(GpuTexture.Format.RGBA8, textureView)
         }
 
         dst.gpuTexture().copyFrom(ops.map { GpuTexture.CopyOp(it.src.gpuTexture(), it.srcX, it.srcY, it.destX, it.destY, it.width, it.height) })

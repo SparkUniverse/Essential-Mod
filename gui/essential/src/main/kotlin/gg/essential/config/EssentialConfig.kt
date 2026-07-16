@@ -278,6 +278,8 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
 
     val showOwnNametag = property("Quality of Life.Nameplate.Show my nameplate in third-person", true)
 
+    val appearOffline = mutableStateOf(/*state*/false to /*updateInfra*/false)
+
     val shareProfileLastOnline = mutableStateOf(/*state*/true to /*updateInfra*/false)
 
     val acknowledgedPermanentSuspension = property("Hidden.acknowledged_permanent_suspension", false)
@@ -407,6 +409,215 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
             }
         }
 
+        category("Friends") {
+            subcategory("Activity Sharing") {
+                switch(appearOffline.bimapState({ it.first }, { it to true})) {
+                    name = "Appear offline"
+                    description = "Hides your online and activity status."
+                }
+                dynamic {
+                    if (!appearOffline().first) {
+                        switch(sendServerUpdatesState) {
+                            name = "Share game activity with friends"
+                            description = "Displays the server or world you are currently playing on to your friends."
+                        }
+                    }
+                }
+                switch(discordRichPresenceState) {
+                    name = "Share activity status on Discord"
+                    description = "Display Essential as your current activity on Discord."
+                }
+                switch(shareProfileLastOnline.bimap({ it.first }, { it to true })) {
+                    name = "Share last online time with friends"
+                    description = "Displays the last time you were online to your friends."
+                }
+            }
+
+            subcategory("Friend Requests") {
+                selector(friendRequestPrivacyState) {
+                    name = "Friend request permission"
+                    description = "Determines who can send you a friend request on Essential."
+                    options = FriendRequestPrivacySetting.entries.map { option ->
+                        when (option) {
+                            FriendRequestPrivacySetting.ANY_ONE -> "Everyone"
+                            FriendRequestPrivacySetting.FRIEND_OF_FRIENDS -> "Friends of friends"
+                            FriendRequestPrivacySetting.NO_ONE -> "Nobody"
+                        }
+                    }
+                }
+            }
+
+            subcategory("Chat Safety") {
+                switch(chatFilterWithSource.bimap({ it.first }, { it to true })) {
+                    name = "Chat filter"
+                    description = "Prevents inappropriate or offensive language from appearing in chat"
+                }
+            }
+        }
+
+        category("Appearance") {
+            subcategory("Main & Pause Menu") {
+                selector(essentialMenuLayoutState) {
+                    name = "Essential menu layout"
+                    description = "Choose the layout of the Essential buttons on the main and pause menu."
+                    options = EssentialMenuLayout.entries.map { it.label }
+                }
+                switch(useVanillaButtonForRetexturing) {
+                    name = "Use Minecraft button texture"
+                    description = "Uses Minecraft’s button texture on Essential main and pause menu buttons. If you have a resource pack equipped, it will use the resource pack’s button texture."
+                }
+                switch(shouldDarkenRetexturedButtonsState) {
+                    name = "Darken Minecraft button texture"
+                    description = "Tints Essential main and pause menu buttons darker to increase read-ability."
+                    visible = useVanillaButtonForRetexturing
+                }
+            }
+
+            subcategory("Nameplates") {
+                switch(showOwnNametag) {
+                    name = "Nameplate in third-person"
+                    description = "Shows your own nameplate when in third-person perspective."
+                }
+                switch(showEssentialIndicatorOnNametagState) {
+                    name = "Essential icon on nameplates"
+                    description = "Shows the Essential icon on Essential players’ nameplates."
+                }
+            }
+
+            subcategory("Tab-list") {
+                switch(showEssentialIndicatorOnTabState) {
+                    name = "Essential icon in tab-list"
+                    description = "Shows the Essential icon on Essential players in the tab-list."
+                }
+            }
+
+            if (platform.mcVersion < 11400) {
+                subcategory("Fullscreen") {
+                    switch(windowedFullscreenState) {
+                        name = "Windowed fullscreen"
+                        description = "Enables windowed fullscreen, allowing focusing on other windows."
+                    }
+                }
+            }
+
+            subcategory("Accessibility") {
+                switch(enlargeSocialMenuChatMetadataState) {
+                    name = "Enlarge social menu chat metadata"
+                    description = "Uses a larger font for usernames and timestamps in the social menu’s chat."
+                }
+            }
+        }
+
+        category("Notifications") {
+            subcategory("Notifications") {
+                switch(!disableAllNotificationsState) {
+                    name = "Notifications"
+                    description = "Notifications appear in the bottom right corner."
+                }
+                dynamic {
+                    if (!disableAllNotificationsState()) {
+                        switch(friendConnectionStatusState) {
+                            name = "Friend online alert"
+                            description = "Receive a notification when a friend comes online."
+                        }
+                        switch(messageReceivedNotificationsState) {
+                            name = "Direct message notifications"
+                            description = "Receive a notification when you get a direct message in Essential chat."
+                        }
+                        switch(groupMessageReceivedNotificationsState) {
+                            name = "Group message notifications"
+                            description = "Receive a notification when you get a group message in Essential chat."
+                        }
+                        switch(messageSoundState) {
+                            name = "Message received sound"
+                            description = "Plays a sound when receiving a message."
+                        }
+                        switch(updateModalState) {
+                            name = "Essential update notifications"
+                            description = "Displays a notification modal after Essential has been updated."
+                        }
+                    }
+                }
+            }
+
+            subcategory("Warnings") {
+                switch(linkWarningState) {
+                    name = "Link opening warning"
+                    description = "Show a confirmation modal before opening any third-party link."
+                }
+
+                switch(spsIPWarningState) {
+                    name = "World hosting IP visibility warning"
+                    description = "Show an IP warning modal when hosting a world."
+                }
+            }
+        }
+
+        category("Quality of Life") {
+            subcategory("Screenshots") {
+                switch(essentialScreenshotsState) {
+                    name = "Screenshot preview"
+                    description = "Shows a screenshot preview with quick-actions on capture."
+                }
+
+                val quickActionOptions = ScreenshotPreviewAction.DISPLAY_ORDER
+                selector(screenshotOverlayTopLeftActionState, quickActionOptions) {
+                    name = "Screenshot quick-action #1"
+                    description = "Select an action for the top left screenshot quick-action slot."
+                    options = quickActionOptions.map { it.displayName }
+                }
+                selector(screenshotOverlayTopRightActionState, quickActionOptions) {
+                    name = "Screenshot quick-action #2"
+                    description = "Select an action for the top right screenshot quick-action slot."
+                    options = quickActionOptions.map { it.displayName }
+                }
+                selector(screenshotOverlayBottomLeftActionState, quickActionOptions) {
+                    name = "Screenshot quick-action #3"
+                    description = "Select an action for the bottom left screenshot quick-action slot."
+                    options = quickActionOptions.map { it.displayName }
+                }
+                selector(screenshotOverlayBottomRightActionState, quickActionOptions) {
+                    name = "Screenshot quick-action #4"
+                    description = "Select an action for the bottom right screenshot quick-action slot."
+                    options = quickActionOptions.map { it.displayName }
+                }
+                selector(postScreenshotActionState) {
+                    name = "Post screenshot action"
+                    description = "Automatically trigger an action after taking a screenshot."
+                    options = PostScreenshotAction.entries.map { it.label }
+                }
+                selector(screenshotToastDurationState) {
+                    name = "Screenshot preview duration"
+                    description = "Control for how long the screenshot preview will be shown."
+                    options = ScreenshotToastDuration.entries.map { "${it.seconds} seconds" }
+                }
+                switch(screenshotSoundsState) {
+                    name = "Screenshot sounds"
+                    description = "Plays a capture sound when taking a screenshot."
+                }
+                switch(enableVanillaScreenshotMessageState) {
+                    name = "Screenshot message"
+                    description = "Shows the vanilla screenshot capture message in in-game chat."
+                }
+            }
+            if (!platform.isOptiFineInstalled) {
+                subcategory("Zoom") {
+                    switch(zoomSmoothCameraState) {
+                        name = "Smooth zoomed camera"
+                        description = "Enables smooth camera while zooming."
+                    }
+                    switch(smoothZoomAnimationState) {
+                        name = "Smooth zooming"
+                        description = "Uses a smooth animation when zooming in and out."
+                    }
+                    switch(toggleToZoomState) {
+                        name = "Toggle to zoom"
+                        description = "Press the zoom key to toggle zoom, rather than hold."
+                    }
+                }
+            }
+        }
+
         category("Emotes") {
             subcategory("General") {
                 switch(!disableEmotesState) {
@@ -486,213 +697,17 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
             }
         }
 
-        category("Notifications") {
-            subcategory("Notifications") {
-                switch(!disableAllNotificationsState) {
-                    name = "Notifications"
-                    description = "Notifications appear in the bottom right corner."
-                }
-                dynamic {
-                    if (!disableAllNotificationsState()) {
-                        switch(friendConnectionStatusState) {
-                            name = "Friend online alert"
-                            description = "Receive a notification when a friend comes online."
-                        }
-                        switch(messageReceivedNotificationsState) {
-                            name = "Direct message notifications"
-                            description = "Receive a notification when you get a direct message in Essential chat."
-                        }
-                        switch(groupMessageReceivedNotificationsState) {
-                            name = "Group message notifications"
-                            description = "Receive a notification when you get a group message in Essential chat."
-                        }
-                        switch(messageSoundState) {
-                            name = "Message received sound"
-                            description = "Plays a sound when receiving a message."
-                        }
-                        switch(updateModalState) {
-                            name = "Essential update notifications"
-                            description = "Displays a notification modal after Essential has been updated."
-                        }
-                    }
-                }
-            }
-
-            subcategory("Warnings") {
-                switch(linkWarningState) {
-                    name = "Link opening warning"
-                    description = "Show a confirmation modal before opening any third-party link."
-                }
-
-                switch(spsIPWarningState) {
-                    name = "World hosting IP visibility warning"
-                    description = "Show an IP warning modal when hosting a world."
-                }
-            }
-        }
-
-        category("Appearance") {
-            subcategory("Main & Pause Menu") {
-                selector(essentialMenuLayoutState) {
-                    name = "Essential menu layout"
-                    description = "Choose the layout of the Essential buttons on the main and pause menu."
-                    options = EssentialMenuLayout.entries.map { it.label }
-                }
-                switch(useVanillaButtonForRetexturing) {
-                    name = "Use Minecraft button texture"
-                    description = "Uses Minecraft’s button texture on Essential main and pause menu buttons. If you have a resource pack equipped, it will use the resource pack’s button texture."
-                }
-                switch(shouldDarkenRetexturedButtonsState) {
-                    name = "Darken Minecraft button texture"
-                    description = "Tints Essential main and pause menu buttons darker to increase read-ability."
-                    visible = useVanillaButtonForRetexturing
-                }
-            }
-
-            subcategory("Nameplates") {
-                switch(showOwnNametag) {
-                    name = "Nameplate in third-person"
-                    description = "Shows your own nameplate when in third-person perspective."
-                }
-                switch(showEssentialIndicatorOnNametagState) {
-                    name = "Essential icon on nameplates"
-                    description = "Shows the Essential icon on Essential players’ nameplates."
-                }
-            }
-
-            subcategory("Tab-list") {
-                switch(showEssentialIndicatorOnTabState) {
-                    name = "Essential icon in tab-list"
-                    description = "Shows the Essential icon on Essential players in the tab-list."
-                }
-            }
-
-            if (platform.mcVersion < 11400) {
-                subcategory("Fullscreen") {
-                    switch(windowedFullscreenState) {
-                        name = "Windowed fullscreen"
-                        description = "Enables windowed fullscreen, allowing focusing on other windows."
-                    }
-                }
-            }
-
-            subcategory("Accessibility") {
-                switch(enlargeSocialMenuChatMetadataState) {
-                    name = "Enlarge social menu chat metadata"
-                    description = "Uses a larger font for usernames and timestamps in the social menu’s chat."
-                }
-            }
-        }
-
-        category("Quality of Life") {
-            subcategory("Screenshots") {
-                switch(essentialScreenshotsState) {
-                    name = "Screenshot preview"
-                    description = "Shows a screenshot preview with quick-actions on capture."
-                }
-
-                val quickActionOptions = ScreenshotPreviewAction.DISPLAY_ORDER
-                selector(screenshotOverlayTopLeftActionState, quickActionOptions) {
-                    name = "Screenshot quick-action #1"
-                    description = "Select an action for the top left screenshot quick-action slot."
-                    options = quickActionOptions.map { it.displayName }
-                }
-                selector(screenshotOverlayTopRightActionState, quickActionOptions) {
-                    name = "Screenshot quick-action #2"
-                    description = "Select an action for the top right screenshot quick-action slot."
-                    options = quickActionOptions.map { it.displayName }
-                }
-                selector(screenshotOverlayBottomLeftActionState, quickActionOptions) {
-                    name = "Screenshot quick-action #3"
-                    description = "Select an action for the bottom left screenshot quick-action slot."
-                    options = quickActionOptions.map { it.displayName }
-                }
-                selector(screenshotOverlayBottomRightActionState, quickActionOptions) {
-                    name = "Screenshot quick-action #4"
-                    description = "Select an action for the bottom right screenshot quick-action slot."
-                    options = quickActionOptions.map { it.displayName }
-                }
-                selector(postScreenshotActionState) {
-                    name = "Post screenshot action"
-                    description = "Automatically trigger an action after taking a screenshot."
-                    options = PostScreenshotAction.entries.map { it.label }
-                }
-                selector(screenshotToastDurationState) {
-                    name = "Screenshot preview duration"
-                    description = "Control for how long the screenshot preview will be shown."
-                    options = ScreenshotToastDuration.entries.map { "${it.seconds} seconds" }
-                }
-                switch(screenshotSoundsState) {
-                    name = "Screenshot sounds"
-                    description = "Plays a capture sound when taking a screenshot."
-                }
-                switch(enableVanillaScreenshotMessageState) {
-                    name = "Screenshot message"
-                    description = "Shows the vanilla screenshot capture message in in-game chat."
-                }
-            }
-            if (!platform.isOptiFineInstalled) {
-                subcategory("Zoom") {
-                    switch(zoomSmoothCameraState) {
-                        name = "Smooth zoomed camera"
-                        description = "Enables smooth camera while zooming."
-                    }
-                    switch(smoothZoomAnimationState) {
-                        name = "Smooth zooming"
-                        description = "Uses a smooth animation when zooming in and out."
-                    }
-                    switch(toggleToZoomState) {
-                        name = "Toggle to zoom"
-                        description = "Press the zoom key to toggle zoom, rather than hold."
-                    }
-                }
-            }
-            subcategory("Discord Integration") {
-                switch(discordRichPresenceState) {
-                    name = "Activity status on Discord"
-                    description = "Display Essential as your current activity on Discord."
-                }
-            }
-        }
         category("Privacy & Data") {
-            subcategory("Privacy") {
-                switch(sendServerUpdatesState) {
-                    name = "Share game activity with friends"
-                    description = "Displays the server or world you are currently playing on to your friends in the social and multiplayer menu."
-                }
-                switch(shareProfileLastOnline.bimap({ it.first }, { it to true })) {
-                    name = "Share last online time with friends"
-                    description = "Displays the last time you were online to your friends in the social menu."
-                }
-                selector(friendRequestPrivacyState) {
-                    name = "Friend request permission"
-                    description = "Determines who can send you a friend request on Essential."
-                    options = FriendRequestPrivacySetting.entries.map { option ->
-                        when (option) {
-                            FriendRequestPrivacySetting.ANY_ONE -> "Everyone"
-                            FriendRequestPrivacySetting.FRIEND_OF_FRIENDS -> "Friends of friends"
-                            FriendRequestPrivacySetting.NO_ONE -> "Nobody"
-                        }
-                    }
-                }
-                button(::revokeTosButton) {
-                    name = "Terms of Service and Privacy Policy"
-                    description = "Deny the Essential terms of service and privacy policy. Warning! This will prevent the use of Essential features."
-                    label = "Deny TOS & PP"
-                }
-            }
-            subcategory("Data") {
+            subcategory("Privacy & Data") {
                 switch(collectOptionalTelemetryWithSource.bimap({ it.first }, { it to true })) {
                     name = "Collect optional telemetry data"
                     description = "Give Essential permission to collect additional telemetry data to help improve your experience."
                 }
-            }
-        }
-        category("Chat Safety") {
-            subcategory("Chat Safety") {
-                switch(chatFilterWithSource.bimap({ it.first }, { it to true })) {
-                    name = "Chat filter"
-                    description = "Prevents inappropriate or offensive language from appearing in chat"
+
+                button(::revokeTosButton) {
+                    name = "Terms of Service and Privacy Policy"
+                    description = "Deny the Essential terms of service and privacy policy. Warning! This will prevent the use of Essential features."
+                    label = "Deny TOS & PP"
                 }
             }
         }

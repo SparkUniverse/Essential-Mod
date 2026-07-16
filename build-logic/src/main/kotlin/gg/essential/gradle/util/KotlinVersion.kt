@@ -21,6 +21,7 @@ data class KotlinVersion(
     val serialization: String,
 ) {
     companion object {
+        // Note: When updating stdlib version, also update the check at the start of IntegrationTestBootstrap.initialize
         val latest = KotlinVersion(null, "2.3.0", "1.10.2", "1.9.0")
 
         val fabricLanguageKotlin = latest.copy(mod = "1.13.8")

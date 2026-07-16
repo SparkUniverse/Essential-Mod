@@ -60,7 +60,7 @@ abstract class TitleManagementActions(
     protected fun makeGroup() {
         launchModalFlow(platform.createModalManager()) {
             val channel = makeGroupModal(socialStates) ?: return@launchModalFlow
-            socialMenuActions.openMessageScreen(channel)
+            socialMenuActions.openMessageScreen(channel.id)
         }
     }
 

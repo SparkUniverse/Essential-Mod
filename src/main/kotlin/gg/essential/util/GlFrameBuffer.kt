@@ -54,13 +54,13 @@ class GlFrameBufferImpl(
     depthFormat: GpuTexture.Format,
 ) : GlFrameBuffer {
     override val frameBuffer: Int
-    override val texture: GlGpuTexture
-    override val depthStencil: GlGpuTexture
+    override val texture: GpuTextureImpl
+    override val depthStencil: GpuTextureImpl
 
     init {
         frameBuffer = glGenFramebuffers()
-        texture = OwnedGlGpuTexture(width, height, colorFormat)
-        depthStencil = OwnedGlGpuTexture(width, height, depthFormat)
+        texture = OwnedGpuTextureImpl(width, height, colorFormat)
+        depthStencil = OwnedGpuTextureImpl(width, height, depthFormat)
 
         use {
             glFramebufferTexture2D(

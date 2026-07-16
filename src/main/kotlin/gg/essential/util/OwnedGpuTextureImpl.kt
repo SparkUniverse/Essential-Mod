@@ -19,11 +19,11 @@ import org.lwjgl.opengl.GL30.GL_DEPTH24_STENCIL8
 import org.lwjgl.opengl.GL30.GL_DEPTH_STENCIL
 import org.lwjgl.opengl.GL30.GL_UNSIGNED_INT_24_8
 
-class OwnedGlGpuTexture(
+class OwnedGpuTextureImpl(
     override val width: Int,
     override val height: Int,
     format: GpuTexture.Format,
-) : GlGpuTexture(format) {
+) : GpuTextureImpl(format) {
     override var uc: UGpuTexture = UGraphics.getDevice().createTexture(
         null,
         UGpuTexture.Usage.COPY_SRC + UGpuTexture.Usage.COPY_DST + UGpuTexture.Usage.RENDER_ATTACHMENT + UGpuTexture.Usage.TEXTURE_BINDING,

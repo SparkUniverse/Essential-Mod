@@ -91,6 +91,12 @@ abstract class EssentialProxyElement<T : UIComponent>(
     }
 
     fun initAfterInitialLayout() {
+        if (essentialContainer == null) {
+            throw IllegalStateException("Proxy element for $essentialId was never bound. " +
+                    "Ensure `mountWithProxy` is being called unconditionally and/or the hard-coded label-to-id " +
+                    "mapping in `ScreenWithProxiesHandler` is feature-flagged correctly.")
+        }
+
         // Apply position of Essential component to proxy
         updateProxyStateWhileNotInControl()
 

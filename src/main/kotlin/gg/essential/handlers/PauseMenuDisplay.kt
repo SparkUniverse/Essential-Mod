@@ -148,7 +148,7 @@ class PauseMenuDisplay {
     private fun initContent(screen: GuiScreen) {
         initContent = true
 
-        if (EssentialConfig.essentialFull) {
+        if (isEnabled()) {
             //#if MC >= 26.2
             //$$ val realScreen = net.minecraft.client.Minecraft.getInstance().gui.screen()
             //$$ val isFriendsOverlay = realScreen is net.minecraft.client.gui.screens.friends.FriendsOverlayScreen
@@ -164,8 +164,6 @@ class PauseMenuDisplay {
     }
 
     fun initContent(screen: GuiScreen, window: Window, proxyHandler: ScreenWithProxiesHandler?) {
-        if (EssentialConfig.essentialMenuLayout == EssentialConfig.EssentialMenuLayout.OFF) return
-
         run { // for indent
             window.addTag(MenuButton.WindowSupportsButtonRetexturingMarker)
 
@@ -438,6 +436,11 @@ class PauseMenuDisplay {
     companion object {
         @JvmStatic
         val minWidth = 404
+
+        @JvmStatic
+        fun isEnabled(): Boolean {
+            return EssentialConfig.essentialEnabled && EssentialConfig.essentialMenuLayout != EssentialConfig.EssentialMenuLayout.OFF
+        }
 
         @JvmStatic
         fun canRescale(screen: GuiScreen): Boolean {

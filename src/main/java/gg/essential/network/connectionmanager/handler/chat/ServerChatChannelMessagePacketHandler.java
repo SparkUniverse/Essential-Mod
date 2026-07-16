@@ -26,6 +26,7 @@ import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.universal.USound;
 import gg.essential.util.CachedAvatarImage;
+import gg.essential.util.GuiEssentialPlatform;
 import gg.essential.util.GuiUtil;
 import gg.essential.util.UUIDUtil;
 import kotlin.Unit;
@@ -142,7 +143,8 @@ public class ServerChatChannelMessagePacketHandler extends PacketHandler<ServerC
                         text,
                         4f,
                         () -> {
-                            GuiUtil.openScreen(SocialMenu.class, () -> new SocialMenu(channel.getId()));
+                            GuiEssentialPlatform.Companion.getPlatform()
+                                .openSocialMenu(channel.getId(), null);
                             return Unit.INSTANCE;
                         },
                         () -> Unit.INSTANCE,
