@@ -15,6 +15,7 @@ import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -22,6 +23,7 @@ class HidesAllOtherCosmeticsOrItemsConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.HidesAllOtherCosmeticsOrItems>(
+    CosmeticPropertyType.ALL_OTHER_COSMETIC_OR_ITEM_HIDING,
     CosmeticProperty.HidesAllOtherCosmeticsOrItems::class.java,
     cosmeticsDataWithChanges,
     cosmetic

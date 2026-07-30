@@ -18,6 +18,7 @@ import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledListInp
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledStringInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
 import gg.essential.mod.cosmetics.settings.CosmeticProperty.RequiresUnlockAction.Data
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -25,6 +26,7 @@ class RequiresUnlockActionConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.RequiresUnlockAction>(
+    CosmeticPropertyType.REQUIRES_UNLOCK_ACTION,
     CosmeticProperty.RequiresUnlockAction::class.java,
     cosmeticsDataWithChanges,
     cosmetic
@@ -64,24 +66,24 @@ class RequiresUnlockActionConfiguration(
     }
 
     private fun LayoutScope.openLink(property: CosmeticProperty.RequiresUnlockAction, data: Data.OpenLink) {
-        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
-        labeledStringInputRow("Link", mutableStateOf(data.linkAddress)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(linkAddress = it))) }
-        labeledStringInputRow("Link Short", mutableStateOf(data.linkShort)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(linkShort = it))) }
+        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
+        labeledStringInputRow("Link", mutableStateOf(data.linkAddress)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(linkAddress = it))) }
+        labeledStringInputRow("Link Short", mutableStateOf(data.linkShort)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(linkShort = it))) }
 
     }
 
     private fun LayoutScope.joinServer(property: CosmeticProperty.RequiresUnlockAction, data: Data.JoinServer) {
-        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
-        labeledStringInputRow("Server Address", mutableStateOf(data.serverAddress)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(serverAddress = it))) }
+        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
+        labeledStringInputRow("Server Address", mutableStateOf(data.serverAddress)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(serverAddress = it))) }
 
     }
 
     private fun LayoutScope.joinSPS(property: CosmeticProperty.RequiresUnlockAction, data: Data.JoinSps) {
-        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
+        labeledStringInputRow("Description", mutableStateOf(data.actionDescription)).state.onChange(stateScope) { property.update(property.copy(data = data.copy(actionDescription = it))) }
         labeledStringInputRow(
             "Required Version",
             mutableStateOf(data.requiredVersion ?: "")
-        ).state.onSetValue(stateScope) { property.update(property.copy(data = data.copy(requiredVersion = it.ifBlank { null }))) }
+        ).state.onChange(stateScope) { property.update(property.copy(data = data.copy(requiredVersion = it.ifBlank { null }))) }
     }
 
 }

@@ -25,6 +25,8 @@ net.minecraft.client.gui.components.PlayerTabOverlay extractRenderState() render
 net.minecraft.client.gui.components.Renderable extractRenderState() render()
 net.minecraft.client.gui.screens.PauseScreen lambda$createPauseMenu$7() method_72129()
 net.minecraft.client.gui.screens.Screen extractRenderStateWithTooltipAndSubtitles() renderWithTooltip()
+net.minecraft.client.gui.screens.Screen extractTransparentBackground() renderInGameBackground()
+net.minecraft.client.gui.screens.Screen extractBlurredBackground() applyBlur()
 net.minecraft.client.resources.server.DownloadedPackSource lambda$createRepositorySource$0() method_55526()
 net.minecraft.client.renderer.LevelRenderer lambda$addMainPass$0() method_62214()
 net.minecraft.client.renderer.rendertype.RenderTypes entityCutout() entityCutoutNoCull()

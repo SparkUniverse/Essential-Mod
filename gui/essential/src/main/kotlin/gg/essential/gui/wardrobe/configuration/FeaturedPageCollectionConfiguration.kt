@@ -17,20 +17,24 @@ import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.EssentialDropDown
 import gg.essential.gui.common.compactFullEssentialToggle
 import gg.essential.gui.common.input.StateTextInput
+import gg.essential.gui.common.input.UITextInput
+import gg.essential.gui.common.input.essentialInput
 import gg.essential.gui.common.input.essentialStateTextInput
 import gg.essential.gui.common.input.essentialStringInput
-import gg.essential.gui.common.modal.CancelableInputModal
-import gg.essential.gui.common.modal.configure
+import gg.essential.gui.common.modal.EssentialModal2
 import gg.essential.gui.elementa.state.v2.*
+import gg.essential.gui.elementa.state.v2.combinators.letState
 import gg.essential.gui.layoutdsl.*
+import gg.essential.gui.overlay.launchModalFlow
 import gg.essential.gui.wardrobe.WardrobeState
+import gg.essential.gui.wardrobe.configuration.ConfigurationType.Companion.createWithIDModal
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.addAutoCompleteMenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledISODateInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledListInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledNullableISODateInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
-import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.navButton
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorButton
 import gg.essential.gui.wardrobe.configuration.cosmetic.settings.*
 import gg.essential.mod.cosmetics.CosmeticBundle
 import gg.essential.mod.cosmetics.featured.BaseDivider
@@ -43,7 +47,6 @@ import gg.essential.mod.cosmetics.featured.FeaturedPage
 import gg.essential.mod.cosmetics.featured.FeaturedPageCollection
 import gg.essential.mod.cosmetics.featured.TextDivider
 import gg.essential.mod.cosmetics.settings.CosmeticSettingType
-import gg.essential.network.connectionmanager.cosmetics.registerFeaturedPageCollection
 import gg.essential.network.cosmetics.Cosmetic
 import gg.essential.universal.USound
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
@@ -51,7 +54,6 @@ import gg.essential.vigilance.utils.onLeftClick
 import java.time.Duration
 import java.time.Instant
 
-@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
 class FeaturedPageCollectionConfiguration(
     state: WardrobeState,
 ) : AbstractConfiguration<FeaturedPageCollectionId, FeaturedPageCollection>(
@@ -59,33 +61,16 @@ class FeaturedPageCollectionConfiguration(
     state
 ) {
 
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     override fun LayoutScope.columnLayout(pageCollection: FeaturedPageCollection) {
-        navButton("Add new page") {
-            platform.pushModal { manager ->
-                CancelableInputModal(manager, "Featured page width").configure {
-                    titleText = "Create New Featured Page"
-                    contentText = "Enter the width for the new Featured Page."
-                }.apply {
-                    onPrimaryActionWithValue { id ->
-                        val pageId: FeaturedPageWidth = try {
-                            id.toInt()
-                        } catch (e: Exception) {
-                            setError("Not an integer!")
-                            return@onPrimaryActionWithValue
-                        }
-                        if (pageCollection.pages.containsKey(pageId)) {
-                            setError("That width already exists!")
-                            return@onPrimaryActionWithValue
-                        }
-                        pageCollection.update(pageCollection.copy(pages = pageCollection.pages + (pageId to FeaturedPage(listOf()))))
-                    }
-                }
-            }
+        configuratorButton("Add new page") {
+            USound.playButtonPress()
+            showNewPageModal(pageCollection)
         }
         spacer(height = 5f)
         val availability = pageCollection.availability
         val availabilityState = mutableStateOf(availability != null)
-        availabilityState.onSetValue(stateScope) {
+        availabilityState.onChange(stateScope) {
             if (it) {
                 pageCollection.update(pageCollection.copy(availability = FeaturedPageCollection.Availability(Instant.now(), Instant.now().plus(Duration.ofDays(1)), null)))
             } else {
@@ -99,46 +84,30 @@ class FeaturedPageCollectionConfiguration(
             }
         }
         if (availability != null) {
-            labeledISODateInputRow("After:", mutableStateOf(availability.after)).state.onSetValue(stateScope) {
+            labeledISODateInputRow("After:", mutableStateOf(availability.after)).state.onChange(stateScope) {
                 pageCollection.update(pageCollection.copy(availability = availability.copy(after = it)))
             }
-            labeledISODateInputRow("Until:", mutableStateOf(availability.until)).state.onSetValue(stateScope) {
+            labeledISODateInputRow("Until:", mutableStateOf(availability.until)).state.onChange(stateScope) {
                 pageCollection.update(pageCollection.copy(availability = availability.copy(until = it)))
             }
-            labeledNullableISODateInputRow("Timer After:", mutableStateOf(availability.showTimerAfter)).state.onSetValue(stateScope) {
+            labeledNullableISODateInputRow("Timer After:", mutableStateOf(availability.showTimerAfter)).state.onChange(stateScope) {
                 pageCollection.update(pageCollection.copy(availability = availability.copy(showTimerAfter = it)))
             }
         }
         spacer(height = 5f)
         submenuSelection(pageCollection)
-        navButton("Clone") {
+        configuratorButton("Clone") {
             USound.playButtonPress()
-            platform.pushModal {
-                CancelableInputModal(it, "Featured page collection id").configure {
-                    titleText = "Clone ${pageCollection.id}"
-                    contentText = "Enter the id for the new featured page."
-                }.apply {
-                    primaryButtonAction = {
-                        val id = inputTextState.getUntracked()
-                        if (cosmeticsDataWithChanges.getFeaturedPageCollection(id) != null) {
-                            setError("That id already exists!")
-                        } else {
-                            cosmeticsDataWithChanges.registerFeaturedPageCollection(
-                                id,
-                                pageCollection.availability,
-                                pageCollection.pages
-                            )
-                            state.currentlyEditingFeaturedPageCollectionId.set(id)
-                            close()
-                        }
-                    }
-                }
+            launchModalFlow(platform.createModalManager()) {
+                val id = createWithIDModal("Featured page collection", cosmeticsDataWithChanges.featuredPageCollections.letState { it.map { it.id } }.toListState())
+                cosmeticsDataWithChanges.registerFeaturedPageCollection(id, pageCollection.availability, pageCollection.pages)
+                state.currentlyEditingFeaturedPageCollectionId.set(id)
             }
         }
     }
 
-    override fun getSubmenus(editing: FeaturedPageCollection): Set<AbstractConfigurationSubmenu<FeaturedPageCollection>> {
-        return editing.pages.entries.map { FeaturedPageConfigurationSubmenu(it.key.toString(), "${it.key}-wide page", editing, it.key, it.value) }.toSet()
+    override fun getSubmenus(editing: FeaturedPageCollection): List<AbstractConfigurationSubmenu<FeaturedPageCollection>> {
+        return editing.pages.entries.map { FeaturedPageConfigurationSubmenu(it.key.toString(), "${it.key}-wide page", editing, it.key, it.value) }
     }
 
     private inner class FeaturedPageConfigurationSubmenu(
@@ -160,13 +129,13 @@ class FeaturedPageCollectionConfiguration(
                     is BaseDivider -> dividerConfiguration(componentIndex, component)
                 }
             }
-            navButton("Add Row") {
+            configuratorButton("Add Row") {
                 USound.playButtonPress()
                 update {
                     add(FeaturedItemRow(emptyList()))
                 }
             }
-            navButton("Add Divider") {
+            configuratorButton("Add Divider") {
                 USound.playButtonPress()
                 update {
                     add(BlankDivider)
@@ -333,7 +302,7 @@ class FeaturedPageCollectionConfiguration(
                         }
                         component()
                     }
-                    settings.onSetValue(stateScope) {
+                    settings.onChange(stateScope) {
                         updateRow(componentIndex) {
                             this[itemIndex] = item.copy(settings = it)
                         }
@@ -349,8 +318,8 @@ class FeaturedPageCollectionConfiguration(
                     { if (it.isBlank()) null else (cosmeticsDataWithChanges.getCosmeticBundle(it) ?: throw StateTextInput.ParseException()) }
                 )
                 addAutoCompleteMenu(input, cosmeticsDataWithChanges.bundles.mapEach { it.id to it.name })
-                bundleState.onSetValue(stateScope) {
-                    val bundleId = (it ?: return@onSetValue).id
+                bundleState.onChange(stateScope) {
+                    val bundleId = (it ?: return@onChange).id
                     updateRow(componentIndex) {
                         add(FeaturedItem.Bundle(bundleId))
                     }
@@ -364,9 +333,9 @@ class FeaturedPageCollectionConfiguration(
                     { it?.id ?: "" },
                     { if (it.isBlank()) null else (cosmeticsDataWithChanges.getCosmetic(it) ?: throw StateTextInput.ParseException()) }
                 )
-                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id  to it.displayName })
-                cosmeticState.onSetValue(stateScope) {
-                    val cosmeticId = (it ?: return@onSetValue).id
+                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
+                cosmeticState.onChange(stateScope) {
+                    val cosmeticId = (it ?: return@onChange).id
                     updateRow(componentIndex) {
                         add(FeaturedItem.Cosmetic(cosmeticId, listOf()))
                     }
@@ -374,6 +343,42 @@ class FeaturedPageCollectionConfiguration(
             }
         }
 
+    }
+
+    private fun showNewPageModal(pageCollection: FeaturedPageCollection) {
+        launchModalFlow(platform.createModalManager()) {
+            val width = awaitModal { continuation ->
+                object : EssentialModal2(modalManager, false) {
+
+                    private val input = UITextInput("Enter New Width", shadowColor = EssentialPalette.BLACK)
+                    private val widthState = input.textState.letState { it.toIntOrNull() }
+                    private val errorMessageState = widthState.letState {
+                        return@letState when {
+                            it == null -> "Not a number!"
+                            pageCollection.pages.containsKey(it) -> "Width already exists!"
+                            else -> null
+                        }
+                    }
+
+                    override fun LayoutScope.layoutTitle() {
+                        title("Select a width for the new page")
+                    }
+
+                    override fun LayoutScope.layoutBody() {
+                        box(Modifier.width(106f).height(17f)) {
+                            essentialInput(input, errorMessageState = errorMessageState, inputModifier = Modifier.height(10f).color(EssentialPalette.TEXT))
+                        }
+                    }
+
+                    override fun LayoutScope.layoutButtons() {
+                        cancelButton("Cancel")
+                        primaryButton("Create", disabled = errorMessageState.letState { it != null }) { replaceWith(continuation.resume(widthState.getUntracked() ?: return@primaryButton)) }
+                    }
+
+                }
+            }
+            pageCollection.update(pageCollection.copy(pages = pageCollection.pages + (width to FeaturedPage(listOf()))))
+        }
     }
 
 }

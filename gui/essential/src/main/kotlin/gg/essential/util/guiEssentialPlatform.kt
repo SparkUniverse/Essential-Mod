@@ -42,6 +42,7 @@ import gg.essential.network.connectionmanager.features.DisabledFeaturesManager
 import gg.essential.network.connectionmanager.media.IScreenshotManager
 import gg.essential.network.connectionmanager.notices.INoticesManager
 import gg.essential.network.connectionmanager.skins.SkinsManager
+import gg.essential.network.connectionmanager.social.RulesManager
 import gg.essential.network.connectionmanager.suspension.SuspensionManager
 import gg.essential.universal.UGraphics
 import gg.essential.universal.UImage
@@ -134,6 +135,8 @@ interface GuiEssentialPlatform {
 
     val noticesManager: INoticesManager
 
+    val autoUpdateManager: AutoUpdateManager
+
     val skinsManager: SkinsManager
 
     val cosmeticsManager: ICosmeticsManager
@@ -221,7 +224,11 @@ interface GuiEssentialPlatform {
 
     fun openScreenshotBrowser()
 
+    fun openWebAccountManager()
+
     fun connectToServer(name: String, address: String)
+
+    fun shutdown()
 
     val openEmoteWheelKeybind: Keybind
 
@@ -240,6 +247,7 @@ interface GuiEssentialPlatform {
     val modalPrerequisites: ModalPrerequisites
 
     val suspensionManager: SuspensionManager
+    val rulesManager: RulesManager
 
     fun newPenToolBufferBuilder(drawMode: UGraphics.DrawMode): UBufferBuilder
     fun newPenToolRenderPipelineBuilder(
@@ -250,6 +258,9 @@ interface GuiEssentialPlatform {
     ): URenderPipeline.Builder
 
     fun renderToTexture(width: Int, height: Int, block: (UMatrixStack) -> Unit): GpuTexture
+
+    val isEssentialContainerPresent: Boolean
+    val modsDependingOnEssential: List<ModInfo>
 
     interface Keybind {
         val isBound: Boolean

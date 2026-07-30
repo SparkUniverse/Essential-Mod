@@ -54,8 +54,9 @@ fun CosmeticsDataWithChanges.addCosmeticProperty(cosmeticId: CosmeticId, propert
  * Updates [cosmeticId] by removing [oldProperty] and adding [newProperty]
  */
 fun CosmeticsDataWithChanges.updateCosmeticProperty(cosmeticId: CosmeticId, oldProperty: CosmeticProperty, newProperty: CosmeticProperty) {
-    removeCosmeticProperty(cosmeticId, oldProperty)
-    addCosmeticProperty(cosmeticId, newProperty)
+    updateCosmetic(cosmeticId) {
+        copy(base = base.copy(allProperties = allProperties.removeSingletonPropertyType(oldProperty.type) - oldProperty + newProperty))
+    }
 }
 
 /**

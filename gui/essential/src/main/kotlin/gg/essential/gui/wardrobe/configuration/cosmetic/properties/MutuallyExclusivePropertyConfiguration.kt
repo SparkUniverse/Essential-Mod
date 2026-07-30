@@ -15,6 +15,7 @@ import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.CosmeticSlot
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -22,6 +23,7 @@ class MutuallyExclusivePropertyConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.MutuallyExclusive>(
+    CosmeticPropertyType.MUTUALLY_EXCLUSIVE,
     CosmeticProperty.MutuallyExclusive::class.java,
     cosmeticsDataWithChanges,
     cosmetic

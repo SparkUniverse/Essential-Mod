@@ -18,7 +18,6 @@ import gg.essential.connectionmanager.common.packet.telemetry.ServerRecognizedTe
 import gg.essential.data.OnboardingData;
 import gg.essential.elementa.state.v2.ReferenceHolder;
 import gg.essential.event.client.InitializationEvent;
-import gg.essential.event.essential.TosAcceptedEvent;
 import gg.essential.event.gui.InitGuiEvent;
 import gg.essential.event.network.server.ServerJoinEvent;
 import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl;
@@ -149,6 +148,7 @@ public class TelemetryManager implements NetworkedManager {
             }}));
             return Unit.INSTANCE;
         });
+        sendInitialAutoUpdateState();
     }
 
     @Override
@@ -163,6 +163,7 @@ public class TelemetryManager implements NetworkedManager {
     private void init(InitializationEvent event) {
         setupAbFeatureTracking(this, referenceHolder);
         setupSettingsTracking(this, referenceHolder);
+        setupAutoUpdateTracking();
         ImpressionTelemetryManager.INSTANCE.initialize();
         FPSTelemetryManager.INSTANCE.initialize();
 
@@ -171,6 +172,7 @@ public class TelemetryManager implements NetworkedManager {
         }}));
         queueInstallerTelemetryPacket();
         queueIntegrationModTelemetryPacket();
+        queueHardwareTelemetry();
     }
 
     /**
@@ -221,8 +223,7 @@ public class TelemetryManager implements NetworkedManager {
         }
     }
 
-    @Subscribe
-    public void sendHardwareTelemetry(@NotNull final TosAcceptedEvent event) {
+    private void queueHardwareTelemetry() {
 
         final Map<String, Object> hardwareMap = new HashMap<>();
 
@@ -244,12 +245,16 @@ public class TelemetryManager implements NetworkedManager {
         hardwareMap.put("allocatedMemory", Runtime.getRuntime().maxMemory() / 1024L / 1024L);
 
         enqueue(new ClientTelemetryPacket("HARDWARE_V2", hardwareMap));
+    }
 
-        // Sends on init once per PC, and always when the value is changed later
+    private void sendInitialAutoUpdateState() {
         if (!OnboardingData.hasSentAutoUpdateTelemetryBefore()) {
             sendAutoUpdateTelemetry();
             OnboardingData.setSentAutoUpdateTelemetry();
         }
+    }
+
+    private void setupAutoUpdateTracking() {
         StateKt.onChange(EssentialConfig.INSTANCE.getAutoUpdateState(), referenceHolder, (o, b)-> {
             sendAutoUpdateTelemetry();
             return Unit.INSTANCE;

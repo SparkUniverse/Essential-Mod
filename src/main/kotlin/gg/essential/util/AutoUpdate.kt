@@ -18,9 +18,6 @@ import gg.essential.data.MenuData
 import gg.essential.data.VersionData
 import gg.essential.elementa.components.Window
 import gg.essential.gui.elementa.state.v2.mutableStateOf
-import gg.essential.gui.modals.updateAvailableModal
-import gg.essential.gui.modals.updateRequiredModal
-import gg.essential.gui.overlay.ModalFlow
 import gg.essential.lib.gson.Gson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -39,7 +36,7 @@ import kotlin.io.path.exists
 //$$ import net.fabricmc.loader.api.FabricLoader
 //#endif
 
-object AutoUpdate {
+object AutoUpdate : AutoUpdateManager {
 
     private const val AUTO_UPDATE_KEY = "autoUpdate"
     private const val PENDING_UPDATE_VERSION_KEY = "pendingUpdateVersion"
@@ -73,15 +70,21 @@ object AutoUpdate {
     private val stage3PendingUpdateResolution = getContainerConfigValue(stage3Config, PENDING_UPDATE_RESOLUTION_KEY)
     private val stage3UpdateAvailable = stage3PendingUpdateVersion != null
 
-    val updateAvailable = mutableStateOf(stage3UpdateAvailable || stage2UpdateAvailable)
-    val updateIgnored = mutableStateOf(if (stage3UpdateAvailable) stage3PendingUpdateResolution == "false" else stage2PendingUpdateResolution == "false")
+    override val updateAvailable = mutableStateOf(stage3UpdateAvailable || stage2UpdateAvailable)
+    override val updateIgnored = mutableStateOf(if (stage3UpdateAvailable) stage3PendingUpdateResolution == "false" else stage2PendingUpdateResolution == "false")
     val autoUpdate = mutableStateOf((stage3AutoUpdate ?: System.getProperty("essential.autoUpdate", "true")).toBoolean()
         || (stage2AutoUpdate ?: System.getProperty("essential.stage2.autoUpdate", "true")).toBoolean())
+
     var dismissUpdateToast : (() -> Unit)? = null
+    override fun dismissUpdateNotification() {
+        dismissUpdateToast?.invoke()
+    }
 
     fun requiresUpdate() = Essential.getInstance().connectionManager.outdated
+    override val isUpdateRequired: Boolean
+        get() = requiresUpdate()
 
-    fun getNotificationTitle(includeLoaderText: Boolean = true) = if (requiresUpdate()) {
+    override fun getNotificationTitle(includeLoaderText: Boolean) = if (requiresUpdate()) {
         "Update Required"
     } else if (!stage3UpdateAvailable && includeLoaderText) {
         "Loader Update Available"
@@ -89,10 +92,7 @@ object AutoUpdate {
         "Update Available"
     }
 
-    suspend fun ModalFlow.showUpdateModal() =
-        if (updateAvailable.getUntracked()) updateAvailableModal() else updateRequiredModal()
-
-    val changelog: CompletableFuture<String?> by lazy {
+    override val changelog: CompletableFuture<String?> by lazy {
         val version = (if (stage3UpdateAvailable) stage3PendingUpdateVersion else stage2PendingUpdateVersion)
             ?: return@lazy CompletableFuture.completedFuture(null)
 
@@ -131,7 +131,7 @@ object AutoUpdate {
         }, Window::enqueueRenderOperation)
     }
 
-    fun update(shouldAutoUpdate: Boolean) {
+    override fun acceptUpdate() {
         if (stage3UpdateAvailable) {
             updateConfig(stage3Config) {
                 setProperty(PENDING_UPDATE_RESOLUTION_KEY, "true")
@@ -143,15 +143,10 @@ object AutoUpdate {
             }
         }
 
-        if (shouldAutoUpdate != autoUpdate.get()) {
-            // User explicitly changed the value
-            setAutoUpdates(shouldAutoUpdate)
-        }
-
         updateAvailable.set(false)
     }
 
-    fun ignoreUpdate() {
+    override fun ignoreUpdate() {
         if (stage3UpdateAvailable) {
             updateConfig(stage3Config) { setProperty(PENDING_UPDATE_RESOLUTION_KEY, "false") }
         }

@@ -15,6 +15,7 @@ import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledLongInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -22,13 +23,14 @@ class TransitionDelayConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.TransitionDelay>(
+    CosmeticPropertyType.TRANSITION_DELAY,
     CosmeticProperty.TransitionDelay::class.java,
     cosmeticsDataWithChanges,
     cosmetic
 ) {
 
     override fun LayoutScope.layout(property: CosmeticProperty.TransitionDelay) {
-        labeledLongInputRow("Time:", mutableStateOf(property.data.time)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(time = it))) }
+        labeledLongInputRow("Time:", mutableStateOf(property.data.time)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(time = it))) }
     }
 
 }

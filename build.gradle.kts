@@ -212,7 +212,7 @@ tasks.jar {
         manifest {
             if (mcVersion >= 11400) {
                 attributes("MixinConfigs" to "mixins.essential.json,mixins.essential.init.json,mixins.essential.modcompat.json,mixins.essential.tests.json")
-                attributes("Requires-Essential-Stage2-Version" to "1.7.1")
+                attributes("Requires-Essential-Stage2-Version" to "1.8.0")
             } else {
                 attributes("Requires-Essential-Stage2-Version" to "1.7.0")
             }

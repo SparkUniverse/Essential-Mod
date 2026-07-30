@@ -45,7 +45,6 @@ import java.util.*
 class FriendStatus(
     uuid: UUID,
     statusStates: IStatusStates,
-    sortListener: SortListener? = null
 ) : UIContainer() {
 
     init {
@@ -102,8 +101,6 @@ class FriendStatus(
             }.constrain {
                 width = width.coerceAtMost(100.percent)
             } childOf this@FriendStatus
-
-            sortListener?.sort()
         }
     }
 

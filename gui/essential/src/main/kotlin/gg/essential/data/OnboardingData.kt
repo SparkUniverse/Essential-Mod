@@ -11,19 +11,20 @@
  */
 package gg.essential.data
 
-import gg.essential.Essential
 import gg.essential.api.data.OnboardingData
-import gg.essential.event.essential.TosAcceptedEvent
 import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl
 import gg.essential.gui.elementa.state.v2.combinators.map
+import gg.essential.gui.elementa.state.v2.memo
 import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.elementa.state.v2.onChange
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.util.globalEssentialDirectory
 import gg.essential.util.minecraftDirectory
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -33,7 +34,8 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 object OnboardingData : OnboardingData {
-    private val localFile = Essential.getInstance().baseDir.toPath() / "onboarding.json"
+    private val LOGGER = LoggerFactory.getLogger(javaClass)
+    private val localFile = platform.essentialBaseDir / "onboarding.json"
     private val globalFile = globalEssentialDirectory / "onboarding.json"
     private val oldGlobalFile = minecraftDirectory.toPath() / "essential" / "onboarding.json"
     private val referenceHolder = ReferenceHolderImpl()
@@ -42,6 +44,8 @@ object OnboardingData : OnboardingData {
         prettyPrint = true
         ignoreUnknownKeys = true
     }
+
+    val acceptedTos = memo { state().acceptedTos == true }
 
     val seenServerDiscovery = state.map { it.seenServerDiscovery }
 
@@ -66,12 +70,6 @@ object OnboardingData : OnboardingData {
 
         state.onChange(referenceHolder) {
             saveData()
-        }
-
-        state.map { it.acceptedTos }.onChange(referenceHolder) { accepted ->
-            if (accepted == true) {
-                Essential.EVENT_BUS.post(TosAcceptedEvent())
-            }
         }
     }
 
@@ -140,7 +138,7 @@ object OnboardingData : OnboardingData {
         try {
             state.set(json.decodeFromString<State>(file.readText()))
         } catch (exception: Exception) {
-            Essential.logger.error("Failed to read from Onboarding JSON, rewriting file.", exception)
+            LOGGER.error("Failed to read from Onboarding JSON, rewriting file.", exception)
             saveData() // Rewrite the config with default state
         }
     }
@@ -158,7 +156,7 @@ object OnboardingData : OnboardingData {
             globalFile.parent.createDirectories()
             globalFile.writeText(json.encodeToString(data))
         } catch (exception: Exception) {
-            Essential.logger.error("Failed to save global Onboarding file.", exception)
+            LOGGER.error("Failed to save global Onboarding file.", exception)
         }
     }
 

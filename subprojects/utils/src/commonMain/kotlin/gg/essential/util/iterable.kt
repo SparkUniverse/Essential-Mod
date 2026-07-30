@@ -26,3 +26,17 @@ fun <T, K, R> Iterable<T>.associateNotNull(transform: (T) -> Pair<K, R>?): Map<K
     }
 }
 
+
+fun <T> Iterable<T>.isSorted(comparator: Comparator<T>): Boolean = iterator().isSorted(comparator)
+fun <T> Iterator<T>.isSorted(comparator: Comparator<T>): Boolean {
+    if (!hasNext()) return true
+    var prev: T = next()
+    while (hasNext()) {
+        val next = next()
+        if (comparator.compare(prev, next) > 0) {
+            return false
+        }
+        prev = next
+    }
+    return true
+}

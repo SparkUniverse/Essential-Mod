@@ -13,7 +13,6 @@ package gg.essential.gui.wardrobe.configuration
 
 import gg.essential.cosmetics.CosmeticCategoryId
 import gg.essential.gui.common.input.essentialIntInput
-import gg.essential.gui.elementa.state.v2.isEmpty
 import gg.essential.gui.elementa.state.v2.memo
 import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.elementa.state.v2.onChange
@@ -56,7 +55,7 @@ class CosmeticSortWeightConfiguration(
                 .sortedWith(WardrobeState.FilterSort.Default)
         }.toListState()
 
-        if_(cosmetics.isEmpty()) {
+        if_({ cosmetics().isEmpty() }) {
             text("No cosmetics in category...", Modifier.alignHorizontal(Alignment.Start))
         }
         forEach(cosmetics) { cosm ->

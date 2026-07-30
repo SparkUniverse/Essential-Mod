@@ -362,6 +362,4 @@ object ModLoaderUtil {
         //#endif
     }
 
-    data class ModInfo(val id: String, val name: String, val path: Path?, val version: String)
-
 }

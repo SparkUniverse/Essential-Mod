@@ -14,6 +14,7 @@ package gg.essential.gui.wardrobe.configuration.cosmetic.properties
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledEnumInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -21,6 +22,7 @@ class DefaultSidePropertyConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.DefaultSide>(
+    CosmeticPropertyType.DEFAULT_SIDE,
     CosmeticProperty.DefaultSide::class.java,
     cosmeticsDataWithChanges,
     cosmetic

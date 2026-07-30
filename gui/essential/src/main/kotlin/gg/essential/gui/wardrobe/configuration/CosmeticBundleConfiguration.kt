@@ -40,12 +40,12 @@ class CosmeticBundleConfiguration(
     override fun LayoutScope.columnLayout(bundle: CosmeticBundle) {
         val skin = bundle.skin
 
-        labeledStringInputRow("Name:", mutableStateOf(bundle.name)).state.onSetValue(stateScope) { bundle.update(bundle.copy(name = it)) }
+        labeledStringInputRow("Name:", mutableStateOf(bundle.name)).state.onChange(stateScope) { bundle.update(bundle.copy(name = it)) }
         labeledEnumInputRow("Tier:", bundle.tier) { bundle.update(bundle.copy(tier = it)) }
-        labeledFloatInputRow("Discount %:", mutableStateOf(bundle.discountPercent)).state.onSetValue(stateScope) { bundle.update(bundle.copy(discountPercent = it)) }
+        labeledFloatInputRow("Discount %:", mutableStateOf(bundle.discountPercent)).state.onChange(stateScope) { bundle.update(bundle.copy(discountPercent = it)) }
         labeledBooleanInputRow("Rotate on Preview:", bundle.rotateOnPreview) { bundle.update(bundle.copy(rotateOnPreview = it)) }
         val hasSkinState = mutableStateOf(skin != null)
-        hasSkinState.onSetValue(stateScope) { bundle.update(bundle.copy(skin = if (it) CosmeticBundle.Skin("bff1570fdf623153e6b4a4d2ca97559b471f1ec776584ceec2ebb8bf0b7ba504", Model.ALEX) else null)) }
+        hasSkinState.onChange(stateScope) { bundle.update(bundle.copy(skin = if (it) CosmeticBundle.Skin("bff1570fdf623153e6b4a4d2ca97559b471f1ec776584ceec2ebb8bf0b7ba504", Model.ALEX) else null)) }
         labeledRow("Has skin: ") {
             box(Modifier.childBasedWidth(3f).childBasedHeight(3f).hoverScope()) {
                 compactFullEssentialToggle(hasSkinState)
@@ -54,8 +54,8 @@ class CosmeticBundleConfiguration(
         }
         if (skin != null) {
             labeledEnumInputRow("Skin model:", skin.model) { bundle.update(bundle.copy(skin = bundle.skin?.copy(model = it))) }
-            labeledStringInputRow("Skin hash:", mutableStateOf(skin.hash), Modifier.fillRemainingWidth(), Arrangement.spacedBy(10f)).state.onSetValue(stateScope) { bundle.update(bundle.copy(skin = bundle.skin?.copy(hash = it))) }
-            labeledNullableStringInputRow("Skin name:", mutableStateOf(skin.name)).state.onSetValue(stateScope) { bundle.update(bundle.copy(skin = bundle.skin?.copy(name = it))) }
+            labeledStringInputRow("Skin hash:", mutableStateOf(skin.hash), Modifier.fillRemainingWidth(), Arrangement.spacedBy(10f)).state.onChange(stateScope) { bundle.update(bundle.copy(skin = bundle.skin?.copy(hash = it))) }
+            labeledNullableStringInputRow("Skin name:", mutableStateOf(skin.name)).state.onChange(stateScope) { bundle.update(bundle.copy(skin = bundle.skin?.copy(name = it))) }
         }
 
         for (slot in CosmeticSlot.values()) {
@@ -67,7 +67,7 @@ class CosmeticBundleConfiguration(
                     { it ?: "" },
                     { if (it.isBlank()) null else (cosmeticsDataWithChanges.getCosmetic(it)?.id ?: throw StateTextInput.ParseException()) }
                 )
-                cosmeticState.onSetValue(stateScope) { cosmeticId ->
+                cosmeticState.onChange(stateScope) { cosmeticId ->
                     bundle.update(
                         if (cosmeticId == null) {
                             bundle.copy(cosmetics = bundle.cosmetics - slot, settings = if (initialId == null) bundle.settings else bundle.settings - initialId)
@@ -85,7 +85,7 @@ class CosmeticBundleConfiguration(
                             }
 
                             newCosmetics[slot] = cosmeticId
-                            bundle.copy(cosmetics = newCosmetics, settings = bundle.settings - (bundle.settings.keys - newCosmetics.values))
+                            bundle.copy(cosmetics = newCosmetics, settings = bundle.settings - (bundle.settings.keys - newCosmetics.values.toSet()))
                         }
                     )
                 }
@@ -104,7 +104,7 @@ class CosmeticBundleConfiguration(
                     }
                     component()
                 }
-                settings.onSetValue(stateScope) {
+                settings.onChange(stateScope) {
                     bundle.update(bundle.copy(settings = if (it.isEmpty()) bundle.settings - cosmeticId else bundle.settings + (cosmeticId to it)))
                 }
             }

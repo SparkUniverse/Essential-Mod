@@ -63,6 +63,7 @@ import gg.essential.gui.wardrobe.WardrobeCategory
 import gg.essential.handlers.EssentialSoundManager
 import gg.essential.handlers.GameProfileManager
 import gg.essential.handlers.MojangSkinManager
+import gg.essential.handlers.account.WebAccountManager
 import gg.essential.handlers.discord.DiscordIntegration
 import gg.essential.key.EssentialKeybindingRegistry
 import gg.essential.mod.Skin
@@ -81,6 +82,7 @@ import gg.essential.network.connectionmanager.media.IScreenshotManager
 import gg.essential.network.connectionmanager.notices.INoticesManager
 import gg.essential.network.connectionmanager.skins.SkinsManager
 import gg.essential.network.connectionmanager.social.ProfileSuspension
+import gg.essential.network.connectionmanager.social.RulesManager
 import gg.essential.network.connectionmanager.suspension.SuspensionManager
 import gg.essential.sps.SpsAddress
 import gg.essential.universal.UGraphics
@@ -370,6 +372,9 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
     override val noticesManager: INoticesManager
         get() = Essential.getInstance().connectionManager.noticesManager
 
+    override val autoUpdateManager: AutoUpdateManager
+        get() = AutoUpdate
+
     override val skinsManager: SkinsManager
         get() = Essential.getInstance().connectionManager.skinsManager
 
@@ -581,8 +586,16 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         GuiUtil.openScreen { ScreenshotBrowser() }
     }
 
+    override fun openWebAccountManager() {
+        WebAccountManager.openInBrowser()
+    }
+
     override fun connectToServer(name: String, address: String) {
         MinecraftUtils.connectToServer(name, address)
+    }
+
+    override fun shutdown() {
+        MinecraftUtils.shutdown()
     }
 
     override val openEmoteWheelKeybind: GuiEssentialPlatform.Keybind
@@ -647,6 +660,9 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
 
     override val suspensionManager: SuspensionManager
         get() = Essential.getInstance().connectionManager.suspensionManager
+
+    override val rulesManager: RulesManager
+        get() = Essential.getInstance().connectionManager.rulesManager
 
     //#if MC >= 26.2
     //$$ private val penToolVertexFormat: VertexFormat = VertexFormat.builder(0)
@@ -791,4 +807,10 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         }
         //#endif
     }
+
+    override val isEssentialContainerPresent: Boolean
+        get() = EssentialContainerUtil.isContainerPresent()
+
+    override val modsDependingOnEssential: List<ModInfo>
+        get() = ModLoaderUtil.getModsDependingOnEssential()
 }

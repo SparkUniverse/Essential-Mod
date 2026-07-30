@@ -12,7 +12,6 @@
 package gg.essential.gui.menu
 
 import gg.essential.Essential
-import gg.essential.elementa.utils.ObservableList
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.account.factory.InitialSessionFactory
 import gg.essential.gui.account.factory.ManagedSessionFactory
@@ -49,7 +48,6 @@ import kotlin.time.Duration.Companion.seconds
 
 class AccountManager {
 
-    private val accountsList = ObservableList(mutableListOf<AccountInfo>())
     private val referenceHolder = ReferenceHolderImpl()
     private val allAccountsMutable = mutableStateOf<List<AccountInfo>>(listOf())
     private val originalAccountsMutable = mutableStateOf<List<AccountInfo>>(listOf())
@@ -64,16 +62,11 @@ class AccountManager {
     }
 
     private fun refreshAccounts() {
-        accountsList.clear()
-
         val sessionFactories = Essential.getInstance().sessionFactories
         val accounts = sessionFactories
             .flatMap { it.sessions.values }
             .distinctBy { it.uuid }
             .map { AccountInfo(it.uuid, it.username) }
-        val active = accounts.find { it.uuid == USession.activeNow().uuid }
-        val accountsWithoutActive = if (active != null) accounts - active else accounts
-        accountsList.addAll(accountsWithoutActive)
         allAccountsMutable.set(accounts.toList())
 
         // Find original account(s) that cannot be removed

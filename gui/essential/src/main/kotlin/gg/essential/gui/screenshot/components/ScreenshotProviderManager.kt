@@ -95,11 +95,11 @@ class ScreenshotProviderManager(
 
     // The screenshots in the current view [gg.essential.gui.screenshot.components.Tab]
     // Setup in reloadItems()
-    val currentPathsState: ListState<ScreenshotId> = previewItems
-    val currentPaths: List<ScreenshotId>
-        get() = currentPathsState.getUntracked()
+    val currentIdsState: ListState<ScreenshotId> = previewItems
+    val currentIds: List<ScreenshotId>
+        get() = currentIdsState.getUntracked()
 
-    private val indexByIdState = State { currentPathsState().withIndex().associate { it.value to it.index } }
+    private val indexByIdState = State { currentIdsState().withIndex().associate { it.value to it.index } }
     val indexById: Map<ScreenshotId, Int>
         get() = indexByIdState.getUntracked()
 
@@ -167,7 +167,7 @@ class ScreenshotProviderManager(
         effect(refHolder) {
             val size = targetFocusImageSize()
             focusImageResolution = TransitionWindowedProvider(createFocusImageProvider(size), focusImageResolution)
-            focusImageResolution.items = currentPaths
+            focusImageResolution.items = currentIds
         }
 
         effect(refHolder) {
@@ -180,12 +180,12 @@ class ScreenshotProviderManager(
 
 
             val transitionWindowedProvider = TransitionWindowedProvider(newTargetProvider, currentTargetProvider)
-            transitionWindowedProvider.items = currentPaths
+            transitionWindowedProvider.items = currentIds
             providerArray[0] = transitionWindowedProvider
         }
 
         effect(refHolder) {
-            val items = currentPathsState()
+            val items = currentIdsState()
             provider.items = items
             focusImageResolution.items = items
             flushCache()

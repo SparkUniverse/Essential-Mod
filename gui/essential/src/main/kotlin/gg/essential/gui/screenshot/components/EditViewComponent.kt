@@ -146,7 +146,7 @@ class EditViewComponent(
         val focused = (view.getUntracked() as? View.Edit)?.screenshot
         if (focused != null) {
 
-            val targetIndex = providerManager.currentPaths.indexOf(focused)
+            val targetIndex = providerManager.currentIds.indexOf(focused)
             if (targetIndex != -1) {
 
                 val provideFocus = providerManager.provideFocus(targetIndex.toSingleWindowRequest())

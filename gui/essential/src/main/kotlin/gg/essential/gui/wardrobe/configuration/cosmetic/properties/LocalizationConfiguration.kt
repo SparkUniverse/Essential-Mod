@@ -15,6 +15,7 @@ import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledStringInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -22,13 +23,14 @@ class LocalizationConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.Localization>(
+    CosmeticPropertyType.LOCALIZATION,
     CosmeticProperty.Localization::class.java,
     cosmeticsDataWithChanges,
     cosmetic
 ) {
 
     override fun LayoutScope.layout(property: CosmeticProperty.Localization) {
-        labeledStringInputRow("en_US Partner Name", mutableStateOf(property.data.en_US)).state.onSetValue(stateScope) {
+        labeledStringInputRow("en_US Partner Name", mutableStateOf(property.data.en_US)).state.onChange(stateScope) {
             property.update(property.copy(data = property.data.copy(en_US = it)))
         }
     }

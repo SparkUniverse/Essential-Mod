@@ -11,10 +11,7 @@
  */
 package gg.essential.gui.overlay
 
-enum class LayerPriority {
-    // TODO we'll want a proper solution for augmenting layered vanilla screens, this is just temporary
-    BehindVanillaFriendsOverlayScreen,
-
+sealed interface LayerPriority {
     /**
      * Layer which is logically positioned below the currently active screen.
      *
@@ -22,46 +19,46 @@ enum class LayerPriority {
      * [AboveScreenContent] (i.e. it will handle events before the screen and can cancel them). This is not intentional
      * and will change in the future if someone has an actual need for it.
      */
-    BelowScreen,
+    data object BelowScreen : LayerPriority
 
     /**
-     * Layer which is logically positioned below most of the content of the currently active screen.
+     * Layer which is logically positioned below most of the content of the given screen.
      *
      * Note that this does not yet have dedicated input events and will instead use the same events as
      * [AboveScreenContent] (i.e. it will handle events before the screen and can cancel them). This is not intentional
      * and will change in the future if someone has an actual need for it.
      */
-    BelowScreenContent,
+    data class BelowScreenContent(val screen: Any) : LayerPriority
 
     /**
-     * Layer which is logically positioned right above most of the content of the currently active screen.
+     * Layer which is logically positioned right above most of the content of the given screen.
      * Note that some special screen elements may still be drawn above this layer, especially modded elements. This is
      * intentional because this layer is meant for adding custom elements to the screen, not over the screen (e.g.
      * modded modals and tooltips should be displayed on top of this layer). If this is not desirable, you should create
      * a new layer with [AboveScreen] or higher.
      */
-    AboveScreenContent,
+    data class AboveScreenContent(val screen: Any) : LayerPriority
 
     /**
      * Layer which is logically positioned well above the screen. Content in here should still relate to the screen but
      * will generally get higher priority than anything else in the screen, including modded content.
      */
-    AboveScreen,
+    data object AboveScreen : LayerPriority
 
     /**
      * Layer for modals which do not care about the specific screen which is currently active. They go on top of
      * everything related to the active screen.
      */
-    Modal,
+    data object Modal : LayerPriority
 
     /**
      * Layer for notifications, which should generally always be visible regardless of what else is on screen.
      */
-    Notifications,
+    data object Notifications : LayerPriority
 
     /**
      * The highest possible layer priority.
      * If you are considering creating a layer on this priority, consider creating a new explicit priority type instead.
      */
-    Highest;
+    data object Highest : LayerPriority
 }

@@ -72,10 +72,10 @@ class FocusViewComponent(
 
     val textures = mutableStateOf<Map<ScreenshotId, RegisteredTexture>>(emptyMap())
 
-    val centerIndex = memo { providerManager.currentPathsState().indexOf(idState()) }
-    val leftId = memo { providerManager.currentPathsState().getOrNull(centerIndex() - 1) }
+    val centerIndex = memo { providerManager.currentIdsState().indexOf(idState()) }
+    val leftId = memo { providerManager.currentIdsState().getOrNull(centerIndex() - 1) }
     val centerId = idState
-    val rightId = memo { providerManager.currentPathsState().getOrNull(centerIndex() + 1) }
+    val rightId = memo { providerManager.currentIdsState().getOrNull(centerIndex() + 1) }
 
     init {
         titleBar.layoutAsBox {
@@ -92,10 +92,10 @@ class FocusViewComponent(
 
         Window.of(this).onKeyType { _, keyCode ->
             if (active.get()) {
-                val previewIndex = providerManager.currentPaths.indexOf(idState.getUntracked() ?: return@onKeyType)
+                val previewIndex = providerManager.currentIds.indexOf(idState.getUntracked() ?: return@onKeyType)
                 if (keyCode == UKeyboard.KEY_LEFT && previewIndex > 0) {
                     focus(previewIndex - 1)
-                } else if (keyCode == UKeyboard.KEY_RIGHT && previewIndex < providerManager.currentPaths.size - 1) {
+                } else if (keyCode == UKeyboard.KEY_RIGHT && previewIndex < providerManager.currentIds.size - 1) {
                     focus(previewIndex + 1)
                 }
             }
@@ -210,7 +210,7 @@ class FocusViewComponent(
             // Preload one extra in each direction so switching feels better, multiple windows ordered by importance
             listOf(0, 1, -1, 2, -2)
                 .map { it + centerIndex.getUntracked() }
-                .filter { it in providerManager.currentPaths.indices }
+                .filter { it in providerManager.currentIds.indices }
                 .map { WindowedProvider.Window(IntRange(it, it), false) }
         ))
     }
@@ -250,7 +250,7 @@ class FocusViewComponent(
             view.set { it.back }
             return
         }
-        val id = providerManager.currentPaths[index]
+        val id = providerManager.currentIds[index]
         view.set { when (it) {
             View.List -> it
             is View.Edit -> it.copy(screenshot = id)

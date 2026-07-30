@@ -234,15 +234,13 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
                         // We pass `false` for `allowCheats` to ensure that not everybody can enable commands.
                         // This option by default will allow anyone to use operator commands, without being explicitly
                         // added as operator.
-                        // TODO we do not want to actually set the gamemode via this method because it has pretty bad
-                        //  behavior, see the comment in the defaultGameMode effect
                         //#if MC>=11400
                         //$$ val port = net.minecraft.util.HTTPUtil.getSuitableLanPort()
                         //$$ val success = server.shareToLAN(
                             //#if MC >= 26.2
                             //$$ MinecraftServer.MultiplayerScope.LAN,
                             //#endif
-                        //$$     GameMode.Adventure.toMc(),
+                        //$$     null,
                         //$$     false,
                         //$$     port,
                         //$$ )
@@ -251,7 +249,7 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
                         //$$ }
                         //#else
                         @Suppress("USELESS_ELVIS") // Forge applies an inappropriate NonNullByDefault
-                        val portStr: String = server.shareToLAN(GameMode.Adventure.toMc(), false) ?: return@runBlocking
+                        val portStr: String = server.shareToLAN(null, false) ?: return@runBlocking
                         val port = Integer.parseInt(portStr)
                         //#endif
 
@@ -350,15 +348,13 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
 
             server.coroutineScope.launch {
                 isDefaultGameModeControlledByState = false
-                // TODO this doesn't set the default game mode (at least on 1.12.2)
-                //  it sets the gamemode which is applied to everyone who joins, regardless of whether they've joined
-                //  or even changed their gamemode before
                 //#if MC>=11700
                 //$$ server.setDefaultGameMode(gameMode.toMc())
                 //#elseif MC>=11600
-                //$$ server.playerList.setGameType(gameMode.toMc())
+                //$$ server.gameType = gameMode.toMc()
+                //$$ server.playerList.setGameType(null)
                 //#else
-                server.playerList.setGameType(gameMode.toMc())
+                server.worlds.forEach { it.worldInfo.gameType = gameMode.toMc() }
                 //#endif
                 isDefaultGameModeControlledByState = true
             }

@@ -105,7 +105,7 @@ class ScreenshotBrowser(editPath: Path? = null) : InternalEssentialGUI(
         // Return to list if the item currently being focused is no longer available
         var oldItems = emptyList<ScreenshotId>()
         effect(window) {
-            val items = providerManager.currentPathsState()
+            val items = providerManager.currentIdsState()
             val focused = focusingV2()
             if (focused != null && focused !in items) {
                 val filteredOldItems = oldItems.filterTo(mutableListOf()) { it in items || it == focused }

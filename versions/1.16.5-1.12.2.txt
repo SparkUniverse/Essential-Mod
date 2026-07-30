@@ -7,6 +7,8 @@ com.mojang.blaze3d.systems.RenderSystem translatef() translate()
 com.mojang.datafixers.DataFixer net.minecraft.util.datafix.DataFixer
 net.minecraft.client.Minecraft getResourcePackList() getResourcePackRepository()
 net.minecraft.client.entity.player.RemoteClientPlayerEntity net.minecraft.client.entity.EntityOtherPlayerMP
+net.minecraft.client.gui.AbstractGui net.minecraft.client.gui.Gui
+net.minecraft.client.gui.AbstractGui fillGradient() drawGradientRect()
 net.minecraft.client.gui.NewChatGui net.minecraft.client.gui.GuiNewChat
 net.minecraft.client.gui.NewChatGui func_238493_a_() setChatLine()
 net.minecraft.client.gui.NewChatGui func_238492_a_() drawChat()
@@ -22,6 +24,9 @@ net.minecraft.client.gui.screen.Screen resize() net.minecraft.client.gui.GuiScre
 net.minecraft.client.gui.screen.Screen tick() net.minecraft.client.gui.GuiScreen updateScreen()
 net.minecraft.client.gui.screen.Screen render() net.minecraft.client.gui.GuiScreen drawScreen()
 net.minecraft.client.gui.screen.Screen onClose() net.minecraft.client.gui.GuiScreen onGuiClosed()
+net.minecraft.client.gui.screen.Screen renderBackground(Lcom/mojang/blaze3d/matrix/MatrixStack;)V drawDefaultBackground()V
+net.minecraft.client.gui.screen.Screen renderBackground(Lcom/mojang/blaze3d/matrix/MatrixStack;I)V drawWorldBackground(I)V
+net.minecraft.client.gui.screen.Screen renderDirtBackground() drawBackground()
 net.minecraft.client.gui.widget.list.AbstractList$AbstractListEntry render() net.minecraft.client.gui.GuiListExtended$IGuiListEntry drawEntry()
 net.minecraft.client.gui.widget.Widget active net.minecraft.client.gui.GuiButton enabled
 net.minecraft.client.gui.widget.Widget heightRealms net.minecraft.client.gui.GuiButton height

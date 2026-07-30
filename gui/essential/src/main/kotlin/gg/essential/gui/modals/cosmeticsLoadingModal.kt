@@ -11,22 +11,20 @@
  */
 package gg.essential.gui.modals
 
-import gg.essential.Essential
 import gg.essential.gui.common.modal.ConnectingModal
+import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.awaitValue
 import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.overlay.ModalFlow
-import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
 
-suspend fun ModalFlow.cosmeticsLoadingModal(): Boolean {
+suspend fun ModalFlow.cosmeticsLoadingModal(cosmeticsLoaded: State<Boolean>, timeout: Duration): Boolean {
     return awaitModal { continuation ->
-        val cosmeticsLoaded = Essential.getInstance().connectionManager.cosmeticsManager.cosmeticsLoaded
         val hasCompleted = mutableStateOf<Boolean?>(null)
         modalManager.coroutineScope.launch {
-            val completed = withTimeoutOrNull(CosmeticsManager.LOAD_TIMEOUT_SECONDS.seconds) {
+            val completed = withTimeoutOrNull(timeout) {
                 cosmeticsLoaded.awaitValue(true)
             }
             hasCompleted.set(completed == true)

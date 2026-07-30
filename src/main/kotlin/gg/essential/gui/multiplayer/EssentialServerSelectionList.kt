@@ -16,7 +16,6 @@ import gg.essential.config.EssentialConfig
 import gg.essential.connectionmanager.common.enums.ActivityType
 import gg.essential.connectionmanager.common.packet.telemetry.ClientTelemetryPacket
 import gg.essential.mixins.ext.client.gui.ext
-import gg.essential.mixins.ext.client.gui.friends
 import gg.essential.mixins.ext.client.multiplayer.ext
 import gg.essential.mixins.ext.client.multiplayer.isTrusted
 import gg.essential.mixins.ext.client.multiplayer.recommendedVersion
@@ -225,12 +224,6 @@ class EssentialServerSelectionList(
     }
 
     fun isDiscoverEmpty() = EssentialConfig.currentMultiplayerTab == 2 && serverListInternet.isEmpty()
-
-    fun updatePlayerStatus(uuid: UUID) {
-        for (entry in serverListInternet) {
-            entry.ext.friends.updatePlayerStatus(uuid)
-        }
-    }
 
     //#if MC>=11200
     private fun newEntry(serverData: ServerData) = ServerListEntryNormalAccessor.create(

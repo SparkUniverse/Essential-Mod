@@ -55,6 +55,11 @@ import gg.essential.model.util.UVertexConsumer as CVertexConsumer
 //$$ import net.minecraft.client.texture.GlTexture
 //#endif
 
+//#if FABRIC && MC >= 1.21.5
+//$$ import gg.essential.util.ModLoaderUtil
+//$$ import net.irisshaders.iris.api.v0.IrisApi
+//#endif
+
 //#if MC>=12102
 //$$ import net.minecraft.client.render.VertexConsumer
 //#endif
@@ -376,6 +381,23 @@ object MinecraftRenderBackend : RenderBackend {
         texture: ReleasedDynamicTexture,
     ) : DynamicTexture(identifier("essential", "textures/cosmetics/${name.lowercase()}"), texture)
 
+    private fun skipRendering(): Boolean {
+        // Workaround for Iris missing a `assignPipelineShadow` method (similar to the `assignPipeline` one we already
+        // use in RenderLayerFactory), and Iris still issuing the draw call despite not being able to find an
+        // appropriate pipeline. This results in invalid draw call log spam (and potentially worse depending on driver)
+        // when the part of our geometry that use a custom pipeline are being rendered during the shadow pass.
+        // Forgelike is not affected because we copyFrom our custom RenderPipelines from vanilla ones, and Iris injects
+        // into Forge's copyFrom method to copy over the shadow pipeline assignment.
+        //#if FABRIC && MC >= 1.21.5
+        //$$ if (ModLoaderUtil.isModLoaded("iris")) {
+        //$$     // Separate method for class loading reasons
+        //$$     fun isRenderingShadowPass() = IrisApi.getInstance().isRenderingShadowPass
+        //$$     if (isRenderingShadowPass()) return true
+        //$$ }
+        //#endif
+        return false
+    }
+
     class CommandQueue : RenderBackend.CommandQueue {
         private class Key(
             val texture: MinecraftTexture,
@@ -422,7 +444,7 @@ object MinecraftRenderBackend : RenderBackend {
         }
 
         fun render(vertexConsumerProvider: RenderBackend.VertexConsumerProvider) {
-            if (queue.isEmpty()) return
+            if (queue.isEmpty() || skipRendering()) return
 
             for ((key, commands) in queue.entries.sortedBy { it.key }) {
                 vertexConsumerProvider.provide(key.texture, key.emissive) { vertexConsumer ->
@@ -434,6 +456,8 @@ object MinecraftRenderBackend : RenderBackend {
         }
 
         fun render(vertexConsumerProvider: ParticleVertexConsumerProvider) {
+            if (particleQueue.isEmpty() || skipRendering()) return
+
             for ((renderPass, command) in particleQueue) {
                 vertexConsumerProvider.provide(renderPass, command)
             }
@@ -490,6 +514,8 @@ object MinecraftRenderBackend : RenderBackend {
     //$$         emissive: Boolean,
     //$$         render: (CVertexConsumer) -> Unit,
     //$$     ) {
+    //$$         if (skipRendering()) return
+    //$$
     //$$         require(texture is MinecraftTexture)
     //$$         val layer =
     //$$             if (emissive) getEmissiveLayer(texture.identifier)
@@ -510,6 +536,8 @@ object MinecraftRenderBackend : RenderBackend {
     //$$     }
     //$$
     //$$     override fun submit(renderPass: ParticleEffect.RenderPass, render: (CVertexConsumer) -> Unit) {
+    //$$         if (skipRendering()) return
+    //$$
     //$$         val layer = getParticleLayer(renderPass)
     //$$         val order = when {
     //$$             renderPass.material.needsSorting -> 0

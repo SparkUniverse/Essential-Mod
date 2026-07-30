@@ -9,9 +9,12 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-package gg.essential.gui.friends.previews
+package gg.essential.mixins.transformers.server;
 
-interface SortListener {
+import gg.essential.mixins.DummyTarget;
+import org.spongepowered.asm.mixin.Mixin;
 
-    fun sort()
+// 26.2+ Only
+@Mixin(DummyTarget.class)
+public abstract class Mixin_DisableDefaultGameModeChange {
 }

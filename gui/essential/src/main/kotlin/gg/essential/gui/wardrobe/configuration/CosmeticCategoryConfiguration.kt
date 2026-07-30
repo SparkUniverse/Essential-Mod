@@ -14,20 +14,17 @@ package gg.essential.gui.wardrobe.configuration
 import gg.essential.cosmetics.CosmeticCategoryId
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.compactFullEssentialToggle
-import gg.essential.gui.common.modal.DangerConfirmationEssentialModal
-import gg.essential.gui.common.modal.Modal
-import gg.essential.gui.common.modal.configure
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
-import gg.essential.gui.overlay.ModalManager
+import gg.essential.gui.overlay.launchModalFlow
 import gg.essential.gui.wardrobe.WardrobeState
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorDangerModal
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledIntInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledManagedNullableISODateInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledStringInputRow
 import gg.essential.mod.cosmetics.CosmeticCategory
-import gg.essential.network.connectionmanager.cosmetics.*
-import gg.essential.util.*
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.vigilance.utils.onLeftClick
 
 class CosmeticCategoryConfiguration(
@@ -38,12 +35,12 @@ class CosmeticCategoryConfiguration(
 ) {
 
     override fun LayoutScope.columnLayout(category: CosmeticCategory) {
-        labeledStringInputRow("ID:", mutableStateOf(category.id)).state.onSetValue(stateScope) { newID ->
+        labeledStringInputRow("ID:", mutableStateOf(category.id)).state.onChange(stateScope) { newID ->
             // Create the new category
             cosmeticsDataWithChanges.updateCategory(newID, category.copy(id = newID))
 
             // Update cosmetics to use the new category
-            cosmeticsDataWithChanges.cosmetics.get().forEach { cosmetic ->
+            cosmeticsDataWithChanges.cosmetics.getUntracked().forEach { cosmetic ->
                 val order = cosmetic.categories[category.id] ?: return@forEach
                 cosmeticsDataWithChanges.updateCosmetic(cosmetic.id, cosmetic.copy(storeInfo = cosmetic.storeInfo.copy(categories = cosmetic.categories - category.id + (newID to order))))
             }
@@ -56,23 +53,23 @@ class CosmeticCategoryConfiguration(
         labeledStringInputRow(
             "Full name:",
             mutableStateOf(category.displayNames["en_us"] ?: "")
-        ).state.onSetValue(stateScope) { category.update(category.copy(displayNames = category.displayNames + ("en_us" to it))) }
+        ).state.onChange(stateScope) { category.update(category.copy(displayNames = category.displayNames + ("en_us" to it))) }
         labeledStringInputRow(
             "Compact Name:",
             mutableStateOf(category.compactNames["en_us"] ?: "")
-        ).state.onSetValue(stateScope) { category.update(category.copy(compactNames = category.compactNames + ("en_us" to it))) }
+        ).state.onChange(stateScope) { category.update(category.copy(compactNames = category.compactNames + ("en_us" to it))) }
         labeledStringInputRow(
             "Description:",
             mutableStateOf(category.descriptions["en_us"] ?: ""),
             Modifier.fillRemainingWidth(),
             Arrangement.spacedBy(10f)
-        ).state.onSetValue(stateScope) { category.update(category.copy(descriptions = category.descriptions + ("en_us" to it))) }
-        labeledIntInputRow("Order:", mutableStateOf(category.order)).state.onSetValue(stateScope) { category.update(category.copy(order = it)) }
-        labeledManagedNullableISODateInputRow("Available After:", mutableStateOf(category.availableAfter)).state.onSetValue(stateScope) { category.update(category.copy(availableAfter = it)) }
-        labeledManagedNullableISODateInputRow("Available Until:", mutableStateOf(category.availableUntil)).state.onSetValue(stateScope) { category.update(category.copy(availableUntil = it)) }
+        ).state.onChange(stateScope) { category.update(category.copy(descriptions = category.descriptions + ("en_us" to it))) }
+        labeledIntInputRow("Order:", mutableStateOf(category.order)).state.onChange(stateScope) { category.update(category.copy(order = it)) }
+        labeledManagedNullableISODateInputRow("Available After:", mutableStateOf(category.availableAfter)).state.onChange(stateScope) { category.update(category.copy(availableAfter = it)) }
+        labeledManagedNullableISODateInputRow("Available Until:", mutableStateOf(category.availableUntil)).state.onChange(stateScope) { category.update(category.copy(availableUntil = it)) }
 
         val isEmoteCategoryState = mutableStateOf(category.isEmoteCategory())
-        isEmoteCategoryState.onSetValue(stateScope) { category.update(category.copy(tags = if (it) category.tags + CosmeticCategory.EMOTE_CATEGORY_TAG else category.tags - CosmeticCategory.EMOTE_CATEGORY_TAG)) }
+        isEmoteCategoryState.onChange(stateScope) { category.update(category.copy(tags = if (it) category.tags + CosmeticCategory.EMOTE_CATEGORY_TAG else category.tags - CosmeticCategory.EMOTE_CATEGORY_TAG)) }
         labeledRow("Is Emote Category: ") {
             box(Modifier.childBasedWidth(3f).childBasedHeight(3f).hoverScope()) {
                 compactFullEssentialToggle(isEmoteCategoryState)
@@ -81,7 +78,7 @@ class CosmeticCategoryConfiguration(
         }
 
         val isHiddenState = mutableStateOf(category.isHidden())
-        isHiddenState.onSetValue(stateScope) { category.update(category.copy(tags = if (it) category.tags + CosmeticCategory.HIDDEN_CATEGORY_TAG else category.tags - CosmeticCategory.HIDDEN_CATEGORY_TAG)) }
+        isHiddenState.onChange(stateScope) { category.update(category.copy(tags = if (it) category.tags + CosmeticCategory.HIDDEN_CATEGORY_TAG else category.tags - CosmeticCategory.HIDDEN_CATEGORY_TAG)) }
         labeledRow("Is Hidden (sidebar): ") {
             box(Modifier.childBasedWidth(3f).childBasedHeight(3f).hoverScope()) {
                 compactFullEssentialToggle(isHiddenState)
@@ -103,19 +100,18 @@ class CosmeticCategoryConfiguration(
                 }
             }
         }
-        labeledStringInputRow("Add tag:", mutableStateOf("")).state.onSetValue(stateScope) { category.update(category.copy(tags = category.tags + it)) }
+        labeledStringInputRow("Add tag:", mutableStateOf("")).state.onChange(stateScope) { category.update(category.copy(tags = category.tags + it)) }
     }
 
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-    override fun getDeleteModal(modalManager: ModalManager, categoryId: CosmeticCategoryId): Modal {
-        val cosmeticNames = cosmeticsDataWithChanges.cosmetics.get().filter { categoryId in it.categories }.joinToString { it.displayName }
-
-        return DangerConfirmationEssentialModal(modalManager, "Delete", false).configure {
-            titleText = "Are you sure you want to delete ${categoryId}?"
-            contentText =
-                "This will remove the category from all cosmetics that use it. The following cosmetics will be affected: $cosmeticNames"
-        }.onPrimaryAction {
-            cosmeticsDataWithChanges.cosmetics.get().forEach { cosmetic ->
+    override fun attemptDelete(categoryId: CosmeticCategoryId) {
+        val cosmeticNames = cosmeticsDataWithChanges.cosmetics.getUntracked().filter { categoryId in it.categories }.joinToString { it.displayName }
+        launchModalFlow(platform.createModalManager()) {
+            configuratorDangerModal(
+                "Delete",
+                "Are you sure you want to delete ${categoryId}?",
+                "This will remove the category from all cosmetics that use it. The following cosmetics will be affected: $cosmeticNames",
+            )
+            cosmeticsDataWithChanges.cosmetics.getUntracked().forEach { cosmetic ->
                 if (!cosmetic.categories.containsKey(categoryId)) return@forEach
                 cosmeticsDataWithChanges.updateCosmetic(cosmetic.id, cosmetic.copy(storeInfo = cosmetic.storeInfo.copy(categories = cosmetic.categories - categoryId)))
             }

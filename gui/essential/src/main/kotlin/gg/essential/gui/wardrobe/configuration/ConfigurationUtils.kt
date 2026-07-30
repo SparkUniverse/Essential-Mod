@@ -11,9 +11,15 @@
  */
 package gg.essential.gui.wardrobe.configuration
 
+import gg.essential.elementa.UIComponent
+import gg.essential.elementa.events.UIClickEvent
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.about.components.ColoredDivider
 import gg.essential.gui.common.ContextOptionMenu
 import gg.essential.gui.common.EssentialDropDown
+import gg.essential.gui.common.EssentialTooltip
+import gg.essential.gui.common.OutlineButtonStyle
+import gg.essential.gui.common.StyledButton
 import gg.essential.gui.common.input.StateTextInput
 import gg.essential.gui.common.input.essentialDoubleInput
 import gg.essential.gui.common.input.essentialFloatInput
@@ -24,12 +30,22 @@ import gg.essential.gui.common.input.essentialManagedNullableISODateInput
 import gg.essential.gui.common.input.essentialNullableISODateInput
 import gg.essential.gui.common.input.essentialNullableStringInput
 import gg.essential.gui.common.input.essentialStringInput
+import gg.essential.gui.common.modal.EssentialModal2
+import gg.essential.gui.common.outlineButton
 import gg.essential.gui.elementa.state.v2.*
-import gg.essential.gui.elementa.state.v2.combinators.map
+import gg.essential.gui.elementa.state.v2.combinators.letState
 import gg.essential.gui.layoutdsl.*
+import gg.essential.gui.overlay.ModalFlow
 import gg.essential.gui.util.focusedState
 import gg.essential.mod.EssentialAsset
+import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.network.connectionmanager.cosmetics.CosmeticsDataWithChanges
+import gg.essential.network.connectionmanager.cosmetics.removeCosmeticProperty
+import gg.essential.network.cosmetics.Cosmetic
+import gg.essential.universal.USound
 import gg.essential.util.lwjgl3.api.*
+import gg.essential.util.onLeftClick
+import gg.essential.vigilance.utils.onLeftClick
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.*
@@ -46,12 +62,76 @@ object ConfigurationUtils {
 
     fun LayoutScope.divider() = box(Modifier.fillWidth().height(2f).color(EssentialPalette.LIGHT_DIVIDER))
 
-    fun LayoutScope.navButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, action: () -> Unit) = navButton(stateOf(text), modifier, enabled, action)
+    fun LayoutScope.configuratorButton(
+        text: String,
+        modifier: Modifier = Modifier,
+        disabled: State<Boolean> = stateOf(false),
+        style: StyledButton.Style = OutlineButtonStyle.GRAY,
+        action: () -> Unit
+    ) = configuratorButton(stateOf(text), modifier, disabled, style, action)
 
-    fun LayoutScope.navButton(text: State<String>, modifier: Modifier = Modifier, enabled: Boolean = true, action: () -> Unit) =
-        menuButton(text, Modifier.fillWidth(padding = 10f) then modifier, action = action).apply {
-            rebindEnabled(stateOf(enabled).toV1(stateScope))
+    fun LayoutScope.configuratorButton(
+        text: State<String>,
+        modifier: Modifier = Modifier,
+        disabled: State<Boolean> = stateOf(false),
+        style: StyledButton.Style = OutlineButtonStyle.GRAY,
+        action: () -> Unit
+    ) = outlineButton(text, disabled = disabled, style = style, modifier = Modifier.fillWidth(padding = 10f) then modifier).onLeftClick {
+        USound.playButtonPress()
+        action()
+    }
+
+    fun LayoutScope.configuratorCollapsibleSection(
+        name: String,
+        tooltip: String? = null,
+        startExpanded: Boolean = false,
+        hasDividerLine: Boolean = true,
+        removeAction: (UIComponent.(UIClickEvent) -> Unit)? = null,
+        block: LayoutScope.() -> Unit
+    ) {
+        val expanded = mutableStateOf(startExpanded)
+        row(
+            if (tooltip == null) Modifier.height(20f).fillWidth() else Modifier.height(16f).fillWidth().hoverScope()
+                .hoverTooltip(tooltip, position = EssentialTooltip.Position.LEFT, wrapAtWidth = 200f)
+        ) {
+            row(Modifier.fillRemainingWidth()) {
+                if (hasDividerLine) ColoredDivider(name)(Modifier.fillRemainingWidth())
+                else box(Modifier.fillRemainingWidth()) { text(name, truncateIfTooSmall = true, modifier = Modifier.alignHorizontal(Alignment.Start)) }
+                box(Modifier.width(14f).heightAspect(1f)) {
+                    icon(expanded.letState { if (it) EssentialPalette.ARROW_UP_7X5 else EssentialPalette.ARROW_DOWN_7X5 })
+                }
+            }.onLeftClick { expanded.set { !it } }
+            if (removeAction != null) {
+                box(Modifier.width(10f).heightAspect(1f).hoverTooltip("Remove").hoverScope()) {
+                    icon(EssentialPalette.CANCEL_5X)
+                }.onLeftClick(removeAction)
+            }
         }
+        if_(expanded) {
+            block()
+        }
+    }
+
+    fun LayoutScope.configuratorWrappedLabeledRow(
+        label: String,
+        blockRowArrangement: Arrangement = Arrangement.spacedBy(),
+        removeAction: (UIComponent.(UIClickEvent) -> Unit)? = null,
+        block: (LayoutScope.() -> Unit)? = null
+    ) {
+        row(Modifier.fillWidth()) {
+            box(Modifier.fillRemainingWidth()) {
+                wrappedText(label, Modifier.alignHorizontal(Alignment.Start))
+            }
+            if (block != null) {
+                row(blockRowArrangement) { block() }
+            }
+            if (removeAction != null) {
+                box(Modifier.width(10f).heightAspect(1f).hoverTooltip("Remove").hoverScope()) {
+                    icon(EssentialPalette.CANCEL_5X)
+                }.onLeftClick(removeAction)
+            }
+        }
+    }
 
     fun LayoutScope.labeledRow(label: String, arrangement: Arrangement = Arrangement.SpaceBetween, inputComponent: LayoutScope.() -> Unit) {
         row(Modifier.fillWidth(), arrangement) {
@@ -227,7 +307,7 @@ object ConfigurationUtils {
     ) {
         labeledRow(label, horizontalArrangement) {
             val dropDown = EssentialDropDown(initialValue, optionsList)
-            dropDown.selectedOption.onSetValue(stateScope) { onSetValue(it.value) }
+            dropDown.selectedOption.onChange(stateScope) { onSetValue(it.value) }
             dropDown(inputModifier)
         }
     }
@@ -236,12 +316,14 @@ object ConfigurationUtils {
         input: StateTextInput<*>,
         items: ListState<Pair<String, String>>,
     ) {
-        val minChars = items.map { if (it.size > 20) 2 else 0 }
+        val minChars = items.letState { if (it.size > 20) 2 else 0 }
         val options = memo {
             val text = input.textState()
             if (text.length < minChars()) return@memo listOf()
             return@memo items().filter { it.first.contains(text, ignoreCase = true) || it.second.contains(text, ignoreCase = true) }
-        }.toListState().mapEach { ContextOptionMenu.Option("${it.second} (${it.first})", null) { input.setText(it.first) } }
+        }.toListState().mapEach { (id, name) ->
+            ContextOptionMenu.Option(if (id == name) id else "$name ($id)", null) { input.setText(id) }
+        }
         var menu: ContextOptionMenu? = null
         input.focusedState().onChange(stateScope) { focused ->
             menu?.close()
@@ -254,6 +336,69 @@ object ConfigurationUtils {
         input.state.onChange(stateScope) {
             menu?.close()
             menu = null
+        }
+    }
+
+    suspend fun ModalFlow.configuratorDeleteCosmeticPropertyModal(
+        cosmeticsData: CosmeticsDataWithChanges,
+        cosmetic: Cosmetic,
+        property: CosmeticProperty,
+    ) {
+        awaitModal<Unit> {
+            object : EssentialModal2(modalManager, false) {
+                override fun LayoutScope.layoutTitle() {
+                    title("Are you sure you want to remove the property with id ${property.id}?")
+                }
+
+                override fun LayoutScope.layoutButtons() {
+                    primaryAndCancelButtons(
+                        "Delete",
+                        "Cancel",
+                        primaryStyle = OutlineButtonStyle.RED,
+                        primaryAction = {
+                            cosmeticsData.removeCosmeticProperty(cosmetic.id, property)
+                            close()
+                        }
+                    )
+                }
+
+            }
+        }
+    }
+
+    suspend fun ModalFlow.configuratorDangerModal(primaryText: String, title: String = "", description: String = "") {
+        return awaitModal { continuation ->
+            object : EssentialModal2(modalManager) {
+                override fun LayoutScope.layoutTitle() {
+                    wrappedText(title)
+                }
+
+                override fun LayoutScope.layoutBody() {
+                    wrappedText(description)
+                }
+
+                override fun LayoutScope.layoutButtons() {
+                    primaryAndCancelButtons(primaryText, "Cancel", primaryStyle = OutlineButtonStyle.RED, primaryAction = { replaceWith(continuation.resume(Unit)) })
+                }
+            }
+        }
+    }
+
+    suspend fun ModalFlow.configuratorNoticeModal(title: String = "", description: String) {
+        return awaitModal { continuation ->
+            object : EssentialModal2(modalManager) {
+                override fun LayoutScope.layoutTitle() {
+                    wrappedText(title)
+                }
+
+                override fun LayoutScope.layoutBody() {
+                    wrappedText(description)
+                }
+
+                override fun LayoutScope.layoutButtons() {
+                    cancelButton("Ok")
+                }
+            }
         }
     }
 

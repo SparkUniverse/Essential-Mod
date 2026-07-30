@@ -14,11 +14,14 @@ package gg.essential.gui.proxies
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.Window
+import gg.essential.gui.elementa.state.v2.MutableState
 import gg.essential.gui.elementa.state.v2.mutableStateOf
+import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.stateOf
 import gg.essential.gui.layoutdsl.LayoutScope
 import gg.essential.gui.layoutdsl.Modifier
 import gg.essential.gui.layoutdsl.box
+import gg.essential.gui.overlay.Layer
 import gg.essential.handlers.OptionsScreenOverlay
 import gg.essential.handlers.PauseMenuDisplay
 import gg.essential.mixins.transformers.client.gui.GuiScreenAccessor
@@ -32,7 +35,11 @@ class ScreenWithProxiesHandler(
     private val initialLayout: (Window, ScreenWithProxiesHandler) -> Unit,
 ) {
     private val proxiesById = mutableMapOf<String, EssentialProxyElement<*>>()
+    private val elementaById = mutableMapOf<String, Pair<UIComponent, MutableState<State<Boolean>>>>()
     private val access = screen as GuiScreenAccessor
+
+    var layer: Layer? = null
+    var lastWidth = -1 // TODO remove, see usages
 
     fun initGui() {
         val proxies = mutableListOf<EssentialProxyElement<*>>()
@@ -67,6 +74,12 @@ class ScreenWithProxiesHandler(
         // (we only add them after positioning them, in case a mod modifies the `addDrawableChild` method and expects
         //  correct positioning in there already, because vanilla buttons would already be positioned too)
         proxies.forEach { addProxy(it) }
+
+        // If we have already set up the overlay previously, re-attach those Elementa components to the new proxies
+        for ((id, elementa) in elementaById) {
+            val (container, mounted) = elementa
+            proxiesById[id]?.acceptNewEssentialContainer(container, mounted)
+        }
     }
 
     private fun addProxy(proxy: EssentialProxyElement<*>) {
@@ -110,6 +123,7 @@ class ScreenWithProxiesHandler(
             if (proxyHandler != null) {
                 val proxy = proxyHandler.proxiesById[id]
                     ?: throw IllegalArgumentException("No proxy found for `$id`. Did you forget to add it to the label-to-id mapping in `ScreenWithProxiesHandler`?")
+                proxyHandler.elementaById[id] = Pair(container, mounted)
                 proxy.acceptNewEssentialContainer(container, mounted)
             }
         }

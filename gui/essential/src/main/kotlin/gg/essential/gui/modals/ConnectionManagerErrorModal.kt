@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.modals
 
-import gg.essential.Essential
 import gg.essential.minecraftauth.exception.AuthenticationException
 import gg.essential.minecraftauth.exception.MicrosoftAuthenticationException
 import gg.essential.minecraftauth.exception.MinecraftAuthenticationException
@@ -39,17 +38,18 @@ import gg.essential.gui.layoutdsl.width
 import gg.essential.gui.layoutdsl.wrappedText
 import gg.essential.gui.overlay.ModalFlow
 import gg.essential.gui.overlay.ModalManager
-import gg.essential.handlers.account.WebAccountManager
 import gg.essential.network.connectionmanager.ConnectionManagerStatus
 import gg.essential.universal.USound
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.util.openInBrowser
 import gg.essential.vigilance.utils.onLeftClick
+import org.slf4j.LoggerFactory
 import java.awt.Color
 import java.net.URI
 
 class ConnectionManagerErrorModal(
     modalManager: ModalManager,
-    status: State<ConnectionManagerStatus?> = Essential.getInstance().connectionManager.connectionStatus,
+    status: State<ConnectionManagerStatus?>,
     continuation: ModalFlow.ModalContinuation<Unit>,
 ) : EssentialModal2(modalManager) {
     private class StatusContent(val title: String, val message: String, val buttons: LayoutScope.() -> Unit)
@@ -159,7 +159,7 @@ class ConnectionManagerErrorModal(
                 )
             }
 
-            is ConnectionManagerStatus.Error.AuthenticationFailure -> when (status.throwable) {
+            is ConnectionManagerStatus.Error.AuthenticationFailure -> when (val throwable = status.throwable) {
                 is AuthenticationException.InvalidResponse -> genericAuthenticationFailure
 
                 is AuthenticationException.InvalidCredentials -> StatusContent(
@@ -171,7 +171,7 @@ class ConnectionManagerErrorModal(
                     """.trimIndent(),
                 ) {
                     cancelButton("Ignore")
-                    linkButton("Login") { WebAccountManager.openInBrowser() }
+                    linkButton("Login") { platform.openWebAccountManager() }
                 }
 
                 is AuthenticationException.Ratelimited -> StatusContent(
@@ -212,7 +212,7 @@ class ConnectionManagerErrorModal(
                     )
                 }
 
-                is XboxLiveAuthenticationException.XboxLiveError -> when (status.throwable.error) {
+                is XboxLiveAuthenticationException.XboxLiveError -> when (throwable.error) {
                     XboxLiveErrorCode.NoXboxLiveAccount -> StatusContent(
                         "You don't own Minecraft",
                         """
@@ -293,7 +293,7 @@ class ConnectionManagerErrorModal(
                 is MicrosoftAuthenticationException, is MinecraftAuthenticationException.Failed -> genericAuthenticationFailure
 
                 else -> {
-                    Essential.logger.error("Unknown authentication exception", status.throwable)
+                    LOGGER.error("Unknown authentication exception", status.throwable)
                     genericAuthenticationFailure
                 }
             }
@@ -318,9 +318,13 @@ class ConnectionManagerErrorModal(
             }
         }
     }
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(ConnectionManagerErrorModal::class.java)
+    }
 }
 
-suspend fun ModalFlow.connectionManagerErrorModal(status: State<ConnectionManagerStatus?> = Essential.getInstance().connectionManager.connectionStatus) =
+suspend fun ModalFlow.connectionManagerErrorModal(status: State<ConnectionManagerStatus?>) =
     awaitModal { continuation ->
         ConnectionManagerErrorModal(
             modalManager,

@@ -12,9 +12,7 @@
 package gg.essential.gui.layoutdsl
 
 import gg.essential.elementa.components.inspector.Inspector
-import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.IconButton
-import gg.essential.gui.common.MenuButton
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.elementa.state.v2.combinators.*
 import gg.essential.gui.image.ImageFactory
@@ -63,53 +61,6 @@ fun LayoutScope.iconButton(
     iconButton.onLeftClick { action() }
     iconButton.setLayout(layout)
     return iconButton
-}
-
-fun LayoutScope.menuButton(
-    buttonText: String,
-    modifier: Modifier = Modifier,
-    defaultStyle: MenuButton.Style = MenuButton.DARK_GRAY,
-    hoverStyle: MenuButton.Style = MenuButton.GRAY,
-    disabledStyle: MenuButton.Style = defaultStyle.copy(textColor = EssentialPalette.TEXT_DISABLED),
-    action: () -> Unit = {}
-) = menuButton(
-    stateOf(buttonText),
-    modifier,
-    stateOf(defaultStyle),
-    stateOf(hoverStyle),
-    stateOf(disabledStyle),
-    action = action,
-)
-
-fun LayoutScope.menuButton(
-    buttonText: State<String>,
-    modifier: Modifier = Modifier,
-    defaultStyle: State<MenuButton.Style> = stateOf(MenuButton.DARK_GRAY),
-    hoverStyle: State<MenuButton.Style> = stateOf(MenuButton.GRAY),
-    disabledStyle: State<MenuButton.Style> = defaultStyle.map { it.copy(textColor = EssentialPalette.TEXT_DISABLED) },
-    textAlignment: MenuButton.Alignment = MenuButton.Alignment.CENTER,
-    textXOffset: State<Float> = stateOf(0f),
-    collapsedText: State<String?> = stateOf(null),
-    truncate: Boolean = false,
-    clickSound: Boolean = true,
-    shouldBeRetextured: Boolean? = null,
-    action: () -> Unit = {}
-): MenuButton {
-    val menuButton = MenuButton(
-        buttonText.toV1(stateScope),
-        defaultStyle.toV1(stateScope),
-        hoverStyle.toV1(stateScope),
-        disabledStyle.toV1(stateScope),
-        textAlignment,
-        textXOffset.toV1(stateScope),
-        collapsedText.toV1(stateScope),
-        truncate,
-        clickSound,
-        shouldBeRetextured,
-        action
-    )
-    menuButton(modifier)
-    return menuButton
 }
 
 @Suppress("unused")

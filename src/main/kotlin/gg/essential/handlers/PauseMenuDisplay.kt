@@ -148,15 +148,23 @@ class PauseMenuDisplay {
     private fun initContent(screen: GuiScreen) {
         initContent = true
 
-        if (isEnabled()) {
-            //#if MC >= 26.2
-            //$$ val realScreen = net.minecraft.client.Minecraft.getInstance().gui.screen()
-            //$$ val isFriendsOverlay = realScreen is net.minecraft.client.gui.screens.friends.FriendsOverlayScreen
-            //$$ val priority = if (isFriendsOverlay) LayerPriority.BehindVanillaFriendsOverlayScreen else LayerPriority.AboveScreenContent
-            //#else
-            val priority = LayerPriority.AboveScreenContent
-            //#endif
-            val window = GuiUtil.addLayer(priority)
+        if (!isEnabled()) return
+
+        val proxyHandler = (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`()
+        if (proxyHandler != null) {
+            var layer = proxyHandler.layer
+            // TODO we shouldn't have to re-create our overlay when the screen width changes; but we have some
+            //      `isMinimal.getUntracked` in the right side bar layout, so we currently rely on it being re-created
+            if (layer == null || proxyHandler.lastWidth != screen.width) {
+                layer = GuiUtil.createLayer(LayerPriority.AboveScreenContent(screen))
+                proxyHandler.layer = layer
+                proxyHandler.lastWidth = screen.width
+                initContent(screen, layer.window, proxyHandler)
+            }
+            this.layer = layer
+            GuiUtil.addLayer(layer)
+        } else {
+            val window = GuiUtil.addLayer(LayerPriority.AboveScreenContent(screen))
                 .also { layer = it }
                 .window
             initContent(screen, window, (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`())

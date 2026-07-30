@@ -63,29 +63,29 @@ class MinecraftWindowedTextureProvider(
 
         val processed = mutableMapOf<ScreenshotId, RegisteredTexture>()
 
-        val requestedPaths = windows.flatMapTo(mutableSetOf()) { window ->
+        val requestedIds = windows.flatMapTo(mutableSetOf()) { window ->
             window.range.asSequence().map { items[it] }.filterNot { it in optional }
         }
 
-        for (path in requestedPaths) {
-            processed[path] = loaded[path] ?: continue
+        for (id in requestedIds) {
+            processed[id] = loaded[id] ?: continue
         }
 
         for (entry in sourceProvider.provide(windows, optional + loaded.keys + loading.keys)) {
-            val path = entry.key
+            val id = entry.key
 
-            if (path !in loaded && path !in loading && path !in optional) {
-                textureManager.createResource(path, entry.value)
+            if (id !in loaded && id !in loading && id !in optional) {
+                textureManager.createResource(id, entry.value)
             }
 
             entry.value.release()
         }
 
-        for (path in textureManager.getFinished()) {
-            val resourceLocation = loading.remove(path)!!
-            loaded[path] = resourceLocation
-            if (path in requestedPaths) {
-                processed[path] = resourceLocation
+        for (id in textureManager.getFinished()) {
+            val resourceLocation = loading.remove(id)!!
+            loaded[id] = resourceLocation
+            if (id in requestedIds) {
+                processed[id] = resourceLocation
             }
         }
 
@@ -121,11 +121,11 @@ class MinecraftWindowedTextureProvider(
         }
     }
 
-    private fun AsyncTextureManager.createResource(path: ScreenshotId, image: PixelBuffer) {
-        val texture = PixelBufferTexture(path.toString(), image)
-        loading[path] = RegisteredTexture(texture.uGpuTextureView)
+    private fun AsyncTextureManager.createResource(id: ScreenshotId, image: PixelBuffer) {
+        val texture = PixelBufferTexture(id.toString(), image)
+        loading[id] = RegisteredTexture(texture.uGpuTextureView)
         image.retain()
-        upload(path) {
+        upload(id) {
             texture.upload(image)
             image.release()
             texture
@@ -357,7 +357,7 @@ class AsyncTextureManager {
     private val uploadBackend = uploadBackendRefCounted.obtain { makeUploadBackend() }
 
     /**
-     * Set of screenshot paths that have been uploaded since
+     * Set of screenshot ids that have been uploaded since
      * the last call to [getFinished]
      */
     private val complete = mutableMapOf<ScreenshotId, PixelBufferTexture>()
@@ -365,7 +365,7 @@ class AsyncTextureManager {
     /**
      * Schedules the [texture] function to be called on a worker thread.
      */
-    fun upload(path: ScreenshotId, texture: () -> PixelBufferTexture) {
+    fun upload(id: ScreenshotId, texture: () -> PixelBufferTexture) {
         uploadBackend.submit {
             val pixelBufferTexture = texture()
 
@@ -375,14 +375,14 @@ class AsyncTextureManager {
 
             UMinecraft.getMinecraft().executor.execute {
                 synchronized(complete) {
-                    complete[path] = pixelBufferTexture
+                    complete[id] = pixelBufferTexture
                 }
             }
         }
     }
 
     /**
-     * Returns the list of paths that had their textures uploaded since the last call to getFinished()
+     * Returns the list of ids that had their textures uploaded since the last call to getFinished()
      */
     fun getFinished(): Set<ScreenshotId> {
         //Clone the entries that are loaded

@@ -11,11 +11,11 @@
  */
 package gg.essential.data
 
-import gg.essential.Essential
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import java.io.File
 
 object ABTestingData {
-    private val abFile = File(Essential.getInstance().baseDir, "expFeatures.json")
+    private val abFile = File(platform.essentialBaseDir.toFile(), "expFeatures.json")
     private val abFeatures = mutableSetOf<String>()
 
     fun addData(name: String) {

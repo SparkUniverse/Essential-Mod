@@ -17,6 +17,7 @@ import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -24,18 +25,19 @@ class PlayerPositionAdjustmentPropertyConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.PositionRange>(
+    CosmeticPropertyType.POSITION_RANGE,
     CosmeticProperty.PositionRange::class.java,
     cosmeticsDataWithChanges,
     cosmetic
 ) {
 
     override fun LayoutScope.layout(property: CosmeticProperty.PositionRange) {
-        labeledNullableFloatInputRow("Min x:", mutableStateOf(property.data.xMin)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(xMin = it))) }
-        labeledNullableFloatInputRow("Max x:", mutableStateOf(property.data.xMax)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(xMax = it))) }
-        labeledNullableFloatInputRow("Min y:", mutableStateOf(property.data.yMin)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(yMin = it))) }
-        labeledNullableFloatInputRow("Max y:", mutableStateOf(property.data.yMax)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(yMax = it))) }
-        labeledNullableFloatInputRow("Min z:", mutableStateOf(property.data.zMin)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(zMin = it))) }
-        labeledNullableFloatInputRow("Max z:", mutableStateOf(property.data.zMax)).state.onSetValue(stateScope) { property.update(property.copy(data = property.data.copy(zMax = it))) }
+        labeledNullableFloatInputRow("Min x:", mutableStateOf(property.data.xMin)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(xMin = it))) }
+        labeledNullableFloatInputRow("Max x:", mutableStateOf(property.data.xMax)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(xMax = it))) }
+        labeledNullableFloatInputRow("Min y:", mutableStateOf(property.data.yMin)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(yMin = it))) }
+        labeledNullableFloatInputRow("Max y:", mutableStateOf(property.data.yMax)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(yMax = it))) }
+        labeledNullableFloatInputRow("Min z:", mutableStateOf(property.data.zMin)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(zMin = it))) }
+        labeledNullableFloatInputRow("Max z:", mutableStateOf(property.data.zMax)).state.onChange(stateScope) { property.update(property.copy(data = property.data.copy(zMax = it))) }
     }
 }
 

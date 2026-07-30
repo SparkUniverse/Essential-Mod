@@ -11,27 +11,25 @@
  */
 package gg.essential.gui.wardrobe.configuration.cosmetic.properties
 
-import gg.essential.elementa.effects.ScissorEffect
-import gg.essential.elementa.state.BasicState
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.about.components.ColoredDivider
 import gg.essential.gui.common.input.StateTextInput
 import gg.essential.gui.common.input.essentialStateTextInput
-import gg.essential.gui.common.modal.CancelableInputModal
-import gg.essential.gui.common.modal.ConfirmDenyModal
-import gg.essential.gui.common.modal.EssentialModal
-import gg.essential.gui.common.modal.configure
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.elementa.state.v2.combinators.*
 import gg.essential.gui.layoutdsl.*
-import gg.essential.gui.overlay.ModalManager
+import gg.essential.gui.overlay.launchModalFlow
 import gg.essential.gui.wardrobe.WardrobeState
+import gg.essential.gui.wardrobe.configuration.AbstractConfiguration.AbstractConfigurationSubmenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.addAutoCompleteMenu
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorDangerModal
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorDeleteCosmeticPropertyModal
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
-import gg.essential.util.*
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.vigilance.utils.onLeftClick
 
@@ -39,19 +37,36 @@ class ExternalHiddenBoneConfiguration(
     private val state: WardrobeState,
     private val cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     private val cosmetic: Cosmetic,
-) : LayoutDslComponent {
+) : AbstractConfigurationSubmenu<Cosmetic>("properties:${CosmeticPropertyType.EXTERNAL_HIDDEN_BONE.name}", CosmeticPropertyType.EXTERNAL_HIDDEN_BONE.displayName, cosmetic) {
 
     override fun LayoutScope.layout(modifier: Modifier) {
         val boneHidingProperties = cosmetic.properties<CosmeticProperty.ExternalHiddenBone>()
         column(Modifier.fillWidth().then(modifier), Arrangement.spacedBy(10f)) {
             column(Modifier.fillWidth(), Arrangement.spacedBy(5f)) {
                 for (property in boneHidingProperties) {
-                    boneProperty(property)
+                    layoutBone(property)
                 }
             }
-            box(Modifier.fillWidth().childBasedHeight(5f).color(EssentialPalette.BUTTON).hoverColor(EssentialPalette.BUTTON_HIGHLIGHT).hoverScope()) {
-                text("Add new target cosmetic")
-            }.onLeftClick { platform.pushModal { NewSettingModal(it) } }
+            labeledInputRow("Add cosmetic:") {
+                val input = essentialStateTextInput(
+                    mutableStateOf(null),
+                    { "" }, // Since we update when we get a valid result, we don't need this
+                    { input ->
+                        if (input.isBlank())
+                            null
+                        else (cosmeticsDataWithChanges.getCosmetic(input) ?: throw StateTextInput.ParseException())
+                    }
+                )
+                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
+                input
+            }.state.onChange(stateScope) { targetCosmetic ->
+                if (targetCosmetic != null) {
+                    cosmeticsDataWithChanges.addCosmeticProperty(
+                        this@ExternalHiddenBoneConfiguration.cosmetic.id,
+                        CosmeticProperty.ExternalHiddenBone(targetCosmetic.id.uppercase(), true, CosmeticProperty.ExternalHiddenBone.Data(emptySet()))
+                    )
+                }
+            }
             divider()
             labeledInputRow("Copy from:") {
                 val input = essentialStateTextInput(
@@ -63,9 +78,9 @@ class ExternalHiddenBoneConfiguration(
                         else (cosmeticsDataWithChanges.getCosmetic(input)?.properties<CosmeticProperty.ExternalHiddenBone>() ?: throw StateTextInput.ParseException())
                     }
                 )
-                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName }.toListState())
+                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
                 input
-            }.state.onSetValue(stateScope) { propertyList ->
+            }.state.onChange(stateScope) { propertyList ->
                 if (propertyList != null) {
                     val newPropertyList = cosmetic.allProperties.toMutableList()
                     newPropertyList.removeAll(boneHidingProperties)
@@ -76,128 +91,59 @@ class ExternalHiddenBoneConfiguration(
         }
     }
 
-    private fun LayoutScope.boneProperty(setting: CosmeticProperty.ExternalHiddenBone) {
+    private fun LayoutScope.layoutBone(setting: CosmeticProperty.ExternalHiddenBone) {
         val expanded = mutableStateOf(false)
-        val collapsedHeight = 20f
-
-        val currentIcon = expanded.map {
-            if (it) {
-                EssentialPalette.ARROW_UP_7X4
-            } else {
-                EssentialPalette.ARROW_DOWN_7X4
-            }
-        }
-
-        column(Modifier.fillWidth().whenTrue(expanded, Modifier.childBasedHeight(), Modifier.height(collapsedHeight)).effect { ScissorEffect() }, Arrangement.spacedBy(0f, FloatPosition.START)) {
-            row(Modifier.fillWidth()) {
-                row(Modifier.fillRemainingWidth().height(collapsedHeight).color(EssentialPalette.BUTTON).hoverColor(EssentialPalette.BUTTON_HIGHLIGHT).hoverScope(), Arrangement.SpaceAround) {
-                    text(setting.id)
-                    icon(currentIcon.toV1(stateScope))
-                }.onLeftClick { expanded.set { !it } }
-                box(Modifier.childBasedWidth(5f)) {
-                    removeButton(setting)
+        row(Modifier.fillWidth()) {
+            row(Modifier.fillRemainingWidth()) {
+                ColoredDivider(setting.id)(Modifier.fillRemainingWidth())
+                box(Modifier.width(14f).heightAspect(1f)) {
+                    icon(expanded.letState { if (it) EssentialPalette.ARROW_UP_7X5 else EssentialPalette.ARROW_DOWN_7X5 })
                 }
-            }
-            column(Modifier.fillWidth().color(EssentialPalette.COMPONENT_BACKGROUND), Arrangement.spacedBy(5f)) {
-                setting.data.hiddenBones.forEach {
-                    boneEntry(setting, it)
-                }
-            }
-            box(Modifier.fillWidth().height(15f).color(EssentialPalette.BUTTON).hoverColor(EssentialPalette.BUTTON_HIGHLIGHT).hoverScope()) {
-                text("Add new bone")
+            }.onLeftClick { expanded.set { !it } }
+            box(Modifier.width(10f).heightAspect(1f).hoverTooltip("Remove").hoverScope()) {
+                icon(EssentialPalette.CANCEL_5X)
             }.onLeftClick {
-                val cosmetic = cosmeticsDataWithChanges.getCosmetic(setting.id)
-                if (cosmetic == null) {
-                    platform.pushModal { manager ->
-                        EssentialModal(manager, false).configure {
-                            titleText = "Cosmetic ${setting.id} not found"
-                        }
-                    }
-                    return@onLeftClick
+                launchModalFlow(platform.createModalManager()) {
+                    configuratorDeleteCosmeticPropertyModal(cosmeticsDataWithChanges, cosmetic, setting)
                 }
-                platform.pushModal { ExternalBoneInputModal(it, setting, cosmetic) }
             }
         }
-    }
-
-    private fun LayoutScope.boneEntry(setting: CosmeticProperty.ExternalHiddenBone, boneName: String) {
-        row(Modifier.fillWidth().childBasedHeight(3f), Arrangement.SpaceAround) {
-            text(boneName)
-            icon(EssentialPalette.CANCEL_7X).apply {
-                bindHoverEssentialTooltip(BasicState("Remove"))
-                onLeftClick {
-                    platform.pushModal { manager ->
-                        ConfirmDenyModal(manager, false).configure {
-                            titleText = "Are you sure you want to the bone $boneName ${setting.id}?"
-                        }.onPrimaryAction {
-                            cosmeticsDataWithChanges.updateCosmeticProperty(cosmetic.id, setting, setting.copy(data = setting.data.copy(hiddenBones = setting.data.hiddenBones - boneName)))
+        if_(expanded) {
+            for (bone in setting.data.hiddenBones) {
+                row(Modifier.fillWidth(), Arrangement.SpaceBetween) {
+                    text("- $bone")
+                    box(Modifier.width(10f).heightAspect(1f).hoverTooltip("Remove").hoverScope()) {
+                        icon(EssentialPalette.CANCEL_5X)
+                    }.onLeftClick {
+                        launchModalFlow(platform.createModalManager()) {
+                            configuratorDangerModal("Delete", "Are you sure you want to remove the bone with id ${setting.id}?")
+                            cosmeticsDataWithChanges.updateCosmeticProperty(
+                                cosmetic.id,
+                                setting,
+                                setting.copy(data = setting.data.copy(hiddenBones = setting.data.hiddenBones - bone))
+                            )
                         }
                     }
                 }
             }
-        }
-    }
-
-    private fun LayoutScope.removeButton(setting: CosmeticProperty.ExternalHiddenBone) {
-        icon(EssentialPalette.CANCEL_7X).apply {
-            bindHoverEssentialTooltip(BasicState("Remove"))
-            onLeftClick {
-                platform.pushModal { manager ->
-                    ConfirmDenyModal(manager, false).configure {
-                        titleText = "Are you sure you want to remove the setting for ${setting.id}?"
-                    }.onPrimaryAction {
-                        cosmeticsDataWithChanges.removeCosmeticProperty(cosmetic.id, setting)
-                    }
+            val targetCosmetic = cosmeticsDataWithChanges.getCosmetic(setting.id)
+            if (targetCosmetic != null) {
+                labeledInputRow("Add Bone:") {
+                    val model = platform.modelLoader.getModel(targetCosmetic, cosmetic.defaultVariantName, AssetLoader.Priority.Blocking).get()
+                    val remainingBones = model.bones.byName.keys - setting.data.hiddenBones
+                    val boneInput = essentialStateTextInput(
+                        mutableStateOf(""),
+                        { it },
+                        { if (it.isEmpty()) "" else if (remainingBones.contains(it)) it else throw StateTextInput.ParseException() },
+                        Modifier.width(100f),
+                    )
+                    addAutoCompleteMenu(boneInput, listStateOf(*remainingBones.map { it to it }.toTypedArray()))
+                    boneInput
+                }.state.onChange(stateScope) { boneID ->
+                    cosmeticsDataWithChanges.updateCosmeticProperty(cosmetic.id, setting, setting.copy(data = setting.data.copy(hiddenBones = setting.data.hiddenBones + boneID)))
                 }
             }
         }
     }
-
-    /**
-     * An input modal that allows the user to input a bone name and adds it to the list of hidden bones.
-     * The bone name is validated against the model of the cosmetic.
-     */
-    inner class ExternalBoneInputModal(
-        modalManager: ModalManager,
-        setting: CosmeticProperty.ExternalHiddenBone,
-        targetCosmetic: Cosmetic,
-    ) : CancelableInputModal(modalManager, "Bone name", "") {
-
-        private val model = state.modelLoader.getModel(targetCosmetic, targetCosmetic.defaultVariantName, AssetLoader.Priority.Blocking).get()
-
-        init {
-
-            val validBone = inputTextState.map { it in model.bones }
-            bindConfirmAvailable(validBone.toV1(this))
-
-            onPrimaryActionWithValue {
-                cosmeticsDataWithChanges.updateCosmeticProperty(cosmetic.id, setting, setting.copy(data = setting.data.copy(hiddenBones = setting.data.hiddenBones + it)))
-            }
-
-            configure {
-                titleText = "Enter the name of the bone you want to hide"
-            }
-        }
-    }
-
-
-    /**
-     * An input modal that allows the user to input a cosmetic ID and adds it to the list of cosmetics
-     */
-    inner class NewSettingModal(modalManager: ModalManager) : CancelableInputModal(modalManager, "Cosmetic ID", "") {
-
-        init {
-            configure {
-                titleText = "Enter cosmetic ID of the cosmetic you want to hide bones of"
-            }
-            val validCosmetic = inputTextState.map { cosmeticsDataWithChanges.getCosmetic(it.uppercase()) != null }
-            bindConfirmAvailable(validCosmetic.toV1(this))
-
-            onPrimaryActionWithValue { inputValue ->
-                cosmeticsDataWithChanges.addCosmeticProperty(cosmetic.id, CosmeticProperty.ExternalHiddenBone(inputValue.uppercase(), true, CosmeticProperty.ExternalHiddenBone.Data(emptySet())))
-            }
-        }
-    }
-
 
 }

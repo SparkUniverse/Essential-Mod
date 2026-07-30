@@ -9,7 +9,8 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-package gg.essential.event.essential;
+package gg.essential.util
 
-public class TosAcceptedEvent {
-}
+import java.nio.file.Path
+
+data class ModInfo(val id: String, val name: String, val path: Path?, val version: String)

@@ -54,17 +54,17 @@ class PlayerPositionAdjustmentSettingConfiguration(
                 val zMax = adjustments.zMax
 
                 if (xMax != null || xMin != null) {
-                    labeledFloatInputRow("X: $xMin to $xMax", mutableStateOf(setting.data.x), min = xMin ?: Float.NEGATIVE_INFINITY, max = xMax ?: Float.POSITIVE_INFINITY).state.onSetValue(stateScope) {
+                    labeledFloatInputRow("X: $xMin to $xMax", mutableStateOf(setting.data.x), min = xMin ?: Float.NEGATIVE_INFINITY, max = xMax ?: Float.POSITIVE_INFINITY).state.onChange(stateScope) {
                         setting.update(setting.copy(data = setting.data.copy(x = it)))
                     }
                 }
                 if (yMax != null || yMin != null) {
-                    labeledFloatInputRow("Y: $yMin to $yMax", mutableStateOf(setting.data.y), min = yMin ?: Float.NEGATIVE_INFINITY, max = yMax ?: Float.POSITIVE_INFINITY).state.onSetValue(stateScope) {
+                    labeledFloatInputRow("Y: $yMin to $yMax", mutableStateOf(setting.data.y), min = yMin ?: Float.NEGATIVE_INFINITY, max = yMax ?: Float.POSITIVE_INFINITY).state.onChange(stateScope) {
                         setting.update(setting.copy(data = setting.data.copy(y = it)))
                     }
                 }
                 if (zMax != null || zMin != null) {
-                    labeledFloatInputRow("Z: $zMin to $zMax", mutableStateOf(setting.data.z), min = zMin ?: Float.NEGATIVE_INFINITY, max = zMax ?: Float.POSITIVE_INFINITY).state.onSetValue(stateScope) {
+                    labeledFloatInputRow("Z: $zMin to $zMax", mutableStateOf(setting.data.z), min = zMin ?: Float.NEGATIVE_INFINITY, max = zMax ?: Float.POSITIVE_INFINITY).state.onChange(stateScope) {
                         setting.update(setting.copy(data = setting.data.copy(z = it)))
                     }
                 }

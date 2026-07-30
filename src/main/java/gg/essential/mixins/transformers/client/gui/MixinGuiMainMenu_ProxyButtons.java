@@ -32,7 +32,9 @@ public class MixinGuiMainMenu_ProxyButtons implements ScreenWithVanillaProxyElem
     @Inject(method = "initGui", at = @At("TAIL"))
     private void addProxyButtons(CallbackInfo ci) {
         if (PauseMenuDisplay.isEnabled()) {
-            proxyHandler = ScreenWithProxiesHandler.forMainMenu((GuiScreen) (Object) this);
+            if (proxyHandler == null) {
+                proxyHandler = ScreenWithProxiesHandler.forMainMenu((GuiScreen) (Object) this);
+            }
             proxyHandler.initGui();
         } else {
             proxyHandler = null;

@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":pseudotcp"))
     implementation(project(":lwjgl3"))
     implementation(project(":clipboard"))
+    implementation(project(":minecraft-auth"))
 
     // For NotificationBuilder
     compileOnly(project(":api:1.12.2-forge")) { isTransitive = false}

@@ -16,6 +16,7 @@ import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledFloatInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -23,6 +24,7 @@ class InterruptsEmoteConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.InterruptsEmote>(
+    CosmeticPropertyType.INTERRUPTS_EMOTE,
     CosmeticProperty.InterruptsEmote::class.java,
     cosmeticsDataWithChanges,
     cosmetic
@@ -32,7 +34,7 @@ class InterruptsEmoteConfiguration(
         labeledRow("Movement") {
             checkbox(property.data.movement) { property.update(property.copy(data = property.data.copy(movement = it))) }
         }
-        labeledFloatInputRow("Movement grace period", mutableStateOf(property.data.movementGraceTime.toFloat())).state.onSetValue(stateScope) {
+        labeledFloatInputRow("Movement grace period", mutableStateOf(property.data.movementGraceTime.toFloat())).state.onChange(stateScope) {
             property.update(property.copy(data = property.data.copy(movementGraceTime = it.toDouble())))
         }
         labeledRow("Attack") {

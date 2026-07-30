@@ -16,9 +16,19 @@ package gg.essential.gui.overlay
  */
 interface OverlayManager {
     /**
+     * Creates a new [Layer] with the given priority, but does not yet enable it.
+     */
+    fun createLayer(priority: LayerPriority): Layer
+
+    /**
      * Creates a new [Layer] with the given priority (above existing layers with the same priority).
      */
-    fun addLayer(priority: LayerPriority): Layer
+    fun addLayer(priority: LayerPriority): Layer = createLayer(priority).also { addLayer(it) }
+
+    /**
+     * Adds the given layer (above existing layers with the same priority).
+     */
+    fun addLayer(layer: Layer)
 
     /**
      * Removes the given layer.

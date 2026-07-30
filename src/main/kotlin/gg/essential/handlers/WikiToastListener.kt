@@ -14,21 +14,26 @@ package gg.essential.handlers
 import gg.essential.api.gui.NotificationType
 import gg.essential.api.gui.Slot
 import gg.essential.data.OnboardingData
-import gg.essential.event.essential.TosAcceptedEvent
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl
+import gg.essential.gui.elementa.state.v2.effect
 import gg.essential.gui.notification.Notifications
 import gg.essential.gui.notification.toastButton
 import gg.essential.universal.UDesktop
-import me.kbrewster.eventbus.Subscribe
 import java.net.URI
 
 object WikiToastListener {
-    @Subscribe
-    fun onTosAccepted(event: TosAcceptedEvent) {
-        if (!OnboardingData.hasAcceptedTos() || OnboardingData.hasShownWikiToast()) {
-            return
-        }
+    private val refHolder = ReferenceHolderImpl()
 
+    fun register() {
+        effect(refHolder) {
+            if (OnboardingData.acceptedTos() && !OnboardingData.hasShownWikiToast()) {
+                showWikiToast()
+            }
+        }
+    }
+
+    private fun showWikiToast() {
         Notifications.pushPersistentToast(
             title = "Need Help?",
             message = "Visit our wiki for more information.",

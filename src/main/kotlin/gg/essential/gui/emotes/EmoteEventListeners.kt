@@ -116,7 +116,7 @@ class EmoteEventListeners {
     private fun showEmotePreview() {
         if (layer != null || !EssentialConfig.emotePreview) return;
 
-        layer = OverlayManagerImpl.addLayer(LayerPriority.BelowScreenContent).apply {
+        layer = OverlayManagerImpl.addLayer(LayerPriority.BelowScreen).apply {
             val previewContainer by UIContainer().constrain {
                 x = 17.pixels
                 y = 20.pixels

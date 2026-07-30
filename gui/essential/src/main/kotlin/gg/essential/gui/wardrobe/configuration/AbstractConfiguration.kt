@@ -12,17 +12,15 @@
 package gg.essential.gui.wardrobe.configuration
 
 import gg.essential.gui.EssentialPalette
-import gg.essential.gui.common.modal.DangerConfirmationEssentialModal
-import gg.essential.gui.common.modal.Modal
-import gg.essential.gui.common.modal.configure
+import gg.essential.gui.common.EssentialTooltip
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.elementa.state.v2.combinators.*
 import gg.essential.gui.layoutdsl.*
-import gg.essential.gui.overlay.ModalManager
+import gg.essential.gui.overlay.launchModalFlow
 import gg.essential.gui.wardrobe.WardrobeState
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorDangerModal
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
-import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.navButton
-import gg.essential.util.*
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorButton
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 
 sealed class AbstractConfiguration<I, T>(
@@ -35,26 +33,29 @@ sealed class AbstractConfiguration<I, T>(
     private val stateTriple = configurationType.stateSupplier(state)
     private val editingIdState = stateTriple.first
     private val editingState = stateTriple.second
-    private val submenuMapState = editingState.map { editing -> if (editing != null) getSubmenus(editing).associateBy { it.id } else mapOf() }
-    private val currentSubmenuId = mutableStateOf<String?>(null)
+    private val submenuMapState = editingState.letState { editing -> if (editing != null) getSubmenus(editing).associateBy { it.id } else mapOf() }
+    private val currentSubmenuStack = mutableListStateOf<String?>(null)
+    private val currentSubmenuId = currentSubmenuStack.letState { it.lastOrNull() }
 
     override fun LayoutScope.layout(modifier: Modifier) {
         column(Modifier.fillParent().alignBoth(Alignment.Center), Arrangement.spacedBy(0f, FloatPosition.CENTER)) {
             bind({ editingState()?.id() to currentSubmenuId() }) { (id, submenuId) ->
                 val submenuState = memo { submenuMapState()[submenuId] }
                 if (id != null) {
-                    column(Modifier.fillWidth().childBasedHeight(3f), Arrangement.spacedBy(3f, FloatPosition.CENTER)) {
+                    column(Modifier.fillWidth(padding = 5f).childBasedHeight(3f), Arrangement.spacedBy(3f, FloatPosition.CENTER)) {
                         text("Editing ${configurationType.displaySingular}")
-                        text({ editingState()?.name() ?: "" })
-                        text("($id)")
+                        text({ (editingState()?.name() ?: "") + " ($id)" }, truncateIfTooSmall = true)
                         ifNotNull(submenuState) { submenu ->
                             text("Submenu: ${submenu.name}")
+                            if (submenu.description != null) {
+                                wrappedText(submenu.description, centered = true, modifier = Modifier.color(EssentialPalette.TEXT_DISABLED))
+                            }
                         }
                     }
                     divider()
                     row(Modifier.fillWidth().fillRemainingHeight()) {
                         val scrollComponent = scrollable(Modifier.fillRemainingWidth().fillHeight(), vertical = true) {
-                            column(Modifier.fillWidth(padding = 10f), Arrangement.spacedBy(3f)) {
+                            column(Modifier.fillWidth(padding = 10f).alignVertical(Alignment.Start), Arrangement.spacedBy(3f)) {
                                 spacer(height = 5f)
                                 ifNotNull(submenuState) { submenu ->
                                     submenu()
@@ -71,18 +72,18 @@ sealed class AbstractConfiguration<I, T>(
                     }
                     divider()
                     row(Modifier.fillWidth().childBasedMaxHeight(3f), Arrangement.spacedBy(5f, FloatPosition.CENTER)) {
-                        navButton("Reset", enabled = configurationType.canReset, modifier = Modifier.fillWidth(0.3f)) {
-                            platform.pushModal { manager -> getResetModal(manager, id) }
+                        configuratorButton("Reset", disabled = stateOf(!configurationType.canReset), modifier = Modifier.fillWidth(0.3f)) {
+                            attemptReset(id)
                         }
-                        navButton("Delete", enabled = configurationType.canUpdate, modifier = Modifier.fillWidth(0.3f)) {
-                            platform.pushModal { manager -> getDeleteModal(manager, id) }
+                        configuratorButton("Delete", disabled = stateOf(!configurationType.canUpdate), modifier = Modifier.fillWidth(0.3f)) {
+                            attemptDelete(id)
                         }
                         if_({ submenuState() != null }) {
-                            navButton("Back", Modifier.fillWidth(0.3f)) {
-                                currentSubmenuId.set(null)
+                            configuratorButton("Back", Modifier.fillWidth(0.3f)) {
+                                currentSubmenuStack.set { if (it.isNotEmpty()) it.removeAt(it.size - 1) else it }
                             }
                         } `else` {
-                            navButton("Close", Modifier.fillWidth(0.3f)) {
+                            configuratorButton("Close", Modifier.fillWidth(0.3f)) {
                                 editingIdState.set(null)
                             }
                         }
@@ -90,8 +91,8 @@ sealed class AbstractConfiguration<I, T>(
                 } else {
                     column(Modifier.fillRemainingHeight(), Arrangement.spacedBy(5f, FloatPosition.CENTER)) {
                         text("${configurationType.displaySingular} with id")
-                        text("${editingIdState.get().toString()} not found")
-                        navButton("Close") {
+                        text("${editingIdState.getUntracked().toString()} not found")
+                        configuratorButton("Close") {
                             editingIdState.set(null)
                         }
                     }
@@ -104,41 +105,46 @@ sealed class AbstractConfiguration<I, T>(
         submenuSelection(editing)
     }
 
-    protected fun LayoutScope.submenuSelection(editing: T) {
-        val submenus = getSubmenus(editing)
+    protected fun LayoutScope.submenuSelection(editing: T, predicate: (AbstractConfigurationSubmenu<T>) -> Boolean = { true }) {
+        val submenus = getSubmenus(editing).filter(predicate)
         text(if (submenus.isEmpty()) "No submenus..." else "Select a submenu:")
         spacer(height = 10f)
         for (submenu in submenus) {
-            navButton("Edit ${submenu.name}") {
-                currentSubmenuId.set(submenu.id)
+            val modifier = if (submenu.description == null) Modifier else Modifier.hoverTooltip(submenu.description, wrapAtWidth = 300f, position = EssentialTooltip.Position.LEFT)
+            configuratorButton("Edit ${submenu.name}", modifier) {
+                currentSubmenuStack.add(submenu.id)
             }
         }
     }
 
-    protected open fun getDeleteModal(modalManager: ModalManager, toDelete: I): Modal {
-        return DangerConfirmationEssentialModal(modalManager, "Delete", false).configure {
-            titleText = "Are you sure you want to delete ${configurationType.displaySingular} with id $toDelete?"
-        }.onPrimaryAction {
+    protected fun selectSubmenu(id: String) {
+        currentSubmenuStack.add(id)
+    }
+
+    protected open fun attemptDelete(toDelete: I) {
+        launchModalFlow(platform.createModalManager()) {
+            configuratorDangerModal("Delete", "Are you sure you want to delete ${configurationType.displaySingular} with id $toDelete?")
             toDelete.update(null)
             editingIdState.set(null)
         }
     }
 
-    protected open fun getResetModal(modalManager: ModalManager, toReset: I): Modal {
-        return DangerConfirmationEssentialModal(modalManager, "Reset", false).configure {
-            titleText = "Are you sure you want to reset ${configurationType.displaySingular} with id $toReset back to initial loaded state?"
-        }.onPrimaryAction {
+    protected open fun attemptReset(toReset: I) {
+        launchModalFlow(platform.createModalManager()) {
+            configuratorDangerModal("Reset", "Are you sure you want to reset ${configurationType.displaySingular} with id $toReset back to initial loaded state?")
             toReset.reset()
         }
     }
 
-    protected open fun getSubmenus(editing: T): Set<AbstractConfigurationSubmenu<T>> = setOf()
+    protected open fun getSubmenus(editing: T): List<AbstractConfigurationSubmenu<T>> = listOf()
 
     protected fun T.update(newItem: T?) = id().update(newItem)
+
     @JvmName("updateById")
     protected fun I.update(newItem: T?) = configurationType.updateHandler?.invoke(cosmeticsDataWithChanges, this, newItem)
 
     protected fun T.reset() = id().reset()
+
     @JvmName("resetById")
     protected fun I.reset() = configurationType.resetHandler?.invoke(cosmeticsDataWithChanges, this)
 
@@ -148,7 +154,9 @@ sealed class AbstractConfiguration<I, T>(
 
     protected fun T.name() = idAndName().second
 
-    protected sealed class AbstractConfigurationSubmenu<T>(val id: String, val name: String, val currentlyEditing: T) : LayoutDslComponent {
+    abstract class AbstractConfigurationSubmenu<T>(val id: String, val name: String, val description: String? = null, val currentlyEditing: T) : LayoutDslComponent {
+
+        constructor(id: String, name: String, currentlyEditing: T) : this(id, name, null, currentlyEditing)
 
         abstract override fun LayoutScope.layout(modifier: Modifier)
 

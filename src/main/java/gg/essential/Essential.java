@@ -33,7 +33,6 @@ import gg.essential.event.client.InitializationEvent;
 import gg.essential.event.client.PostInitializationEvent;
 import gg.essential.event.client.PreInitializationEvent;
 import gg.essential.event.client.ReAuthEvent;
-import gg.essential.event.essential.TosAcceptedEvent;
 import gg.essential.event.gui.GuiDrawScreenEvent;
 import gg.essential.event.render.RenderTickEvent;
 import gg.essential.forge.EssentialForgeMod;
@@ -323,7 +322,7 @@ public class Essential implements EssentialAPI {
         registerListener(connectionManager.getSocialManager());
         registerListenerRequiresEssential(cosmeticEventEmitter = new CosmeticEventEmitter());
         registerListener(playerWearableManager = new PlayerWearableManager(connectionManager, connectionManager.getCosmeticsManager()));
-        registerListener(WikiToastListener.INSTANCE);
+        WikiToastListener.INSTANCE.register();
         if (!OptiFineUtil.isLoaded()) {
             registerListenerRequiresEssential(ZoomHandler.getInstance());
         }
@@ -344,9 +343,6 @@ public class Essential implements EssentialAPI {
         registerListener(Notifications.INSTANCE);
         registerListener(new ReAuthChecker());
         registerListener(UI3DPlayer.Companion);
-        if (OnboardingData.hasAcceptedTos()) {
-            EVENT_BUS.post(new TosAcceptedEvent());
-        }
         WindowTitleManager.INSTANCE.register();
 
         //#if MC<11400

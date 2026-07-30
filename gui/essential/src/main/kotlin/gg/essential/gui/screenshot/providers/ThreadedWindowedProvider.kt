@@ -39,7 +39,7 @@ class ThreadedWindowedProvider<T : Any>(
             }
         }
 
-    //The new paths the inner provider should be set to once all submitted tasks are completed
+    //The new ids the inner provider should be set to once all submitted tasks are completed
     private var newItemsRequested: List<ScreenshotId>? = null
 
     //Map to keep track of the tasks that are currently being worked on by the innerProvider
@@ -58,13 +58,13 @@ class ThreadedWindowedProvider<T : Any>(
 
             val newItemsRequested = this.newItemsRequested
             val items = newItemsRequested ?: items
-            val requestedPaths = windows.flatMapTo(mutableSetOf()) { window ->
+            val requestedIds = windows.flatMapTo(mutableSetOf()) { window ->
                 window.range.asSequence().map { items[it] }.filterNot { it in optional }
             }
 
             // Cancel tasks which we are no longer interested in (or all of them if `items` needs to change)
-            activeTasks.entries.removeIf { (path, entry) ->
-                if (path !in requestedPaths || newItemsRequested != null) {
+            activeTasks.entries.removeIf { (id, entry) ->
+                if (id !in requestedIds || newItemsRequested != null) {
                     val (future, canceled) = entry
                     // We no longer care about this task, cancel it
                     canceled.set(true)
@@ -99,9 +99,9 @@ class ThreadedWindowedProvider<T : Any>(
                 for ((windowIndex, window) in windows.withIndex()) {
                     for (index in window.range.reversed(window.backwards)) {
 
-                        val path = items[index]
+                        val id = items[index]
 
-                        if (path in cache || path in activeTasks || path in optional) {
+                        if (id in cache || id in activeTasks || id in optional) {
                             continue
                         }
 
@@ -114,7 +114,7 @@ class ThreadedWindowedProvider<T : Any>(
                             }
                         }, threadPool.withPriority(windowIndex, providerPriority, index))
 
-                        activeTasks[path] = Pair(future, isCanceled)
+                        activeTasks[id] = Pair(future, isCanceled)
                     }
                 }
 
@@ -128,7 +128,7 @@ class ThreadedWindowedProvider<T : Any>(
 
             //Delete unused entries
             cache.entries.removeIf {
-                if (it.key !in requestedPaths) {
+                if (it.key !in requestedIds) {
                     release(it.value)
                     true
                 } else {

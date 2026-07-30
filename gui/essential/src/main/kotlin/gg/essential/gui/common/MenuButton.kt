@@ -229,21 +229,6 @@ class MenuButton @JvmOverloads constructor(
         collapsed.rebind(state)
     }
 
-    /** Rebind the button's default style to [defaultStyle] */
-    fun rebindDefaultStyle(defaultStyle: State<Style>) = apply {
-        this.defaultStyle.rebind(defaultStyle)
-    }
-
-    /** Rebind the button's hover style to [hoverStyle] */
-    fun rebindHoverStyle(hoverStyle: State<Style>) = apply {
-        this.hoverStyle.rebind(hoverStyle)
-    }
-
-    /** Rebind the button's default and hover styles to [defaultStyle] and [hoverStyle] */
-    fun rebindStyle(defaultStyle: State<Style>, hoverStyle: State<Style>) = apply {
-        rebindHoverStyle(hoverStyle).rebindDefaultStyle(defaultStyle)
-    }
-
     /** Rebind the button's enabled state to [enabled] */
     fun rebindEnabled(enabled: State<Boolean>) {
         enabledState.rebind(enabled)

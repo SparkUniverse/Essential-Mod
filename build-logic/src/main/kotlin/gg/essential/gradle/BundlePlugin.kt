@@ -13,14 +13,12 @@ package gg.essential.gradle
 
 import gg.essential.gradle.multiversion.Platform
 import gg.essential.gradle.util.RelaxFabricLoaderDependencyTransform
-import gg.essential.gradle.util.SlimKotlinForForgeTransform
 import gg.essential.gradle.util.kotlinVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.kotlin.dsl.*
-import essential.modrinth
 import net.fabricmc.loom.task.RemapJarTask
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.attributes.Usage
@@ -257,39 +255,12 @@ private fun Project.configureForFabricLoader(configurations: Configurations, pla
     }
 }
 
-// ModLauncher does not allow one package to be present in two different jars, and it does not give us any way to
-// tell whether a package is already taken. The only way for us to not die at boot when another (e.g.) Kotlin mod is
-// present, is to Jar-in-Jar (use a custom scheme, cause ModLauncher doesn't yet support that either) the most
-// popular one (Java will pick the jar with the higher implementation-version. I hope. at least it seems to be fine with
-// two jars declaring the same module) and then hope that everyone sticks with it.
 private fun Project.configureForModLauncher(configurations: Configurations, platform: Platform) = with(configurations) {
-
-    val slimKFF = Attribute.of("slim-kotlin-for-forge", Boolean::class.javaObjectType)
-    dependencies.registerTransform(SlimKotlinForForgeTransform::class.java) {
-        from.attribute(slimKFF, false)
-        to.attribute(slimKFF, true)
-    }
-    dependencies.artifactTypes.all {
-        attributes.attribute(slimKFF, false)
-    }
-
     bundle.exclude(group = "org.jetbrains.kotlin")
     bundle.exclude(group = "org.jetbrains.kotlinx")
     bundle.exclude(group = "org.jetbrains", module = "annotations")
-    repositories {
-        modrinth()
-    }
     dependencies {
         val kotlin = platform.kotlinVersion
-        jij("maven.modrinth:kotlin-for-forge:${kotlin.mod}") {
-            attributes {
-                // Given we are about to JiJ updated Kotlin libraries, we can strip the old ones from KFF to reduce our
-                // bundled jar size a bit (just need to make sure we bundle at least the same libs as KFF so we don't
-                // break third-party mods that depend on those).
-                attribute(slimKFF, true)
-            }
-        }
-
         jij("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin.stdlib}")
         jij("org.jetbrains.kotlin:kotlin-reflect:${kotlin.stdlib}")
         jij("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")

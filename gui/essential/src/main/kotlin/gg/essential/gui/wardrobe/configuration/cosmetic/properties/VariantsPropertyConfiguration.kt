@@ -33,6 +33,7 @@ import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.util.hoveredState
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.model.util.Color
 import gg.essential.model.util.toJavaColor
 import gg.essential.network.connectionmanager.cosmetics.*
@@ -52,6 +53,7 @@ class VariantsPropertyConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.Variants>(
+    CosmeticPropertyType.VARIANTS,
     CosmeticProperty.Variants::class.java,
     cosmeticsDataWithChanges,
     cosmetic
@@ -67,7 +69,7 @@ class VariantsPropertyConfiguration(
         column(Modifier.fillWidth(), Arrangement.spacedBy(5f)) {
             for ((index, variant) in variants.withIndex()) {
                 row(Modifier.fillWidth(), Arrangement.spacedBy(5f, FloatPosition.CENTER)) {
-                    essentialStringInput(mutableStateOf(variant.name)).state.onSetValue(stateScope) {
+                    essentialStringInput(mutableStateOf(variant.name)).state.onChange(stateScope) {
                         variants[index] = variant.copy(name = it)
                         update()
                     }
@@ -77,7 +79,7 @@ class VariantsPropertyConfiguration(
                         { String.format("%08X", it.rgba.toInt()).substring(0, 6) },
                         { Color.rgba(it.padEnd(8, 'F').toUInt(16)) },
                         Modifier.width(50f)
-                    ).state.onSetValue(stateScope) {
+                    ).state.onChange(stateScope) {
                         variants[index] = variant.copy(color = it)
                         update()
                     }
@@ -129,9 +131,9 @@ class VariantsPropertyConfiguration(
     inner class VariantColorPicker(val currentColorState: MutableState<Color>) : UIContainer() {
 
         val showMenu = BasicState(false)
-        private val hue = BasicState(HSBColor(currentColorState.get().toJavaColor()).hue)
-        private val saturation = BasicState(HSBColor(currentColorState.get().toJavaColor()).saturation)
-        private val brightness = BasicState(HSBColor(currentColorState.get().toJavaColor()).brightness)
+        private val hue = BasicState(HSBColor(currentColorState.getUntracked().toJavaColor()).hue)
+        private val saturation = BasicState(HSBColor(currentColorState.getUntracked().toJavaColor()).saturation)
+        private val brightness = BasicState(HSBColor(currentColorState.getUntracked().toJavaColor()).brightness)
         private val hueSaturationSide = 69f
 
         private val hueColorList: List<java.awt.Color> =

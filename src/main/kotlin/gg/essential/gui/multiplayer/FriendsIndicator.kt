@@ -13,61 +13,56 @@ package gg.essential.gui.multiplayer
 
 import gg.essential.Essential
 import gg.essential.config.EssentialConfig
-import gg.essential.connectionmanager.common.enums.ActivityType
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.UIImage
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.elementa.state.v2.Observer
+import gg.essential.gui.elementa.state.v2.State
+import gg.essential.gui.elementa.state.v2.mapEach
+import gg.essential.gui.elementa.state.v2.mapList
+import gg.essential.gui.elementa.state.v2.memo
+import gg.essential.gui.friends.state.PlayerActivity
 import gg.essential.sps.SpsAddress
 import gg.essential.universal.UMatrixStack
 import gg.essential.universal.UMinecraft
 import gg.essential.util.CachedAvatarImage
-import gg.essential.util.UUIDUtil
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
+import gg.essential.util.UuidNameLookup
 import gg.essential.util.findChildOfTypeOrNull
 import gg.essential.vigilance.gui.VigilancePalette
 import net.minecraft.client.multiplayer.ServerData
-import java.util.SortedMap
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 
 class FriendsIndicator(val server: ServerData) {
     private val connectionManager = Essential.getInstance().connectionManager
-    private val discoveryServer = findServerByAddress(server.serverIP)
 
     private val host = SpsAddress.parse(server.serverIP)?.host
-    private val friendsOnServer: SortedMap<UUID, Pair<UIComponent, CompletableFuture<String>>> = sortedMapOf(compareBy({ it != host }, { it }))
+    private val socialStates = platform.createSocialStates()
+    private val friends = socialStates.relationships.friends
+        .mapEach { it to memo { isPlayingOnServer(it) } }
+        .mapList { list -> list.mapNotNull { (uuid, playing) -> if (playing()) uuid else null }.sorted().sortedBy { it != host } }
+        .mapEach { Friend(it) }
 
-    init {
-        // Status should always be up-to-date for online friends
-        connectionManager.relationshipManager.friends.keys.forEach {
-            if (isPlayingOnServer(it)) {
-                addIcon(it)
+    private class Friend(val uuid: UUID) {
+        val name: State<String> = UuidNameLookup.nameState(uuid, "Loading username…")
+        val avatar: UIComponent = CachedAvatarImage.create(uuid)
+    }
+
+    private fun Observer.isPlayingOnServer(uuid: UUID): Boolean {
+        return when (val activity = socialStates.activity.getActivityState(uuid)()) {
+            is PlayerActivity.SPSSession -> activity.host == host
+            is PlayerActivity.Multiplayer -> {
+                val knownServers = connectionManager.knownServersManager.state()
+                knownServers.findServerByAddress(activity.serverAddress) == knownServers.findServerByAddress(server.serverIP)
             }
-        }
-    }
 
-    private fun isPlayingOnServer(uuid: UUID): Boolean {
-        val (activity, metadata) = connectionManager.profileManager.getActivity(uuid).orElse(null) ?: return false
-        return when {
-            activity != ActivityType.PLAYING -> false // Not playing
-            metadata == server.serverIP -> true // Direct match
-            discoveryServer != null && discoveryServer == findServerByAddress(metadata) -> true // Indirect match via discovery server aliases
-            else -> false // Likely different server
+            is PlayerActivity.Offline -> false
+            is PlayerActivity.Online -> false
+            is PlayerActivity.OnlineWithDescription -> false
         }
-    }
-
-    private fun addIcon(uuid: UUID) {
-        friendsOnServer[uuid] = (CachedAvatarImage.create(uuid) to UUIDUtil.getName(uuid))
     }
 
     private fun appendInvite(uuid: UUID) = if (connectionManager.socialManager.incomingServerInvites[uuid] == server.serverIP) " (Invite)" else ""
-
-    fun updatePlayerStatus(uuid: UUID) {
-        if (!isPlayingOnServer(uuid)) {
-            friendsOnServer.remove(uuid)
-        } else if (uuid !in friendsOnServer) {
-            addIcon(uuid)
-        }
-    }
 
     fun draw(
         matrixStack: UMatrixStack,
@@ -78,7 +73,10 @@ class FriendsIndicator(val server: ServerData) {
         mouseY: Int,
         populationInfoText: Int,
     ): String? {
-        if (!EssentialConfig.essentialEnabled || friendsOnServer.isEmpty()) return null
+        if (!EssentialConfig.essentialEnabled) return null
+
+        val entries = friends.getUntracked()
+        if (entries.isEmpty()) return null
 
         // Figure out the space available for head icons
         val serverNameEndPos = x + 32 + 2 + UMinecraft.getFontRenderer().getStringWidth(server.serverName) + 16
@@ -91,7 +89,6 @@ class FriendsIndicator(val server: ServerData) {
         val spaceAvailable = playerCountStartPos - serverNameEndPos
 
         // Figure out how many heads can fit in the space available and how many to display if we need to truncate them
-        val entries = friendsOnServer.entries.toList()
         val numHeadsCanFit = minOf((spaceAvailable + HEAD_PADDING) / PADDED_HEAD_WIDTH, entries.size, MAX_ALLOWED_ICONS)
         val numHeadsToDisplay = (numHeadsCanFit - if (entries.size > numHeadsCanFit && spaceAvailable - (numHeadsCanFit * PADDED_HEAD_WIDTH) < TRUNCATED_WIDTH) 1 else 0).coerceAtLeast(0)
 
@@ -106,12 +103,12 @@ class FriendsIndicator(val server: ServerData) {
         var tooltip: String? = null
 
         // Display head icons
-        displayedFriends.forEachIndexed { index, (uuid, pair) ->
+        displayedFriends.forEachIndexed { index, friend ->
             val currentX = startX + (index * PADDED_HEAD_WIDTH)
             if (mouseX in currentX until currentX + HEAD_SIZE && mouseY in y..(y + HEAD_SIZE)) {
-                tooltip = pair.second.getNow("Loading username…") + appendInvite(uuid)
+                tooltip = friend.name.getUntracked() + appendInvite(friend.uuid)
             }
-            pair.first.findChildOfTypeOrNull<UIImage>(recursive = true)!!.drawImage(
+            friend.avatar.findChildOfTypeOrNull<UIImage>(recursive = true)!!.drawImage(
                 matrixStack,
                 currentX.toDouble(),
                 y.toDouble(),
@@ -126,7 +123,7 @@ class FriendsIndicator(val server: ServerData) {
             val ellipsesX = startX + (displayedFriends.size * PADDED_HEAD_WIDTH)
             if (mouseX in ellipsesX - 1 until ellipsesX + TRUNCATED_WIDTH + 1 && mouseY in y until y + HEAD_SIZE + 1) {
                 tooltip = "Online friends:\n" + truncatedFriends.joinToString("\n") {
-                    it.value.second.getNow("Loading username...") + appendInvite(it.key)
+                    it.name.getUntracked() + appendInvite(it.uuid)
                 }
             }
             EssentialPalette.ELLIPSES_5X1.create().drawImage(
@@ -140,13 +137,6 @@ class FriendsIndicator(val server: ServerData) {
         }
 
         return tooltip
-    }
-
-    private fun findServerByAddress(address: String): Any? {
-        return run {
-            // FIXME: remove this helper function after feature flag cleanup
-            connectionManager.knownServersManager.findServerByAddress(address)
-        }
     }
 
     private companion object {

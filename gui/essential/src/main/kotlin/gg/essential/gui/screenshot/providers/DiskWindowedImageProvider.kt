@@ -37,9 +37,9 @@ class DiskWindowedImageProvider(
         val map = mutableMapOf<ScreenshotId, PixelBuffer>()
         for (window in windows) {
             for (i in window.range.reversed(window.backwards)) {
-                val path = items[i]
-                if (path !in optional) {
-                    map[path] = loadImage(path)
+                val id = items[i]
+                if (id !in optional) {
+                    map[id] = loadImage(id)
                 }
             }
         }

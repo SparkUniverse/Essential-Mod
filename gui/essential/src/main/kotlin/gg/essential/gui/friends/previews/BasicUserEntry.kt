@@ -19,7 +19,6 @@ import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.IconButton
 import gg.essential.gui.common.shadow.EssentialUIText
 import gg.essential.gui.common.shadow.ShadowEffect
-import gg.essential.gui.elementa.state.v2.onChange
 import gg.essential.gui.elementa.state.v2.toV1
 import gg.essential.gui.image.ImageFactory
 import gg.essential.util.CachedAvatarImage
@@ -32,7 +31,6 @@ abstract class BasicUserEntry(
     val user: UUID,
     imageFactory: ImageFactory,
     hoverIconColor: Color,
-    sortListener: SortListener
 ) : UIBlock(EssentialPalette.COMPONENT_BACKGROUND), SearchableItem {
     val usernameState = UuidNameLookup.nameState(user, "Loading...")
 
@@ -76,10 +74,6 @@ abstract class BasicUserEntry(
             y = SiblingConstraint(7f)
             width = 100.percent
             height = 40.pixels
-        }
-
-        usernameState.onChange(this) {
-            sortListener.sort()
         }
     }
 

@@ -46,9 +46,7 @@ import gg.essential.gui.overlay.ModalManager
 import gg.essential.gui.util.layoutSafePollingState
 import gg.essential.universal.ChatColor
 import gg.essential.universal.USound
-import gg.essential.util.EssentialContainerUtil
-import gg.essential.util.GuiUtil
-import gg.essential.util.ModLoaderUtil
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.util.onLeftClick
 import gg.essential.util.openInBrowser
 import java.awt.Color
@@ -86,7 +84,7 @@ class EssentialAutoInstalledModal(modalManager: ModalManager) : EssentialModal(m
 
         buttonContainer.insertChildAfter(okayButton, primaryActionButton)
 
-        val modsDependingOnEssential = ModLoaderUtil.getModsDependingOnEssential().map { it.name }
+        val modsDependingOnEssential = platform.modsDependingOnEssential.map { it.name }
 
         val modText = when (modsDependingOnEssential.size) {
             0 -> "by a mod you installed."
@@ -124,19 +122,19 @@ class EssentialAutoInstalledModal(modalManager: ModalManager) : EssentialModal(m
                 updatePreviouslyLaunchedWithContainer()
                 return
             }
-            GuiUtil.queueModal(EssentialAutoInstalledModal(GuiUtil))
+            platform.pushModal { EssentialAutoInstalledModal(it) }
         }
 
         private fun shouldShowModal(): Boolean {
             val previouslyLaunchedWithContainer = EssentialConfig.previouslyLaunchedWithContainer.get()
             return (previouslyLaunchedWithContainer == EssentialConfig.PreviouslyLaunchedWithContainer.Yes
                 || previouslyLaunchedWithContainer == EssentialConfig.PreviouslyLaunchedWithContainer.Unknown)
-                && !EssentialContainerUtil.isContainerPresent()
+                && !platform.isEssentialContainerPresent
         }
 
         private fun updatePreviouslyLaunchedWithContainer() {
             EssentialConfig.previouslyLaunchedWithContainer.set(
-                if (EssentialContainerUtil.isContainerPresent()) {
+                if (platform.isEssentialContainerPresent) {
                     EssentialConfig.PreviouslyLaunchedWithContainer.Yes
                 } else {
                     EssentialConfig.PreviouslyLaunchedWithContainer.No

@@ -11,7 +11,6 @@
  */
 package gg.essential.network.connectionmanager
 
-import gg.essential.Essential
 import gg.essential.minecraftauth.exception.AuthenticationException
 import gg.essential.minecraftauth.exception.MinecraftAuthenticationException
 import gg.essential.minecraftauth.minecraft.session.MinecraftSessionService
@@ -19,7 +18,6 @@ import gg.essential.config.EssentialConfig
 import gg.essential.connectionmanager.common.packet.Packet
 import gg.essential.connectionmanager.common.util.LoginUtil
 import gg.essential.data.OnboardingData
-import gg.essential.event.essential.TosAcceptedEvent
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.await
 import gg.essential.gui.elementa.state.v2.awaitValue
@@ -111,7 +109,9 @@ abstract class ConnectionManagerKt : CMConnection {
             if (!OnboardingData.hasAcceptedTos()) {
                 updateStatus(ConnectionManagerStatus.TOSNotAccepted)
                 LOGGER.info("Waiting for Terms Of Service to be accepted before attempting connection")
-                Essential.EVENT_BUS.await<TosAcceptedEvent>()
+                withContext(Dispatchers.Client) {
+                    OnboardingData.acceptedTos.awaitValue(true)
+                }
                 continue
             }
 

@@ -16,23 +16,38 @@ open class VersionInfo {
         const val noSavedVersion = "0.0.0"
     }
 
-    val essentialVersion: String = System.getProperty("essential.version", noSavedVersion)
-    val essentialBranch: String = System.getProperty("essential.branch", "stable")
-    val essentialCommit: String by lazy {
+    private val versionAndCommit: Pair<String, String> by lazy {
+        val version = this::class.java.getResource("/assets/essential/version.txt")!!.readText()
+
+        // Release build
         val commitFile = this::class.java.getResource("/assets/essential/commit.txt")
         if (commitFile != null) {
-            return@lazy commitFile.readText().trim()
+            return@lazy Pair(version, commitFile.readText().trim())
         }
 
-        val version = this::class.java.getResource("/assets/essential/version.txt")!!.readText()
-        val hash = version.split("+").last()
-
-        if (hash.startsWith("g")) {
-            hash.drop(1)
-        } else if (version == "\${version.get()}"){
-            "dev"
-        } else {
-            "SNAPSHOT"
+        // Dev environment
+        if (version == "\${version.get()}") {
+            return@lazy Pair(noSavedVersion, "dev")
         }
+
+        // Local build
+        if (version.endsWith("-SNAPSHOT")) {
+            return@lazy Pair(noSavedVersion, "SNAPSHOT")
+        }
+
+        // CI build
+        val i = version.lastIndexOf("+g")
+        if (i != -1) {
+            return@lazy Pair(noSavedVersion, version.substring(i + 2))
+        }
+
+        return@lazy Pair(noSavedVersion, "unknown")
     }
+
+    val essentialVersion: String
+        get() = versionAndCommit.first
+    val essentialCommit: String
+        get() = versionAndCommit.second
+
+    val essentialBranch: String = System.getProperty("essential.branch", "stable")
 }

@@ -27,16 +27,17 @@ import gg.essential.gui.util.hoveredState
 import gg.essential.network.connectionmanager.notices.SocialMenuNewFriendRequestNoticeManager
 import gg.essential.util.*
 import gg.essential.vigilance.utils.onLeftClick
+import java.time.Instant
 import java.util.*
 
 class PendingUserEntry(
     user: UUID,
+    val since: Instant,
     val incoming: Boolean,
     socialStates: SocialStates,
     socialMenuActions: SocialMenuActions,
     friendRequestNoticeManager: SocialMenuNewFriendRequestNoticeManager,
-    sortListener: SortListener
-) : BasicUserEntry(user, EssentialPalette.CANCEL_5X, EssentialPalette.RED, sortListener) {
+) : BasicUserEntry(user, EssentialPalette.CANCEL_5X, EssentialPalette.RED) {
 
     private val actions = socialStates.relationships
     private val hasUnseenRequest = friendRequestNoticeManager.hasUnseenFriendRequests(user)

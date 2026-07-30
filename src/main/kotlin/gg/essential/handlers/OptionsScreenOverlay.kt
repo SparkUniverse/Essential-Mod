@@ -47,12 +47,22 @@ class OptionsScreenOverlay {
     private var layer: Layer? = null
 
     fun init(screen: GuiScreen) {
-        val layer = GuiUtil.addLayer(LayerPriority.AboveScreenContent).also {
-            this.layer = it
+        val proxyHandler = (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`()
+        if (proxyHandler != null) {
+            var layer = proxyHandler.layer
+            if (layer == null) {
+                layer = GuiUtil.createLayer(LayerPriority.AboveScreenContent(screen))
+                proxyHandler.layer = layer
+                init(screen, layer.window, proxyHandler)
+            }
+            this.layer = layer
+            GuiUtil.addLayer(layer)
+        } else {
+            val window = GuiUtil.addLayer(LayerPriority.AboveScreenContent(screen))
+                .also { layer = it }
+                .window
+            init(screen, window, proxyHandler)
         }
-
-        val window = layer.window
-        init(screen, window, (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`())
     }
 
     fun init(screen: GuiScreen, window: Window, proxyHandler: ScreenWithProxiesHandler?) {

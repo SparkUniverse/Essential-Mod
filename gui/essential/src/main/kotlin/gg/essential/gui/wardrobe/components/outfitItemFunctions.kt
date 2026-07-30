@@ -23,6 +23,7 @@ import gg.essential.gui.notification.Notifications
 import gg.essential.gui.overlay.ModalManager
 import gg.essential.gui.wardrobe.Item
 import gg.essential.gui.wardrobe.WardrobeState
+import gg.essential.gui.wardrobe.configuration.registerBundle
 import gg.essential.mod.cosmetics.CosmeticBundle
 import gg.essential.mod.cosmetics.CosmeticTier
 import gg.essential.network.connectionmanager.cosmetics.*

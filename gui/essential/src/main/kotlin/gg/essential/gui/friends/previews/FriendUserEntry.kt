@@ -30,10 +30,9 @@ class FriendUserEntry(
     user: UUID,
     socialStates: SocialStates,
     socialMenuActions: SocialMenuActions,
-    sortListener: SortListener
-) : BasicUserEntry(user, EssentialPalette.BURGER_7X5, EssentialPalette.TEXT_HIGHLIGHT, sortListener) {
+) : BasicUserEntry(user, EssentialPalette.BURGER_7X5, EssentialPalette.TEXT_HIGHLIGHT) {
 
-    private val friendStatus by FriendStatus(user, socialStates.activity, sortListener).constrain {
+    private val friendStatus by FriendStatus(user, socialStates.activity).constrain {
         y = SiblingConstraint(5f)
     } childOf textContainer
 

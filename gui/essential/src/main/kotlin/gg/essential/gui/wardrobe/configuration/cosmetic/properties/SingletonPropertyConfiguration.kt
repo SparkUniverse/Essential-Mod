@@ -15,18 +15,21 @@ import gg.essential.gui.common.input.StateTextInput
 import gg.essential.gui.common.input.essentialStateTextInput
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
+import gg.essential.gui.wardrobe.configuration.AbstractConfiguration.AbstractConfigurationSubmenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.addAutoCompleteMenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
 abstract class SingletonPropertyConfiguration<P : CosmeticProperty>(
+    type: CosmeticPropertyType,
     private val clazz: Class<P>,
     private val cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     protected val cosmetic: Cosmetic,
-) : LayoutDslComponent {
+) : AbstractConfigurationSubmenu<Cosmetic>("properties:${type.name}", type.displayName, cosmetic) {
 
     private val property = cosmetic.allProperties.firstNotNullOfOrNull { if (clazz.isInstance(it)) clazz.cast(it) else null }
 
@@ -50,7 +53,7 @@ abstract class SingletonPropertyConfiguration<P : CosmeticProperty>(
                         )
                     }
                     addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName }.toListState())
-                    input.state.onSetValue(stateScope) {
+                    input.state.onChange(stateScope) {
                         if (it != null) {
                             property.update(it)
                         }

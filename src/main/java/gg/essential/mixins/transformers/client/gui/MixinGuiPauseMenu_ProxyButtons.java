@@ -45,7 +45,9 @@ public class MixinGuiPauseMenu_ProxyButtons implements ScreenWithVanillaProxyEle
         //#endif
 
         if (PauseMenuDisplay.isEnabled()) {
-            proxyHandler = ScreenWithProxiesHandler.forPauseMenu((GuiScreen) (Object) this);
+            if (proxyHandler == null) {
+                proxyHandler = ScreenWithProxiesHandler.forPauseMenu((GuiScreen) (Object) this);
+            }
             proxyHandler.initGui();
         } else {
             proxyHandler = null;

@@ -428,8 +428,6 @@ class EssentialMultiplayerGui {
         if (EssentialConfig.currentMultiplayerTab == 1) {
             essentialServerList.updateFriendsServers()
         }
-
-        essentialServerList.updatePlayerStatus(uuid)
     }
 
     fun switchTab(tab: Int) {

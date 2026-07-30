@@ -41,12 +41,12 @@ class TransitionWindowedProvider<T>(
 
         val primaryItems = primaryProvider.provide(windows, optional)
 
-        //The paths we are expecting the primary provider to provide
-        val expectedPaths = windows.flatMap { items.slice(it.range) }
+        //The ids we are expecting the primary provider to provide
+        val expectedIds = windows.flatMap { items.slice(it.range) }
 
 
         //The primary provider has all the items available
-        if (expectedPaths.all { it in primaryItems || it in optional }) {
+        if (expectedIds.all { it in primaryItems || it in optional }) {
 
             //Have the fallback provider clean up all of its resources
             fallbackProvider.provide(emptyList(), emptySet())
@@ -62,10 +62,10 @@ class TransitionWindowedProvider<T>(
             // But we don't want the fallback provider to start any new work, so we mark everything that isn't known to
             // already be available as optional (which will also allow the fallback provider to clean up anything we no
             // longer need).
-            val paths = windows.flatMapTo(mutableSetOf()) { window ->
+            val ids = windows.flatMapTo(mutableSetOf()) { window ->
                 window.range.asSequence().map { this.items[it] }
             }
-            val fallbackOptional = knownFallbackItems?.let { paths - it } ?: optional
+            val fallbackOptional = knownFallbackItems?.let { ids - it } ?: optional
 
             val items = fallbackProvider.provide(windows, fallbackOptional).toMutableMap()
 

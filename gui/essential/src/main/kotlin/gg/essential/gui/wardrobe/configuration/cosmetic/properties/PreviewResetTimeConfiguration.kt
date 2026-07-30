@@ -17,6 +17,7 @@ import gg.essential.gui.layoutdsl.checkbox
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledDoubleInputRow
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsDataWithChanges
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -24,6 +25,7 @@ class PreviewResetTimeConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.PreviewResetTime>(
+    CosmeticPropertyType.PREVIEW_RESET_TIME,
     CosmeticProperty.PreviewResetTime::class.java,
     cosmeticsDataWithChanges,
     cosmetic

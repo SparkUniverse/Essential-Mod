@@ -56,8 +56,8 @@ class ImplicitOwnershipConfiguration(
                 { if (it.isBlank()) null else (cosmeticsDataWithChanges.getCosmetic(it) ?: throw StateTextInput.ParseException()) }
             )
             addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
-            cosmeticState.onSetValue(stateScope) {
-                val cosmeticId = (it ?: return@onSetValue).id
+            cosmeticState.onChange(stateScope) {
+                val cosmeticId = (it ?: return@onChange).id
                 implicitOwnership.update(implicitOwnership.copy(cosmetics = cosmetics + cosmeticId))
             }
         }
@@ -83,8 +83,8 @@ class ImplicitOwnershipConfiguration(
                     { if (it.isBlank()) null else (cosmeticsDataWithChanges.getCosmetic(it) ?: throw StateTextInput.ParseException()) }
                 )
                 addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
-                cosmeticState.onSetValue(stateScope) {
-                    val cosmeticId = (it ?: return@onSetValue).id
+                cosmeticState.onChange(stateScope) {
+                    val cosmeticId = (it ?: return@onChange).id
                     implicitOwnership.update(implicitOwnership.copy(criterion = criterion.copy(cosmetic = cosmeticId)))
                 }
             }

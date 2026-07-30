@@ -49,19 +49,19 @@ class FileCachedWindowedImageProvider(
         val providedImages = mutableMapOf<ScreenshotId, PixelBuffer>()
         for (window in windows) {
             for (i in window.range.reversed(window.backwards)) {
-                val sourcePath = items[i]
-                if (sourcePath in optional) {
+                val id = items[i]
+                if (id in optional) {
                     continue
                 }
 
-                val cachePath = cacheFunction(sourcePath)
+                val cachePath = cacheFunction(id)
                 if (cachePath.exists()) {
                     if (precomputeOnly) {
                         continue
                     }
                     val read = read(cachePath)
                     if (read != null) {
-                        providedImages[sourcePath] = read
+                        providedImages[id] = read
                         continue
                     }
                 }

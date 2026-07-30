@@ -92,7 +92,7 @@ class ScreenshotAttacher(
 
         addUpdateFunc { _, _ ->
             // This component will usually not contain many screenshots, so we can simply request all
-            val window = WindowedProvider.Window(screenshotProvider.currentPaths.indices, false)
+            val window = WindowedProvider.Window(screenshotProvider.currentIds.indices, false)
             val textures = screenshotProvider.provide(window)
 
             for (component in findChildrenOfType<ScreenshotPreview>(recursive = true)) {

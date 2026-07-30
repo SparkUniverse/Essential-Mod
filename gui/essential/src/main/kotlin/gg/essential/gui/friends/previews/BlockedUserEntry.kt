@@ -24,8 +24,7 @@ import java.util.*
 class BlockedUserEntry(
     user: UUID,
     socialMenuActions: SocialMenuActions,
-    sortListener: SortListener
-) : BasicUserEntry(user, EssentialPalette.CANCEL_5X, EssentialPalette.RED, sortListener) {
+) : BasicUserEntry(user, EssentialPalette.CANCEL_5X, EssentialPalette.RED) {
 
     init {
         titleText.constrain {

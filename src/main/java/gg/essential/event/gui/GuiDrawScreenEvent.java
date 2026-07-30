@@ -124,4 +124,16 @@ public class GuiDrawScreenEvent {
             super(screen, drawContext, mouseX, mouseY, partialTicks, post);
         }
     }
+
+    public static class Background {
+        private final GuiScreen screen;
+
+        public Background(GuiScreen screen) {
+            this.screen = screen;
+        }
+
+        public GuiScreen getScreen() {
+            return screen;
+        }
+    }
 }

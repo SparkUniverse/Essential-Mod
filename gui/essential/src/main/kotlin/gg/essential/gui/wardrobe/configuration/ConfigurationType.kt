@@ -11,19 +11,24 @@
  */
 package gg.essential.gui.wardrobe.configuration
 
-import gg.essential.gui.common.modal.CancelableInputModal
-import gg.essential.gui.common.modal.Modal
-import gg.essential.gui.common.modal.NoticeEssentialModal
-import gg.essential.gui.common.modal.configure
+import gg.essential.gui.EssentialPalette
+import gg.essential.gui.common.input.UITextInput
+import gg.essential.gui.common.input.essentialInput
+import gg.essential.gui.common.modal.EssentialModal2
 import gg.essential.gui.elementa.state.v2.*
-import gg.essential.gui.overlay.ModalManager
+import gg.essential.gui.elementa.state.v2.combinators.letState
+import gg.essential.gui.layoutdsl.LayoutScope
+import gg.essential.gui.layoutdsl.Modifier
+import gg.essential.gui.layoutdsl.box
+import gg.essential.gui.layoutdsl.color
+import gg.essential.gui.layoutdsl.height
+import gg.essential.gui.layoutdsl.width
+import gg.essential.gui.overlay.ModalFlow
+import gg.essential.gui.overlay.launchModalFlow
 import gg.essential.gui.wardrobe.WardrobeState
-import gg.essential.mod.Model
-import gg.essential.mod.cosmetics.CosmeticBundle
-import gg.essential.mod.cosmetics.CosmeticTier
-import gg.essential.mod.cosmetics.database.GitRepoCosmeticsDatabase
 import gg.essential.model.util.Instant
 import gg.essential.network.connectionmanager.cosmetics.*
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import java.time.ZoneId
 
 class ConfigurationType<I, T> private constructor(
@@ -35,7 +40,7 @@ class ConfigurationType<I, T> private constructor(
     val comparator: Comparator<T> = Comparator.comparing { idAndNameMapper(it).second },
     val updateHandler: ((CosmeticsDataWithChanges, I, T?) -> Unit)? = null,
     val resetHandler: ((CosmeticsDataWithChanges, I) -> Unit)? = null,
-    val createHandler: ((ModalManager, CosmeticsDataWithChanges, WardrobeState) -> Modal)? = null,
+    val createHandler: ((CosmeticsDataWithChanges) -> Unit)? = null,
 ) {
 
     val canReset = resetHandler != null
@@ -57,27 +62,10 @@ class ConfigurationType<I, T> private constructor(
             idAndNameMapper = { it.id to (it.displayNames["en_us"] ?: it.id) },
             updateHandler = { data, id, new -> data.updateCategory(id, new) },
             resetHandler = { data, id -> data.resetCategory(id) },
-            createHandler = { modalManager, cosmeticsDataWithChanges, state ->
-                CancelableInputModal(modalManager, "Category ID").configure {
-                    titleText = "Create New Category"
-                    contentText = "Enter the ID for the new category."
-                }.apply {
-                    onPrimaryActionWithValue { id ->
-                        if (cosmeticsDataWithChanges.getCategory(id) != null) {
-                            setError("That id already exists!")
-                            return@onPrimaryActionWithValue
-                        }
-                        cosmeticsDataWithChanges.registerCategory(
-                            id,
-                            "Category Name",
-                            "Category Description",
-                            "Compact Name",
-                            0,
-                            emptySet(),
-                            null,
-                            null,
-                        )
-                    }
+            createHandler = { cosmeticsDataWithChanges ->
+                launchModalFlow(platform.createModalManager()) {
+                    val id = createWithIDModal("Category", cosmeticsDataWithChanges.categories.letState { it.map { it.id } }.toListState())
+                    cosmeticsDataWithChanges.registerCategory(id)
                 }
             }
         )
@@ -87,12 +75,7 @@ class ConfigurationType<I, T> private constructor(
             stateSupplier = { Triple(it.currentlyEditingCosmeticId, it.currentlyEditingCosmetic, it.rawCosmetics) },
             idAndNameMapper = { it.id to (it.displayNames["en_us"] ?: it.id) },
             updateHandler = { data, id, new -> data.updateCosmetic(id, new) },
-            resetHandler = { data, id -> data.resetCosmetic(id) },
-            createHandler = { modalManager, cosmeticsDataWithChanges, state ->
-                NoticeEssentialModal(modalManager, false).configure {
-                    contentText = "Adding cosmetics in-game currently not available"
-                }
-            }
+            resetHandler = { data, id -> data.resetCosmetic(id) }
         )
 
         val BUNDLES = ConfigurationType(
@@ -101,27 +84,10 @@ class ConfigurationType<I, T> private constructor(
             idAndNameMapper = { it.id to it.name },
             updateHandler = { data, id, new -> data.updateBundle(id, new) },
             resetHandler = { data, id -> data.resetBundle(id) },
-            createHandler = { modalManager, cosmeticsDataWithChanges, state ->
-                CancelableInputModal(modalManager, "Bundle id").configure {
-                    titleText = "Create New Bundle"
-                    contentText = "Enter the id for the new bundle."
-                }.apply {
-                    onPrimaryActionWithValue { id ->
-                        if (cosmeticsDataWithChanges.getCosmeticBundle(id) != null) {
-                            setError("That id already exists!")
-                            return@onPrimaryActionWithValue
-                        }
-                        cosmeticsDataWithChanges.registerBundle(
-                            id,
-                            "Bundle name",
-                            CosmeticTier.COMMON,
-                            0f,
-                            false,
-                            CosmeticBundle.Skin("bff1570fdf623153e6b4a4d2ca97559b471f1ec776584ceec2ebb8bf0b7ba504", Model.ALEX), // A default skin I use for my alt, just so it's not empty :)
-                            mapOf(),
-                            mapOf(),
-                        )
-                    }
+            createHandler = { cosmeticsDataWithChanges ->
+                launchModalFlow(platform.createModalManager()) {
+                    val id = createWithIDModal("Bundle", cosmeticsDataWithChanges.bundles.letState { it.map { it.id } }.toListState())
+                    cosmeticsDataWithChanges.registerBundle(id)
                 }
             }
         )
@@ -162,22 +128,10 @@ class ConfigurationType<I, T> private constructor(
             comparator = compareByDescending { it.availability?.after ?: Instant.MAX },
             updateHandler = { data, id, new -> data.updateFeaturedPageCollection(id, new) },
             resetHandler = { data, id -> data.resetFeaturedPageCollection(id) },
-            createHandler = { modalManager, cosmeticsDataWithChanges, state ->
-                CancelableInputModal(modalManager, "Featured page collection id").configure {
-                    titleText = "Create New Featured Page Collection"
-                    contentText = "Enter the id for the new Featured Page Collection."
-                }.apply {
-                    onPrimaryActionWithValue { id ->
-                        if (cosmeticsDataWithChanges.getFeaturedPageCollection(id) != null) {
-                            setError("That id already exists!")
-                            return@onPrimaryActionWithValue
-                        }
-                        cosmeticsDataWithChanges.registerFeaturedPageCollection(
-                            id,
-                            null,
-                            mapOf(),
-                        )
-                    }
+            createHandler = { cosmeticsDataWithChanges ->
+                launchModalFlow(platform.createModalManager()) {
+                    val id = createWithIDModal("Featured page collection", cosmeticsDataWithChanges.featuredPageCollections.letState { it.map { it.id } }.toListState())
+                    cosmeticsDataWithChanges.registerFeaturedPageCollection(id)
                 }
             }
         )
@@ -188,22 +142,10 @@ class ConfigurationType<I, T> private constructor(
             idAndNameMapper = { it.id to it.id },
             updateHandler = { data, id, new -> data.updateImplicitOwnership(id, new) },
             resetHandler = { data, id -> data.resetImplicitOwnership(id) },
-            createHandler = { modalManager, cosmeticsDataWithChanges, state ->
-                CancelableInputModal(modalManager, "Implicit ownership id").configure {
-                    titleText = "Create New Implicit Ownership"
-                    contentText = "Enter the id for the new Implicit Ownership. This should typically be the same as the cosmetic being unlocked."
-                }.apply {
-                    onPrimaryActionWithValue { id ->
-                        if (cosmeticsDataWithChanges.getImplicitOwnership(id) != null) {
-                            setError("That id already exists!")
-                            return@onPrimaryActionWithValue
-                        }
-                        cosmeticsDataWithChanges.registerImplicitOwnership(
-                            id,
-                            listOf(),
-                            GitRepoCosmeticsDatabase.ImplicitOwnershipCriterion.Everyone
-                        )
-                    }
+            createHandler = { cosmeticsDataWithChanges ->
+                launchModalFlow(platform.createModalManager()) {
+                    val id = createWithIDModal("Implicit ownership", cosmeticsDataWithChanges.implicitOwnerships.letState { it.map { it.id } }.toListState())
+                    cosmeticsDataWithChanges.registerNewImplicitOwnership(id)
                 }
             }
         )
@@ -214,5 +156,36 @@ class ConfigurationType<I, T> private constructor(
             stateSupplier = { Triple(it.currentlyEditingSortWeightCategoryId, it.currentlyEditingSortWeightCategory, it.rawCategories) },
             idAndNameMapper = { it.id to it.id },
         )
+
+        suspend fun ModalFlow.createWithIDModal(name: String, idCollection: ListState<String>) = awaitModal { continuation ->
+            object : EssentialModal2(modalManager, false) {
+                private val input = UITextInput("Enter New ID", shadowColor = EssentialPalette.BLACK)
+
+                private val errorMessageState = memo {
+                    if (idCollection().contains(input.textState())) "That ID already exists!" else null
+                }
+
+                override fun LayoutScope.layoutTitle() {
+                    title("Create a new $name")
+                }
+
+                override fun LayoutScope.layoutBody() {
+                    box(Modifier.width(106f).height(17f)) {
+                        essentialInput(input, errorMessageState = errorMessageState, inputModifier = Modifier.height(10f).color(EssentialPalette.TEXT))
+                    }
+                }
+
+                override fun LayoutScope.layoutButtons() {
+                    cancelButton("Cancel")
+                    primaryButton("Create", disabled = errorMessageState.letState { it != null }) {
+                        val id = input.textState.getUntracked()
+                        if (!idCollection.getUntracked().contains(id)) {
+                            replaceWith(continuation.resume(id))
+                        }
+                    }
+                }
+
+            }
+        }
     }
 }

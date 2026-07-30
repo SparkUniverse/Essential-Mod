@@ -14,7 +14,7 @@ package gg.essential.gui.modals
 import gg.essential.gui.common.modal.ConfirmDenyModal
 import gg.essential.gui.common.modal.configure
 import gg.essential.gui.overlay.ModalManager
-import gg.essential.handlers.account.WebAccountManager
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 
 class AddAccountModal(modalManager: ModalManager) : ConfirmDenyModal(modalManager, false) {
     init {
@@ -24,7 +24,7 @@ class AddAccountModal(modalManager: ModalManager) : ConfirmDenyModal(modalManage
         }
 
         onPrimaryAction {
-            WebAccountManager.openInBrowser()
+            platform.openWebAccountManager()
         }
     }
 }

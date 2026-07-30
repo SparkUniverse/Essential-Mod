@@ -11,33 +11,32 @@
  */
 package gg.essential.gui.wardrobe.configuration.cosmetic.properties
 
-import gg.essential.elementa.state.BasicState
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.Checkbox
 import gg.essential.gui.common.IconButton
 import gg.essential.gui.common.input.StateTextInput
-import gg.essential.gui.common.input.UITextInput
 import gg.essential.gui.common.input.essentialStateTextInput
-import gg.essential.gui.common.modal.ConfirmDenyModal
-import gg.essential.gui.common.modal.NoticeEssentialModal
-import gg.essential.gui.common.modal.configure
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
+import gg.essential.gui.overlay.launchModalFlow
+import gg.essential.gui.wardrobe.configuration.AbstractConfiguration.AbstractConfigurationSubmenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.addAutoCompleteMenu
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorDeleteCosmeticPropertyModal
+import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.configuratorNoticeModal
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.divider
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledInputRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 import gg.essential.universal.USound
-import gg.essential.util.*
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.vigilance.utils.onLeftClick
 
 class CosmeticBoneHidingConfiguration(
     private val cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     private val cosmetic: Cosmetic,
-) : LayoutDslComponent {
+) : AbstractConfigurationSubmenu<Cosmetic>("properties:${CosmeticPropertyType.COSMETIC_BONE_HIDING.name}", CosmeticPropertyType.COSMETIC_BONE_HIDING.displayName, cosmetic) {
 
     private val boneHidingProperties = cosmetic.properties<CosmeticProperty.CosmeticBoneHiding>()
 
@@ -53,7 +52,25 @@ class CosmeticBoneHidingConfiguration(
             }
             column(Modifier.fillWidth(), Arrangement.spacedBy(5f)) {
                 text("Add new cosmetic bone hiding setting")
-                newSettingInput(boneHidingProperties)
+                row(Modifier.fillWidth(), Arrangement.SpaceAround) {
+                    val input = essentialStateTextInput(
+                        mutableStateOf(null),
+                        { it?.id ?: "" },
+                        { input ->
+                            if (input.isBlank())
+                                null
+                            else (cosmeticsDataWithChanges.getCosmetic(input) ?: throw StateTextInput.ParseException())
+                        }
+                    )
+                    addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
+
+                    val headCheckbox = checkbox(false)
+                    val bodyCheckbox = checkbox(false)
+                    val armsCheckbox = checkbox(false)
+                    val legsCheckbox = checkbox(false)
+
+                    addButton(input, boneHidingProperties, headCheckbox, bodyCheckbox, armsCheckbox, legsCheckbox)
+                }
             }
             divider()
             labeledInputRow("Copy from:") {
@@ -66,9 +83,9 @@ class CosmeticBoneHidingConfiguration(
                         else (cosmeticsDataWithChanges.getCosmetic(input)?.properties<CosmeticProperty.CosmeticBoneHiding>() ?: throw StateTextInput.ParseException())
                     }
                 )
-                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName }.toListState())
+                addAutoCompleteMenu(input, cosmeticsDataWithChanges.cosmetics.mapEach { it.id to it.displayName })
                 input
-            }.state.onSetValue(stateScope) { propertyList ->
+            }.state.onChange(stateScope) { propertyList ->
                 if (propertyList != null) {
                     val newPropertyList = cosmetic.allProperties.toMutableList()
                     newPropertyList.removeAll(boneHidingProperties)
@@ -98,25 +115,8 @@ class CosmeticBoneHidingConfiguration(
         }
     }
 
-    private fun LayoutScope.newSettingInput(properties: List<CosmeticProperty.CosmeticBoneHiding>) {
-
-        val input: UITextInput
-        row(Modifier.fillWidth(), Arrangement.SpaceAround) {
-            box(Modifier.width(75f).childBasedHeight(2f).color(EssentialPalette.BUTTON).hoverColor(EssentialPalette.BUTTON_HIGHLIGHT).hoverScope()) {
-                input = UITextInput("Cosmetic ID")(Modifier.fillWidth(padding = 2f))
-            }.onLeftClick { input.grabWindowFocus() }
-
-            val headCheckbox = checkbox(false)
-            val bodyCheckbox = checkbox(false)
-            val armsCheckbox = checkbox(false)
-            val legsCheckbox = checkbox(false)
-
-            addButton(input, properties, headCheckbox, bodyCheckbox, armsCheckbox, legsCheckbox)
-        }
-    }
-
     private fun LayoutScope.addButton(
-        input: UITextInput,
+        input: StateTextInput<Cosmetic?>,
         properties: List<CosmeticProperty.CosmeticBoneHiding>,
         headCheckbox: Checkbox,
         bodyCheckbox: Checkbox,
@@ -127,21 +127,15 @@ class CosmeticBoneHidingConfiguration(
             USound.playButtonPress()
             val cosmeticId = input.getText()
             if (cosmeticsDataWithChanges.getCosmetic(cosmeticId.uppercase()) == null) {
-                platform.pushModal { manager ->
-                    NoticeEssentialModal(manager, false).configure {
-                        titleText = "Invalid Cosmetic ID"
-                        contentText = "The ID you entered is not a valid cosmetic ID"
-                    }
+                launchModalFlow(platform.createModalManager()) {
+                    configuratorNoticeModal("Invalid Cosmetic ID", "The ID you entered is not a valid cosmetic ID")
                 }
                 return@onLeftClick
             }
 
             if (properties.any { it.id == cosmeticId }) {
-                platform.pushModal { manager ->
-                    NoticeEssentialModal(manager, false).configure {
-                        titleText = "Duplicate Cosmetic ID"
-                        contentText = "The target cosmetic already has a bone hiding setting. Update it instead of adding a new one."
-                    }
+                launchModalFlow(platform.createModalManager()) {
+                    configuratorNoticeModal("Duplicate Cosmetic ID", "The target cosmetic already has a bone hiding setting. Update it instead of adding a new one.")
                 }
                 return@onLeftClick
             }
@@ -152,15 +146,15 @@ class CosmeticBoneHidingConfiguration(
                     cosmeticId,
                     true,
                     CosmeticProperty.CosmeticBoneHiding.Data(
-                        head = headCheckbox.isChecked.get(),
-                        body = bodyCheckbox.isChecked.get(),
-                        arms = armsCheckbox.isChecked.get(),
-                        legs = legsCheckbox.isChecked.get(),
+                        head = headCheckbox.isChecked.getUntracked(),
+                        body = bodyCheckbox.isChecked.getUntracked(),
+                        arms = armsCheckbox.isChecked.getUntracked(),
+                        legs = legsCheckbox.isChecked.getUntracked(),
                     )
                 )
             )
 
-            input.setText("")
+            input.state.set(null)
             headCheckbox.isChecked.set(false)
             bodyCheckbox.isChecked.set(false)
             armsCheckbox.isChecked.set(false)
@@ -173,16 +167,9 @@ class CosmeticBoneHidingConfiguration(
         column(Arrangement.spacedBy(7f)) {
             text("Remove")
             for (property in properties) {
-                icon(EssentialPalette.CANCEL_7X).apply {
-                    bindHoverEssentialTooltip(BasicState("Remove"))
-                    onLeftClick {
-                        platform.pushModal { manager ->
-                            ConfirmDenyModal(manager, false).configure {
-                                titleText = "Are you sure you want to remove the setting for ${property.id}?"
-                            }.onPrimaryAction {
-                                cosmeticsDataWithChanges.removeCosmeticProperty(cosmetic.id, property)
-                            }
-                        }
+                icon(EssentialPalette.CANCEL_7X, Modifier.hoverTooltip("Remove").hoverScope()).onLeftClick {
+                    launchModalFlow(platform.createModalManager()) {
+                        configuratorDeleteCosmeticPropertyModal(cosmeticsDataWithChanges, cosmetic, property)
                     }
                 }
             }

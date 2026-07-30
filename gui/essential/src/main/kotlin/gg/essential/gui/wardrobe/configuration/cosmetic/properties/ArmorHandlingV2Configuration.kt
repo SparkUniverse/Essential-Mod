@@ -29,6 +29,7 @@ import gg.essential.gui.layoutdsl.wrappedText
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.addAutoCompleteMenu
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.AssetLoader
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsDataWithChanges
 import gg.essential.network.cosmetics.Cosmetic
@@ -39,6 +40,7 @@ class ArmorHandlingV2Configuration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.ArmorHandlingV2>(
+    CosmeticPropertyType.ARMOR_HANDLING_V2,
     CosmeticProperty.ArmorHandlingV2::class.java,
     cosmeticsDataWithChanges,
     cosmetic

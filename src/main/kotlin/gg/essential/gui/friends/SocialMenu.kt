@@ -76,6 +76,20 @@ class SocialMenu : InternalEssentialGUI(
         height = 27.pixels
     } childOf content
 
+    private val titleManagementActions by SocialTitleManagementActions(
+        selectedTab,
+        socialMenuState,
+        this,
+    ).constrain {
+        y = CenterPixelConstraint()
+    }.bindConstraints(selectedTab) {
+        x = if (it == Tab.CHAT) {
+            10.pixels(alignOpposite = true) boundTo tabsSelector
+        } else {
+            10.pixels(alignOpposite = true)
+        }
+    } childOf titleBar
+
     val chatTab by ChatTab(
         selectedTab,
         socialMenuState,
@@ -92,21 +106,8 @@ class SocialMenu : InternalEssentialGUI(
         connectionManager.socialMenuNewFriendRequestNoticeManager,
         tabsSelector,
         rightDivider,
+        titleManagementActions.search.textContentV2,
     )
-    private val titleManagementActions by SocialTitleManagementActions(
-        selectedTab,
-        socialMenuState,
-        this,
-    ).constrain {
-        y = CenterPixelConstraint()
-    }.bindConstraints(selectedTab) {
-        x = if (it == Tab.CHAT) {
-            10.pixels(alignOpposite = true) boundTo tabsSelector
-        } else {
-            10.pixels(alignOpposite = true)
-        }
-    } childOf titleBar
-
     private val tabs = listOf(chatTab, friendsTab)
 
     /**

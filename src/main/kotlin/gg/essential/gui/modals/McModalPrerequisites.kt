@@ -16,10 +16,12 @@ import gg.essential.gui.overlay.ModalFlow
 import gg.essential.gui.common.modal.ConnectingModal
 import gg.essential.gui.modals.McModalPrerequisites.connectionStatus
 import gg.essential.network.connectionmanager.ConnectionManagerStatus
+import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager
 import gg.essential.network.connectionmanager.features.Feature
 import gg.essential.network.connectionmanager.suspension.suspensionModal
 import gg.essential.universal.UMinecraft
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
+import kotlin.time.Duration.Companion.seconds
 
 object McModalPrerequisites : ModalPrerequisites() {
 
@@ -27,7 +29,7 @@ object McModalPrerequisites : ModalPrerequisites() {
 
     override suspend fun ModalFlow.doTermsOfServiceModal(): PrerequisiteResult {
         return if (connectionStatus.getUntracked() is ConnectionManagerStatus.TOSNotAccepted) {
-            tosModal().toResult()
+            tosModal(connectionStatus).toResult()
         } else {
             PrerequisiteResult.PASS
         }
@@ -59,8 +61,9 @@ object McModalPrerequisites : ModalPrerequisites() {
     }
 
     override suspend fun ModalFlow.doCosmeticsModal(): PrerequisiteResult {
-        if (!Essential.getInstance().connectionManager.cosmeticsManager.cosmeticsLoaded.getUntracked()) {
-            return cosmeticsLoadingModal().toResult()
+        val cosmeticsLoaded = Essential.getInstance().connectionManager.cosmeticsManager.cosmeticsLoaded
+        if (!cosmeticsLoaded.getUntracked()) {
+            return cosmeticsLoadingModal(cosmeticsLoaded, CosmeticsManager.LOAD_TIMEOUT_SECONDS.seconds).toResult()
         }
         return PrerequisiteResult.PASS
     }
@@ -68,7 +71,7 @@ object McModalPrerequisites : ModalPrerequisites() {
     override suspend fun ModalFlow.doConnectionStatusErrorModal(): PrerequisiteResult {
         // Checks all connection errors including authentication errors
         if (connectionStatus.getUntracked() is ConnectionManagerStatus.Error) {
-            connectionManagerErrorModal()
+            connectionManagerErrorModal(connectionStatus)
             return PrerequisiteResult.SUCCESS
         }
         return PrerequisiteResult.PASS

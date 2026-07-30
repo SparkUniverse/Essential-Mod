@@ -39,28 +39,28 @@ import gg.essential.gui.notification.Notifications
 import gg.essential.gui.overlay.ModalFlow
 import gg.essential.gui.overlay.ModalManager
 import gg.essential.universal.USound
-import gg.essential.util.AutoUpdate
-import gg.essential.util.MinecraftUtils.shutdown
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.util.toState
 import java.awt.Color
 import kotlin.coroutines.cancellation.CancellationException
 
 class UpdateAvailableModal(modalManager: ModalManager, private val continuation: ModalFlow.ModalContinuation<Boolean>) : EssentialModal2(modalManager, false) {
+    private val autoUpdateManager = platform.autoUpdateManager
 
     override fun onOpen() {
         super.onOpen()
 
-        AutoUpdate.dismissUpdateToast?.invoke()
+        autoUpdateManager.dismissUpdateNotification()
     }
 
     override fun LayoutScope.layoutTitle() {
-        text(AutoUpdate.getNotificationTitle(), Modifier.whenTrue({ AutoUpdate.requiresUpdate() }, Modifier.color(EssentialPalette.MODAL_WARNING)))
+        text(autoUpdateManager.getNotificationTitle(), Modifier.whenTrue({ autoUpdateManager.isUpdateRequired }, Modifier.color(EssentialPalette.MODAL_WARNING)))
     }
 
     override fun LayoutScope.layoutBody() {
         val autoUpdate = EssentialConfig.autoUpdateState
         column(Modifier.fillWidth(), Arrangement.spacedBy(17f)) {
-            ifNotNull(AutoUpdate.changelog.toState()) { changelog ->
+            ifNotNull(autoUpdateManager.changelog.toState()) { changelog ->
                 wrappedText(changelog, centered = true)
             }
             row(
@@ -100,10 +100,10 @@ class UpdateAvailableModal(modalManager: ModalManager, private val continuation:
 suspend fun ModalFlow.updateAvailableModal() {
     val acceptedUpdate = awaitModal { continuation -> UpdateAvailableModal(modalManager, continuation) }
     if (acceptedUpdate) {
-        AutoUpdate.update(EssentialConfig.autoUpdate)
+        platform.autoUpdateManager.acceptUpdate()
         awaitModal { EssentialRebootUpdateModal(modalManager) }
     } else {
-        AutoUpdate.ignoreUpdate()
+        platform.autoUpdateManager.ignoreUpdate()
         throw CancellationException("Update Denied")
     }
 }
@@ -116,7 +116,7 @@ class EssentialRebootUpdateModal(modalManager: ModalManager) : EssentialModal2(m
     override fun LayoutScope.layoutButtons() {
         row(Arrangement.spacedBy(8f)) {
             cancelButton("Quit & Update", Modifier.hoverScope().hoverTooltip("This will close your game!", position = EssentialTooltip.Position.ABOVE, padding = 4f)) {
-                shutdown()
+                platform.shutdown()
             }
             primaryButton("Okay") {
                 Notifications.push("Update Confirmed", "Essential will update next time you launch the game!")
@@ -138,7 +138,7 @@ class UpdateRequiredModal(modalManager: ModalManager) : EssentialModal2(modalMan
             primaryButton(
                 "Quit & Update",
                 Modifier.hoverTooltip("This will close your game!", position = EssentialTooltip.Position.ABOVE, padding = 4f),
-                action = ::shutdown,
+                action = { platform.shutdown() },
                 style = OutlineButtonStyle.GRAY
             )
         }

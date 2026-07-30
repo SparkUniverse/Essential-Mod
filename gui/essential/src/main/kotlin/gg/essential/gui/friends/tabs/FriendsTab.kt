@@ -12,25 +12,34 @@
 package gg.essential.gui.friends.tabs
 
 import gg.essential.elementa.UIComponent
-import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.FillConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.components.*
 import gg.essential.elementa.constraints.CopyConstraintFloat
 import gg.essential.gui.EssentialPalette
-import gg.essential.gui.common.bindChildren
 import gg.essential.gui.common.bindParent
-import gg.essential.gui.common.shadow.EssentialUIText
 import gg.essential.gui.elementa.state.v2.State
+import gg.essential.gui.elementa.state.v2.toListState
 import gg.essential.gui.friends.Tab
 import gg.essential.gui.friends.message.SocialMenuActions
 import gg.essential.gui.friends.previews.*
 import gg.essential.gui.friends.state.PlayerActivity
 import gg.essential.gui.friends.state.SocialStates
+import gg.essential.gui.layoutdsl.Alignment
+import gg.essential.gui.layoutdsl.Arrangement
+import gg.essential.gui.layoutdsl.Modifier
+import gg.essential.gui.layoutdsl.alignVertical
+import gg.essential.gui.layoutdsl.color
+import gg.essential.gui.layoutdsl.column
+import gg.essential.gui.layoutdsl.fillRemainingHeight
+import gg.essential.gui.layoutdsl.fillWidth
+import gg.essential.gui.layoutdsl.layoutAsColumn
+import gg.essential.gui.layoutdsl.scrollable
+import gg.essential.gui.layoutdsl.spacer
+import gg.essential.gui.layoutdsl.text
 import gg.essential.network.connectionmanager.notices.SocialMenuNewFriendRequestNoticeManager
 import gg.essential.util.scrollGradient
-import kotlin.Comparator
 
 class FriendsTab(
     selectedTab: State<Tab>,
@@ -39,6 +48,7 @@ class FriendsTab(
     private val friendRequestNoticeManager: SocialMenuNewFriendRequestNoticeManager,
     private val tabsSelector: UIComponent,
     private val rightDivider: UIComponent,
+    private val searchQuery: State<String>,
 ) : TabComponent(Tab.FRIENDS, selectedTab) {
 
     private val horizontalDivider by UIBlock(EssentialPalette.COMPONENT_BACKGROUND).constrain {
@@ -53,32 +63,6 @@ class FriendsTab(
         height = FillConstraint(useSiblings = false)
     } childOf this
 
-    private val pendingSorter: Comparator<UIComponent> = compareBy(
-        { (it as PendingUserEntry).incoming },
-        {
-            -(socialStates.relationships.getPendingRequestTime((it as PendingUserEntry).user)?.toEpochMilli()
-                ?: 0)
-        }
-    )
-
-    private val friendSorter: Comparator<UIComponent> = compareBy<UIComponent> {
-        val activity = socialStates.activity.getActivity((it as BasicUserEntry).user)
-        if (activity.isJoinable()) {
-            return@compareBy 0L
-        }
-        when (activity) {
-            is PlayerActivity.Multiplayer -> 0L
-            is PlayerActivity.SPSSession -> if (activity.isJoinable()) 0L else 1L
-            is PlayerActivity.OnlineWithDescription -> 1L
-            PlayerActivity.Online -> 2L
-            is PlayerActivity.Offline -> Long.MAX_VALUE - (activity.lastOnline ?: 0L)
-        }
-    }.thenBy { (it as BasicUserEntry).usernameState.get() }
-
-    private val blockedSorter: Comparator<UIComponent> = compareBy {
-        (it as BasicUserEntry).usernameState.get()
-    }
-
     private val friendSection by Section(UserEntryType.FRIEND) childOf sectionContainer
     private val firstDivider by createDivider(friendSection) childOf sectionContainer
     private val pendingSection by Section(UserEntryType.PENDING) childOf sectionContainer
@@ -92,9 +76,8 @@ class FriendsTab(
         blockedSection.setupScrollbar(it)
     }
 
-    override val userLists: List<ScrollComponent> = listOf(
-        friendSection.scrollList, pendingSection.scrollList, blockedSection.scrollList
-    )
+    // Unused, previously used for search in TabComponent, before Section class rewrite
+    override val userLists: List<ScrollComponent> = listOf()
 
     private fun createDivider(section: Section): UIBlock {
         return UIBlock(EssentialPalette.COMPONENT_BACKGROUND).constrain {
@@ -107,64 +90,76 @@ class FriendsTab(
     }
 
     override fun populate() {
-        val relationshipStates = socialStates.relationships
-
-        friendSection.scrollList.bindChildren(
-            relationshipStates.getObservableFriendList(),
-            comparator = friendSorter
-        ) {
-            FriendUserEntry(it, socialStates, socialMenuActions, friendSection)
-        }
-
-        blockedSection.scrollList.bindChildren(
-            relationshipStates.getObservableBlockedList(),
-            comparator = blockedSorter
-        ) {
-            BlockedUserEntry(it, socialMenuActions, blockedSection)
-        }
-
-        pendingSection.scrollList.bindChildren(
-            relationshipStates.getObservableIncomingRequests(),
-            comparator = pendingSorter
-        ) {
-            PendingUserEntry(it, true, socialStates, socialMenuActions, friendRequestNoticeManager, pendingSection)
-        }
-
-        pendingSection.scrollList.bindChildren(
-            relationshipStates.getObservableOutgoingRequests(),
-            comparator = pendingSorter
-        ) {
-            PendingUserEntry(it, false, socialStates, socialMenuActions, friendRequestNoticeManager, pendingSection)
-        }
+        // Unused, previously used for search in TabComponent, before Section class rewrite
     }
 
     override fun sortUserLists() {
-        friendSection.scrollList.sortChildren(friendSorter)
-        blockedSection.scrollList.sortChildren(blockedSorter)
-        pendingSection.scrollList.sortChildren(pendingSorter)
+        // Unused, previously used for search in TabComponent, before Section class rewrite
     }
 
-    private inner class Section(private val type: UserEntryType) : UIContainer(), SortListener {
-        private val text by EssentialUIText(type.sectionTitle).constrain {
-            x = CenterConstraint()
-            y = 8.pixels
-            color = EssentialPalette.TEXT_HIGHLIGHT.toConstraint()
-        } childOf this
+    private inner class Section(private val type: UserEntryType) : UIContainer() {
+        private var scroller: ScrollComponent
+        private val userList = State {
+            val relationships = socialStates.relationships
+            val search = searchQuery().lowercase()
+            when (type) {
+                UserEntryType.FRIEND -> relationships.friends()
+                    .map { FriendUserEntry(it, socialStates, socialMenuActions) }
+                    .sortedWith(
+                        compareBy<FriendUserEntry> {
+                            val activity = socialStates.activity.getActivityState(it.user)()
+                            if (activity.isJoinable()) {
+                                return@compareBy 0L
+                            }
+                            when (activity) {
+                                is PlayerActivity.Multiplayer -> 0L
+                                is PlayerActivity.SPSSession -> if (activity.isJoinable()) 0L else 1L
+                                is PlayerActivity.OnlineWithDescription -> 1L
+                                PlayerActivity.Online -> 2L
+                                is PlayerActivity.Offline -> Long.MAX_VALUE - (activity.lastOnline ?: 0L)
+                            }
+                        }.thenBy { it.usernameState() }
+                    )
 
-        val scrollList by ScrollComponent(type.emptyText).constrain {
-            x = CenterConstraint()
-            y = SiblingConstraint(10f)
-            width = 100.percent - 20.pixels
-            height = FillConstraint(useSiblings = false)
-        }.apply {
-            emptyText.setColor(EssentialPalette.TEXT)
-        } childOf this scrollGradient 20.pixels
+                UserEntryType.BLOCKED -> relationships.blocked()
+                    .map { BlockedUserEntry(it, socialMenuActions) }
+                    .sortedBy { it.usernameState() }
+
+                UserEntryType.PENDING -> (relationships.incomingFriendRequests() + relationships.outgoingFriendRequests())
+                    .map { PendingUserEntry(it.user, it.since, false, socialStates, socialMenuActions, friendRequestNoticeManager) }
+                    .sortedWith(
+                        compareBy<PendingUserEntry> { it.incoming }.thenByDescending { it.since }
+                    )
+            }.filter { it.usernameState().contains(search, ignoreCase = true) }
+        }.toListState()
+
 
         init {
             constrain {
                 x = SiblingConstraint()
                 width = (100.percent - (rightDivider.getWidth().pixels * 2)) / 3
                 height = 100.percent
+            }
+            layoutAsColumn {
+                spacer(height = 8f)
+                text(type.sectionTitle, Modifier.color(EssentialPalette.TEXT_HIGHLIGHT))
+                spacer(height = 10f)
+                scroller = scrollable(vertical = true, modifier = Modifier.fillRemainingHeight().fillWidth(1f, 10f)) {
+                    column(Modifier.fillWidth().alignVertical(Alignment.Start)) {
+                        if_({ userList().isEmpty() }) {
+                            spacer(height = 4f)
+                            text(type.emptyText, Modifier.color(EssentialPalette.TEXT))
+                        } `else` {
+                            column(Modifier.fillWidth(), Arrangement.spacedBy(7f)) {
+                                forEach(userList) {
+                                    it()
+                                }
+                            }
+                            spacer(height = 10f)
+                        }
+                    }
+                }
+                scroller.scrollGradient(20.pixels)
             }
         }
 
@@ -173,16 +168,7 @@ class FriendsTab(
                 width = 100.percent
             } childOf parent
 
-            scrollList.setVerticalScrollBarComponent(scrollbar, hideWhenUseless = true)
-        }
-
-        override fun sort() {
-            val filter: java.util.Comparator<UIComponent> = when (type) {
-                UserEntryType.FRIEND -> friendSorter
-                UserEntryType.PENDING -> pendingSorter
-                UserEntryType.BLOCKED -> blockedSorter
-            }
-            scrollList.sortChildren(filter)
+            scroller.setVerticalScrollBarComponent(scrollbar, hideWhenUseless = true)
         }
 
     }

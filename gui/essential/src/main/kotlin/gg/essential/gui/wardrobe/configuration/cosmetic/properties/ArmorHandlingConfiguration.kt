@@ -14,6 +14,7 @@ package gg.essential.gui.wardrobe.configuration.cosmetic.properties
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.wardrobe.configuration.ConfigurationUtils.labeledRow
 import gg.essential.mod.cosmetics.settings.CosmeticProperty
+import gg.essential.mod.cosmetics.settings.CosmeticPropertyType
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
 
@@ -21,6 +22,7 @@ class ArmorHandlingConfiguration(
     cosmeticsDataWithChanges: CosmeticsDataWithChanges,
     cosmetic: Cosmetic,
 ) : SingletonPropertyConfiguration<CosmeticProperty.ArmorHandling>(
+    CosmeticPropertyType.ARMOR_HANDLING,
     CosmeticProperty.ArmorHandling::class.java,
     cosmeticsDataWithChanges,
     cosmetic

@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.modals
 
-import gg.essential.Essential
 import gg.essential.data.OnboardingData
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.OutlineButtonStyle
@@ -47,7 +46,7 @@ import gg.essential.gui.overlay.ModalManager
 import gg.essential.gui.util.focusable
 import gg.essential.network.connectionmanager.ConnectionManagerStatus
 import gg.essential.universal.USound
-import gg.essential.util.AutoUpdate.showUpdateModal
+import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.util.openInBrowser
 import gg.essential.vigilance.utils.onLeftClick
 import java.net.URI
@@ -136,7 +135,7 @@ class TOSModal(
             action = {
                 OnboardingData.setAcceptedTos()
 
-                if (requiresAuth && !Essential.getInstance().connectionManager.isAuthenticated) {
+                if (requiresAuth && !platform.cmConnection.isOpen) {
                     isConnecting.set(true)
                 }
                 replaceWith(continuation.resume(true))
@@ -163,7 +162,7 @@ class TOSModal(
 
 }
 
-suspend fun ModalFlow.tosModal(): Boolean {
+suspend fun ModalFlow.tosModal(connectionStatus: State<ConnectionManagerStatus?>): Boolean {
     val acceptedTos = awaitModal { continuation ->
         TOSModal(
             modalManager,
@@ -174,21 +173,19 @@ suspend fun ModalFlow.tosModal(): Boolean {
     if (acceptedTos) {
         OnboardingData.setAcceptedTos()
 
-        if(!Essential.getInstance().connectionManager.isAuthenticated) {
-            val connectionManager = Essential.getInstance().connectionManager
-            val status = connectionManager.connectionStatus
+        if (!platform.cmConnection.isOpen) {
+            val status = connectionStatus
                 .letState { status ->
                     if (status == ConnectionManagerStatus.TOSNotAccepted) return@letState null
                     if (status != ConnectionManagerStatus.Success) return@letState status
-                    if (!connectionManager.suspensionManager.isLoaded()) return@letState null
-                    if (!connectionManager.rulesManager.isLoaded()) return@letState null
+                    if (!platform.suspensionManager.isLoaded()) return@letState null
+                    if (!platform.rulesManager.isLoaded()) return@letState null
                     ConnectionManagerStatus.Success
                 }.await { it != null }
 
             when {
-                connectionManager.outdated -> showUpdateModal()
-                status is ConnectionManagerStatus.Error.AuthenticationFailure -> return accountNotValidModal()
-                status != ConnectionManagerStatus.Success -> connectionManagerErrorModal()
+                status == ConnectionManagerStatus.Outdated -> updateRequiredModal()
+                status != ConnectionManagerStatus.Success -> connectionManagerErrorModal(connectionStatus)
             }
         }
     }
