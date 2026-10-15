@@ -13,16 +13,22 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 
 import gg.essential.cosmetics.model.CosmeticType;
 import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticTypesPopulatePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
+import gg.essential.network.connectionmanager.cosmetics.InfraCosmeticsData;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerCosmeticTypesPopulatePacketHandler extends PacketHandler<ServerCosmeticTypesPopulatePacket> {
+public class ServerCosmeticTypesPopulatePacketHandler implements PacketHandler<ServerCosmeticTypesPopulatePacket> {
+
+    private final InfraCosmeticsData infraCosmeticsData;
+
+    public ServerCosmeticTypesPopulatePacketHandler(InfraCosmeticsData infraCosmeticsData) {
+        this.infraCosmeticsData = infraCosmeticsData;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerCosmeticTypesPopulatePacket packet) {
+    public void handle(@NotNull final ServerCosmeticTypesPopulatePacket packet) {
         for (@NotNull final CosmeticType cosmeticType : packet.getCosmeticTypes()) {
-            connectionManager.getCosmeticsManager().getInfraCosmeticsData().addType(cosmeticType);
+            infraCosmeticsData.addType(cosmeticType);
         }
     }
 

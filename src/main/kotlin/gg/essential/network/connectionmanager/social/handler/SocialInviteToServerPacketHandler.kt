@@ -14,28 +14,28 @@ package gg.essential.network.connectionmanager.social.handler
 import gg.essential.config.EssentialConfig
 import gg.essential.connectionmanager.common.packet.social.SocialInviteToServerPacket
 import gg.essential.gui.notification.sendServerInviteNotification
-import gg.essential.network.connectionmanager.ConnectionManager
 import gg.essential.network.connectionmanager.handler.PacketHandler
+import gg.essential.network.connectionmanager.social.SocialManager
 import gg.essential.util.Multithreading
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class SocialInviteToServerPacketHandler : PacketHandler<SocialInviteToServerPacket>() {
+class SocialInviteToServerPacketHandler(val socialManager: SocialManager) : PacketHandler<SocialInviteToServerPacket> {
     private val cooldowns = mutableSetOf<UUID>()
 
-    override fun onHandle(connectionManager: ConnectionManager, packet: SocialInviteToServerPacket) {
+    override fun handle(packet: SocialInviteToServerPacket) {
         if (!EssentialConfig.essentialEnabled) return
 
         val hostUUID = packet.uuid
         val address = packet.address
-        connectionManager.socialManager.addIncomingServerInvite(hostUUID, address)
+        socialManager.addIncomingServerInvite(hostUUID, address)
 
         if (cooldowns.contains(hostUUID)) return
         cooldowns.add(hostUUID)
         Multithreading.scheduleOnMainThread({ cooldowns.remove(hostUUID) }, NOTIFICATION_COOLDOWN_DURATION, TimeUnit.SECONDS)
 
         sendServerInviteNotification(hostUUID, address) {
-            connectionManager.socialManager.removeIncomingServerInvite(hostUUID)
+            socialManager.removeIncomingServerInvite(hostUUID)
         }
 
     }

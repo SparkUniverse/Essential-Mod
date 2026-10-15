@@ -15,6 +15,7 @@ import gg.essential.elementa.constraints.MinConstraint
 import gg.essential.elementa.dsl.boundTo
 import gg.essential.elementa.dsl.effect
 import gg.essential.elementa.dsl.percent
+import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.EssentialDropDown
 import gg.essential.gui.common.FullEssentialToggle
 import gg.essential.gui.common.onSetValueAndNow
@@ -23,9 +24,11 @@ import gg.essential.gui.elementa.state.v2.mutableListStateOf
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.vigilancev2.palette.VigilancePalette
 import gg.essential.mod.vigilance2.builder.StateBackedPropertyValue
+import gg.essential.mod.vigilance2.builder.VisibleDependencyPredicate
 import gg.essential.vigilance.data.PropertyData
 import gg.essential.vigilance.data.PropertyType
 import gg.essential.vigilance.gui.settings.*
+import gg.essential.vigilance.utils.onLeftClick
 import java.awt.Color
 
 fun LayoutScope.settingContainer(data: PropertyData) {
@@ -57,6 +60,25 @@ fun LayoutScope.settingContainer(data: PropertyData) {
                         Modifier.color(VigilancePalette.TEXT).shadow(VigilancePalette.TEXT_SHADOW),
                         lineSpacing = 10f
                     )
+
+
+                    val links = (data.dependencyPredicate as? VisibleDependencyPredicate)?.links
+                    if (!links.isNullOrEmpty()) {
+                        val modifier = Modifier.color(VigilancePalette.TEXT_URL).shadow(VigilancePalette.TEXT_URL_SHADOW).hoverColor(VigilancePalette.TEXT_URL_HOVER)
+                        column {
+                            spacer(height = 3f)
+                            row(Arrangement.spacedBy(10f)) {
+                                for ((name, action) in links) {
+                                    row(Modifier.hoverScope(), Arrangement.spacedBy(4f)) {
+                                        text(name, modifier.underline())
+                                        icon(EssentialPalette.ARROW_UP_RIGHT_5X5, modifier)
+                                    }.onLeftClick {
+                                        action()
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

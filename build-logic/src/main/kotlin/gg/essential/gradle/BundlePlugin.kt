@@ -13,17 +13,18 @@ package gg.essential.gradle
 
 import gg.essential.gradle.multiversion.Platform
 import gg.essential.gradle.util.RelaxFabricLoaderDependencyTransform
-import gg.essential.gradle.util.kotlinVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.kotlin.dsl.*
 import net.fabricmc.loom.task.RemapJarTask
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.ArchiveOperations
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.support.serviceOf
 import org.gradle.language.jvm.tasks.ProcessResources
 
@@ -225,8 +226,13 @@ private fun Project.configureForFabricLoader(configurations: Configurations, pla
     // For Kotlin, we instead bundle the official fabric-language-kotlin mod
     bundle.excludeKotlin()
     dependencies {
-        val kotlin = platform.kotlinVersion
-        include("net.fabricmc:fabric-language-kotlin:${kotlin.mod}+kotlin.${kotlin.stdlib}") {
+        val kotlinVersion = libs.findVersion("kotlin").orElseThrow().toString()
+        val flkVersion = libs.findVersion("fabricLanguageKotlin").orElseThrow().toString()
+        // Sanity check to make sure no one updates the Kotlin version without also updating FLK
+        if (!flkVersion.endsWith("+kotlin.${kotlinVersion}")) {
+            throw IllegalArgumentException("Version of fabric-language-kotlin ($flkVersion) does not match declared Kotlin ($kotlinVersion).")
+        }
+        include("net.fabricmc:fabric-language-kotlin:$flkVersion") {
             attributes {
                 attribute(relaxedFabricLoaderDependency, true)
             }
@@ -260,13 +266,10 @@ private fun Project.configureForModLauncher(configurations: Configurations, plat
     bundle.exclude(group = "org.jetbrains.kotlinx")
     bundle.exclude(group = "org.jetbrains", module = "annotations")
     dependencies {
-        val kotlin = platform.kotlinVersion
-        jij("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin.stdlib}")
-        jij("org.jetbrains.kotlin:kotlin-reflect:${kotlin.stdlib}")
-        jij("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")
-        jij("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${kotlin.coroutines}")
-        jij("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}")
-        jij("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}")
+        jij(libs.findBundle("kotlin").orElseThrow())
         jij.exclude(group = "org.jetbrains", module = "annotations")
     }
 }
+
+private val Project.libs
+    get() = extensions.getByType<VersionCatalogsExtension>().named("libs")

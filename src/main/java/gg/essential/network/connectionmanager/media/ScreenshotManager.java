@@ -16,16 +16,6 @@ import com.sparkuniverse.toolbox.chat.model.Channel;
 import com.sparkuniverse.toolbox.util.DateTime;
 import gg.essential.Essential;
 import gg.essential.config.EssentialConfig;
-import gg.essential.connectionmanager.common.packet.Packet;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaCreatePacket;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaDeleteRequestPacket;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaGetUploadUrlPacket;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaRequestPacket;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaSharePacket;
-import gg.essential.connectionmanager.common.packet.media.ClientMediaUpdatePacket;
-import gg.essential.connectionmanager.common.packet.media.ServerMediaPopulatePacket;
-import gg.essential.connectionmanager.common.packet.media.ServerMediaUploadUrlPacket;
-import gg.essential.connectionmanager.common.packet.response.ResponseActionPacket;
 import gg.essential.connectionmanager.common.packet.telemetry.ClientTelemetryPacket;
 import gg.essential.event.render.RenderTickEvent;
 import gg.essential.gui.NotificationsKt;
@@ -35,34 +25,23 @@ import gg.essential.gui.elementa.state.v2.collections.MutableTrackedList;
 import gg.essential.gui.elementa.state.v2.collections.TrackedList;
 import gg.essential.gui.modals.FeatureDisabledModal;
 import gg.essential.gui.notification.Notifications;
-import gg.essential.gui.screenshot.LocalScreenshot;
 import gg.essential.gui.screenshot.ScreenshotId;
 import gg.essential.gui.screenshot.ScreenshotInfo;
 import gg.essential.gui.screenshot.ScreenshotOverlay;
 import gg.essential.gui.screenshot.ScreenshotUploadToast;
 import gg.essential.gui.screenshot.action.PostScreenshotAction;
 import gg.essential.gui.screenshot.components.ScreenshotComponentsKt;
-import gg.essential.gui.screenshot.components.ScreenshotProviderManager;
-import gg.essential.gui.screenshot.concurrent.PrioritizedCallable;
-import gg.essential.gui.screenshot.concurrent.PriorityThreadPoolExecutor;
-import gg.essential.gui.screenshot.downsampling.PixelBuffer;
 import gg.essential.gui.screenshot.handler.ScreenshotChecksumManager;
 import gg.essential.gui.screenshot.handler.ScreenshotMetadataManager;
-import gg.essential.gui.screenshot.providers.FileCachedWindowedImageProvider;
+import gg.essential.gui.screenshot.handler.ScreenshotPreviewCache;
 import gg.essential.handlers.io.DirectoryWatcher;
 import gg.essential.handlers.io.FileSystemEvent;
 import gg.essential.handlers.screenshot.ClientScreenshotMetadata;
 import gg.essential.handlers.screenshot.FileSystemEventKt;
-import gg.essential.handlers.screenshot.ScreenshotUploadUtil;
-import gg.essential.image.imagescaling.ResampleOp;
 import gg.essential.media.model.Media;
-import gg.essential.media.model.MediaLocationMetadata;
-import gg.essential.media.model.MediaMetadata;
 import gg.essential.media.model.MediaVariant;
 import gg.essential.network.connectionmanager.ConnectionManager;
-import gg.essential.network.connectionmanager.NetworkedManager;
 import gg.essential.network.connectionmanager.features.Feature;
-import gg.essential.network.connectionmanager.handler.screenshot.ServerScreenshotListPacketHandler;
 import gg.essential.sps.SpsAddress;
 import gg.essential.universal.UDesktop;
 import gg.essential.universal.wrappers.UPlayer;
@@ -72,11 +51,8 @@ import gg.essential.util.GuiUtil;
 import gg.essential.util.HelpersKt;
 import gg.essential.util.MinecraftUtils;
 import gg.essential.util.Multithreading;
-import gg.essential.util.TimeFormatKt;
 import gg.essential.util.UUIDUtil;
 import gg.essential.util.lwjgl3.Lwjgl3Loader;
-import gg.essential.util.lwjgl3.api.NativeImageReader;
-import io.netty.buffer.UnpooledByteBufAllocator;
 import kotlin.Pair;
 import kotlin.Unit;
 import me.kbrewster.eventbus.Subscribe;
@@ -97,40 +73,32 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static gg.essential.gui.elementa.state.v2.ListKt.clear;
 import static gg.essential.gui.elementa.state.v2.ListKt.mutableListStateOf;
-import static gg.essential.gui.screenshot.UtilsKt.getImageTime;
-import static gg.essential.gui.screenshot.providers.WindowProviderKt.toSingleWindowRequest;
 import static gg.essential.util.HelpersKt.combinedOrderedScreenshotsState;
 
-public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
+public class ScreenshotManager implements IScreenshotManager {
 
     private final MutableState<MutableTrackedList<Pair</*name*/ String, /*checksum*/ String>>> localScreenshots = mutableListStateOf();
-    private final MutableState<MutableTrackedList<Media>> remoteScreenshots = mutableListStateOf();
 
     private final State<TrackedList<ScreenshotInfo>> screenshots;
 
-    private final NativeImageReader nativeImageReader;
-    private final Map<String, Media> uploadedScreenshots = new HashMap<>();
     private final ConnectionManager connectionManager;
+    private final RemoteMediaManager remoteMediaManager;
     private final ScreenshotMetadataManager screenshotMetadataManager;
+    private final ScreenshotUploader screenshotUploader;
     private final Set<String> screenshotFiles = Sets.newConcurrentHashSet();
 
-    private final PriorityThreadPoolExecutor backgroundExecutor = new PriorityThreadPoolExecutor(1);
-    private final FileCachedWindowedImageProvider minResolutionProvider;
-
     private final ScreenshotChecksumManager screenshotChecksumManager;
+
+    private final ScreenshotPreviewCache screenshotPreviewCache;
 
     private final DirectoryWatcher screenshotFolderWatcher;
 
@@ -138,7 +106,6 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
 
     public ScreenshotManager(ConnectionManager connectionManager, File baseDir, Lwjgl3Loader lwjgl3) {
         this.connectionManager = connectionManager;
-        connectionManager.registerPacketHandler(ServerMediaPopulatePacket.class, new ServerScreenshotListPacketHandler(this));
 
         // Essential.getInstance() cannot be used at this point
         File metadataFolder = new File(baseDir, "screenshot-metadata");
@@ -151,10 +118,11 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
                 Essential.logger.error("Failed to create screenshot metadata directory.", e);
             }
         }
-        nativeImageReader = lwjgl3.get(NativeImageReader.class);
+        remoteMediaManager = new RemoteMediaManager(connectionManager);
         screenshotChecksumManager = new ScreenshotChecksumManager(HelpersKt.getScreenshotFolder(), new File(baseDir, "screenshot-checksum-caches.json"));
+        screenshotPreviewCache = new ScreenshotPreviewCache(baseDir.toPath(), lwjgl3);
         screenshotMetadataManager = new ScreenshotMetadataManager(metadataFolder, screenshotChecksumManager);
-        minResolutionProvider = ScreenshotProviderManager.Companion.createFileCachedBicubicProvider(ScreenshotProviderManager.minResolutionTargetResolution, backgroundExecutor, UnpooledByteBufAllocator.DEFAULT, baseDir.toPath(), nativeImageReader, true);
+        screenshotUploader = new ScreenshotUploader(connectionManager, remoteMediaManager);
         Multithreading.runAsync(this::preloadScreenshots);
         screenshotFolderWatcher = new DirectoryWatcher(HelpersKt.getScreenshotFolder().toPath(), false, 1, TimeUnit.SECONDS);
         screenshotFolderWatcher.onBatchUpdate(this::flushFilesystemOperationsQueue);
@@ -163,20 +131,8 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
             screenshotMetadataManager,
             HelpersKt.getScreenshotFolder().toPath(),
             localScreenshots,
-            remoteScreenshots
+            remoteMediaManager.getUploadedScreenshotsState()
         );
-    }
-
-    @Override
-    public void resetState() {
-        uploadedScreenshots.clear();
-        clear(remoteScreenshots);
-    }
-
-    @Override
-    public void onConnected() {
-        resetState();
-        this.connectionManager.send(new ClientMediaRequestPacket(null));
     }
 
     private void preloadScreenshots() {
@@ -189,7 +145,7 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
                 }
 
                 screenshotFiles.add(file.getName());
-                precompute(file);
+                screenshotPreviewCache.precompute(file.toPath());
                 getScreenshotMetadataManager().getMetadata(file);
 
                 String checksum = screenshotChecksumManager.get(file);
@@ -204,8 +160,8 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
         return fileName.endsWith(".png") && fileName.length() > 4;
     }
 
-    public NativeImageReader getNativeImageReader() {
-        return nativeImageReader;
+    public RemoteMediaManager getRemoteMediaManager() {
+        return remoteMediaManager;
     }
 
     @Override
@@ -218,47 +174,30 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
         return screenshots;
     }
 
-    public CompletableFuture<Media> upload(Path path) {
-        return upload(path, screenshotMetadataManager.getOrCreateMetadata(path));
-    }
-
-    public CompletableFuture<Media> upload(Path path, ClientScreenshotMetadata metadata) {
-        return upload(path, metadata, ScreenshotUploadToast.create());
-    }
-
     @Override
     public CompletableFuture<Media> upload(Path path, ClientScreenshotMetadata metadata, Consumer<ScreenshotUploadToast.ToastProgress> progressConsumer) {
         Media existingMediaIfPresent = getUploadedMedia(path);
         if (existingMediaIfPresent != null) {
             return CompletableFuture.completedFuture(existingMediaIfPresent);
         }
-        CompletableFuture<Media> uploadFuture = new CompletableFuture<>();
-        this.connectionManager.send(new ClientMediaGetUploadUrlPacket(), packetOptional -> {
-            Packet packet = packetOptional.orElse(null);
-            if (!(packet instanceof ServerMediaUploadUrlPacket)) {
-                if (packet == null) {
-                    uploadFuture.completeExceptionally(new ScreenshotUploadException("No response"));
-                } else {
-                    uploadFuture.completeExceptionally(new ScreenshotUploadException("Unexpected response: " + packet));
-                }
-            } else {
-                progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Step(25));
-                Multithreading.runAsync(() -> upload(path, metadata, (ServerMediaUploadUrlPacket) packet, progressConsumer, uploadFuture));
+
+        return screenshotUploader.uploadAsync(
+            path,
+            metadata,
+            (percent) -> {
+                progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Step(percent));
+                return Unit.INSTANCE;
             }
-        });
-        uploadFuture.whenCompleteAsync((media, throwable) -> {
+        ).whenCompleteAsync((media, throwable) -> {
             if (throwable != null) {
-                throwable.printStackTrace();
-                if (throwable instanceof ScreenshotUploadException) {
-                    progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Failed: " + throwable.getMessage(), false));
-                } else {
-                    progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Failed: An unknown error occurred", false));
-                }
-            } else {
-                connectionManager.getTelemetryManager().enqueue(ClientTelemetryPacket.forAction("SCREENSHOT_UPLOADED"));
+                Essential.logger.error("Failed to upload media at path '{}'", path, throwable);
+                progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Failed to upload screenshot", false));
+                return;
             }
+
+            Multithreading.runAsync(() -> screenshotMetadataManager.updateMetadata(metadata.withMediaId(media.getId())));
+            connectionManager.getTelemetryManager().enqueue(ClientTelemetryPacket.forAction("SCREENSHOT_UPLOADED"));
         }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
-        return uploadFuture;
     }
 
     @Override
@@ -318,45 +257,18 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
     }
 
     public void shareLinkToChannels(List<Channel> channels, Media media, Consumer<ScreenshotUploadToast.ToastProgress> progressConsumer) {
-        connectionManager.send(new ClientMediaSharePacket(
-                channels.stream().map(Channel::getId).collect(Collectors.toSet()),
-                Sets.newHashSet(media.getId())),
-                response -> {
-                    Packet packet = response.orElse(null);
-                    if (packet instanceof ResponseActionPacket) {
-                        ResponseActionPacket responseActionPacket = (ResponseActionPacket) packet;
-                        if (responseActionPacket.isSuccessful()) {
-                            progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Picture shared", true, channels));
-                        } else {
-                            progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Error: Failed to share pictures", false));
-                        }
-                    } else {
-                        progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Error: Failed to share pictures", false));
-                    }
-                }
-        );
-    }
-
-    public void screenshotsReceived(List<Media> screenshots) {
-        if (screenshots == null) return;
-        for (Media media : screenshots) {
-            uploadedScreenshots.put(media.getId(), media);
-
-            MutableTrackedList<Media> list = remoteScreenshots.getUntracked();
-            int index = -1;
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i).getId().equals(media.getId())) {
-                    index = i;
-                    break;
-                }
+        remoteMediaManager.shareMediaAsync(
+            channels.stream().map(Channel::getId).collect(Collectors.toSet()),
+            Sets.newHashSet(media.getId())
+        ).whenCompleteAsync((unit, throwable) -> {
+            if (throwable != null) {
+                Essential.logger.error("Failed to share media with ID '{}'", media.getId(), throwable);
+                progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Error: Failed to share picture", false));
+                return;
             }
-            if (index != -1) {
-                list = list.set(index, media);
-            } else {
-                list = list.add(media);
-            }
-            remoteScreenshots.set(list);
-        }
+
+            progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Complete("Picture shared", true, channels));
+        }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
     }
 
     private CompletableFuture<Media> uploadAndAcceptMedia(Path path, ClientScreenshotMetadata metadata, Consumer<ScreenshotUploadToast.ToastProgress> progressConsumer, Consumer<Media> mediaConsumer) {
@@ -368,60 +280,6 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
         }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
 
         return uploadFuture;
-    }
-
-    private void upload(Path path, @NotNull ClientScreenshotMetadata metadata, ServerMediaUploadUrlPacket packet, Consumer<ScreenshotUploadToast.ToastProgress> progressConsumer, CompletableFuture<Media> uploadFuture) {
-        try {
-            if (ScreenshotUploadUtil.INSTANCE.httpUpload(packet.getUploadUrl(), FileUtils.readFileToByteArray(path.toFile()))) {
-                progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Step(50));
-                // Successful upload
-                UUIDUtil.getName(metadata.getAuthorId()).whenCompleteAsync((username, throwable) -> {
-                    if (throwable != null) {
-                        // Probably an edge case, but if the account that took a screenshot cannot be resolved because it does not exist,
-                        // we fallback to the current username, which should exist if they are connected to the CM.
-                        UUIDUtil.getName(UUIDUtil.getClientUUID()).whenCompleteAsync((username1, throwable1) -> {
-                            if (throwable1 != null) {
-                                uploadFuture.completeExceptionally(new ScreenshotUploadException("Unable to resolve current users username", throwable1));
-                            } else {
-                                completeUpload(metadata, packet, progressConsumer, uploadFuture, username1);
-                            }
-                        }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
-                    } else {
-                        completeUpload(metadata, packet, progressConsumer, uploadFuture, username);
-                    }
-                }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
-            } else {
-                uploadFuture.completeExceptionally(new ScreenshotUploadException("Unable to upload file to Cloudflare Images"));
-            }
-
-        } catch (IOException e) {
-            uploadFuture.completeExceptionally(new ScreenshotUploadException("Unable to upload file to Cloudflare Images", e));
-        }
-
-    }
-
-    private void completeUpload(@NotNull ClientScreenshotMetadata metadata, ServerMediaUploadUrlPacket packet, Consumer<ScreenshotUploadToast.ToastProgress> progressConsumer, CompletableFuture<Media> uploadFuture, String username) {
-        progressConsumer.accept(new ScreenshotUploadToast.ToastProgress.Step(75));
-        final DateTime time = metadata.getEditTime() != null ? metadata.getEditTime() : metadata.getTime();
-        final String identifier = metadata.getLocationMetadata().getIdentifier();
-        final SpsAddress spsAddress = identifier != null ? SpsAddress.parse(identifier) : null;
-        connectionManager.send(new ClientMediaCreatePacket(packet.getMediaId(), username + "'s Screenshot", "Captured " + TimeFormatKt.formatDateAndTime(time.toInstant()), new MediaMetadata(
-            metadata.getAuthorId(),
-            time,
-            new MediaLocationMetadata(metadata.getLocationMetadata().getType().toNetworkType(), identifier, spsAddress == null ? null : spsAddress.getHost()),
-            metadata.getFavorite(),
-            metadata.getEdited()
-        )), packetOptional -> {
-            final Packet packet1 = packetOptional.orElse(null);
-            if (!(packet1 instanceof ServerMediaPopulatePacket)) {
-                uploadFuture.completeExceptionally(new ScreenshotUploadException("Server gave unexpected response"));
-            } else {
-                uploadFuture.complete(((ServerMediaPopulatePacket) packet1).getMedias().get(0));
-            }
-            // Update the screenshot metadata store the media ID
-            ClientScreenshotMetadata newMetadata = metadata.withMediaId(packet.getMediaId());
-            Multithreading.runAsync(() -> screenshotMetadataManager.updateMetadata(newMetadata));
-        });
     }
 
     public ClientScreenshotMetadata getCurrentMetadata() {
@@ -479,10 +337,6 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
 
     }
 
-    private void precompute(File source) {
-        backgroundExecutor.submit(new PrecomputeTask(source, minResolutionProvider));
-    }
-
     /**
      * Used to notify when a new screenshot has been taken
      */
@@ -492,7 +346,7 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
         screenshotFiles.add(imgFile.getName());
         ExtensionsKt.getExecutor(Minecraft.getMinecraft()).execute(() ->
             localScreenshots.set(list -> list.add(new Pair<>(imgFile.getName(), metadata.getChecksum()))));
-        precompute(imgFile);
+        screenshotPreviewCache.precompute(imgFile.toPath());
 
         if (showOverlay) {
             ExtensionsKt.getExecutor(Minecraft.getMinecraft()).execute(() -> ScreenshotOverlay.INSTANCE.push(imgFile));
@@ -536,13 +390,8 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
         return screenshotChecksumManager.get(file);
     }
 
-    @Override
-    public Collection<Media> getUploadedMedia() {
-        return uploadedScreenshots.values();
-    }
-
     public Media getUploadedMedia(String mediaId) {
-        return uploadedScreenshots.get(mediaId);
+        return remoteMediaManager.getUploadedScreenshotsByIdState().getUntracked().get(mediaId);
     }
 
     @NotNull
@@ -576,13 +425,15 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
 
     @Override
     public ClientScreenshotMetadata setFavorite(Media media, boolean favorite) {
-        connectionManager.send(new ClientMediaUpdatePacket(media.getId(), null, null, favorite), maybeReply -> {
-            Packet reply = maybeReply.orElse(null);
-            if (reply instanceof ServerMediaPopulatePacket) {
-                return; // all good
+        remoteMediaManager.setFavoriteAsync(media.getId(), favorite).whenCompleteAsync((unit, throwable) -> {
+            if (throwable == null) {
+                return;
             }
-            Essential.logger.error("Failed to update favorite state of {}: {}", media.getId(), reply);
-        });
+
+            Essential.logger.error("Failed to update favorite state of {}", media.getId(), throwable);
+        }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
+
+        // FIXME: This should not run if the connection-manager returns an unsuccessful response.
         media.getMetadata().setFavorite(favorite);
         return new ClientScreenshotMetadata(media);
     }
@@ -650,20 +501,7 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
      * @return true if the file was removed from the [screenshotFiles] list, false if it was not present.
      */
     public boolean handleDelete(@NotNull File file, boolean external) {
-
-        // Clean up downsampled caches
-        final File screenshot_cache = new File(Essential.getInstance().getBaseDir(), "screenshot-cache");
-        if (screenshot_cache.exists()) {
-            final File[] files = screenshot_cache.listFiles();
-            if (files != null) {
-                for (File directory : files) {
-                    if (directory.isDirectory()) {
-                        final File downsampledCache = new File(directory, file.getName());
-                        downsampledCache.delete();
-                    }
-                }
-            }
-        }
+        screenshotPreviewCache.evict(file.toPath());
 
         boolean mutated = screenshotFiles.remove(file.getName());
         if (mutated) {
@@ -688,16 +526,6 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
 
     @Override
     public void deleteMedia(String mediaId, Path localFile) {
-        uploadedScreenshots.remove(mediaId);
-
-        MutableTrackedList<Media> list = remoteScreenshots.getUntracked();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getId().equals(mediaId)) {
-                remoteScreenshots.set(list.removeAt(i));
-                break;
-            }
-        }
-
         if (localFile != null) {
             // FIXME: Should ideally only update this once CM confirms that it's been deleted.
             //        But that gets us into callback hell, so it's only something to consider once this class starts
@@ -708,20 +536,14 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
             }
         }
 
-        connectionManager.send(new ClientMediaDeleteRequestPacket(mediaId), maybeReply -> {
-            Packet reply = maybeReply.orElse(null);
-            if (reply instanceof ResponseActionPacket && ((ResponseActionPacket) reply).isSuccessful()) {
-                return; // all good
+        remoteMediaManager.deleteMediaAsync(mediaId).whenCompleteAsync((unit, throwable) -> {
+            if (throwable == null) {
+                return;
             }
-            Essential.logger.error("Failed to delete media with id {}: {}", mediaId, reply);
-            Notifications.INSTANCE.push("Error Deleting Screenshot", "An unknown error occurred. Check logs for details");
-        });
-    }
 
-    @Override
-    @NotNull
-    public List<Path> getOrderedPaths() {
-        return HelpersKt.getOrderedPaths(this.screenshotFiles, HelpersKt.getScreenshotFolder().toPath(), path -> getImageTime(path, screenshotMetadataManager.getMetadata(path), true));
+            Essential.logger.error("Failed to delete media with ID '{}'", mediaId, throwable);
+            Notifications.INSTANCE.push("Error Deleting Screenshot", "An unknown error occurred. Check logs for details");
+        }, ExtensionsKt.getExecutor(Minecraft.getMinecraft()));
     }
 
     private File getEditedName(ScreenshotId source) {
@@ -848,29 +670,5 @@ public class ScreenshotManager implements NetworkedManager, IScreenshotManager {
                 UPlayer.sendClientSideMessage(component);
             }
         });
-    }
-
-    private static class PrecomputeTask extends PrioritizedCallable<Void> {
-
-        private final File file;
-        private final FileCachedWindowedImageProvider provider;
-
-        public PrecomputeTask(File file, FileCachedWindowedImageProvider provider) {
-            super(Integer.MAX_VALUE, PRECOMPUTE, 0);
-            this.file = file;
-            this.provider = provider;
-        }
-
-        @Override
-        public Void call() throws Exception {
-            try {
-                ResampleOp.isBackgroundTask.set(true);
-                provider.setItems(Collections.singletonList(new LocalScreenshot(file.toPath())));
-                provider.provide(toSingleWindowRequest(0), Collections.emptySet()).values().forEach(PixelBuffer::release);
-                return null;
-            } finally {
-                ResampleOp.isBackgroundTask.set(false);
-            }
-        }
     }
 }

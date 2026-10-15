@@ -45,7 +45,6 @@ import gg.essential.gui.image.ImageFactory
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.util.hoveredStateV2
 import gg.essential.gui.util.isComponentInParentChain
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.UMouse
 import gg.essential.universal.render.UGpuSampler
 import gg.essential.vigilance.utils.onLeftClick
@@ -395,23 +394,6 @@ fun newGradient(
                 height = heightSize
             }
             super.preFirstDraw()
-        }
-
-        @Deprecated(
-            "`draw`-style rendering is deprecated. Use `extract` instead.",
-            replaceWith = ReplaceWith("extractBeforeChildren(extractor)")
-        )
-        override fun beforeChildrenDraw(matrixStack: UMatrixStack) {
-            // Run in afterDraw
-        }
-
-        @Deprecated(
-            "`draw`-style rendering is deprecated. Use `extract` instead.",
-            replaceWith = ReplaceWith("extractAfter(extractor)")
-        )
-        override fun afterDraw(matrixStack: UMatrixStack) {
-            @Suppress("DEPRECATION")
-            super.beforeChildrenDraw(matrixStack)
         }
 
         override fun extractBeforeChildren(extractor: ElementaExtractor) {

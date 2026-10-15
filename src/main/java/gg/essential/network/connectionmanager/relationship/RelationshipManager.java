@@ -34,10 +34,10 @@ import gg.essential.network.connectionmanager.StateCallbackManager;
 import gg.essential.network.connectionmanager.handler.relationships.FriendRequestPrivacySettingPacketHandler;
 import gg.essential.network.connectionmanager.handler.relationships.ServerRelationshipDeletePacketHandler;
 import gg.essential.network.connectionmanager.handler.relationships.ServerRelationshipPopulatePacketHandler;
-import gg.essential.util.Multithreading;
 import gg.essential.util.ObservableMapEvent;
 import gg.essential.util.SimpleObservableMap;
 import gg.essential.util.StringsKt;
+import gg.essential.util.USession;
 import gg.essential.util.UUIDUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +70,8 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
         this.connectionManager = connectionManager;
 
         connectionManager.registerPacketHandler(FriendRequestPrivacySettingPacket.class, new FriendRequestPrivacySettingPacketHandler());
-        connectionManager.registerPacketHandler(ServerRelationshipDeletePacket.class, new ServerRelationshipDeletePacketHandler());
-        connectionManager.registerPacketHandler(ServerRelationshipPopulatePacket.class, new ServerRelationshipPopulatePacketHandler());
+        connectionManager.registerPacketHandler(ServerRelationshipDeletePacket.class, new ServerRelationshipDeletePacketHandler(this));
+        connectionManager.registerPacketHandler(ServerRelationshipPopulatePacket.class, new ServerRelationshipPopulatePacketHandler(this));
 
         friends.addObserver((o, arg) -> {
             for (IRelationshipManager callback : getCallbacks()) {
@@ -291,7 +291,7 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
     }
 
     public void createRelationship(@NotNull final Relationship relationship) {
-        final UUID ourUUID = this.connectionManager.getMinecraftHook().getPlayerUUID();
+        final UUID ourUUID = USession.Companion.activeNow().getUuid();
         final boolean areWeTheSender = (relationship.getSenderUUID().equals(ourUUID));
         final UUID targetUUID = (areWeTheSender ? relationship.getTargetUUID() : relationship.getSenderUUID());
 
@@ -342,8 +342,6 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
                 } else this.blockedMe.put(targetUUID, relationship);
                 break;
         }
-
-        Multithreading.runAsync(this.connectionManager.getSpsManager()::refreshWhitelist);
     }
 
     public CompletableFuture<RelationshipResponse> createRelationship(@NotNull final UUID targetUUID, @NotNull final RelationshipType type) {
@@ -371,7 +369,7 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
     }
 
     public void removeRelationship(@NotNull final Relationship relationship) {
-        final UUID ourUUID = this.connectionManager.getMinecraftHook().getPlayerUUID();
+        final UUID ourUUID = USession.Companion.activeNow().getUuid();
         final boolean areWeTheSender = (relationship.getSenderUUID().equals(ourUUID));
         final UUID targetUUID = (areWeTheSender ? relationship.getTargetUUID() : relationship.getSenderUUID());
 
@@ -389,8 +387,6 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
                 } else this.blockedMe.remove(targetUUID);
                 break;
         }
-
-        Multithreading.runAsync(this.connectionManager.getSpsManager()::refreshWhitelist);
     }
 
     public CompletableFuture<RelationshipResponse> deleteRelationship(@NotNull final UUID targetUUID, @NotNull final RelationshipType type) {
@@ -435,8 +431,6 @@ public class RelationshipManager extends StateCallbackManager<IRelationshipManag
             this.blockedMe.remove(targetUUID);
 
             future.complete(new RelationshipResponse(FriendRequestState.SENT));
-
-            Multithreading.runAsync(this.connectionManager.getSpsManager()::refreshWhitelist);
         });
         return future;
     }

@@ -14,7 +14,6 @@ package gg.essential.cosmetics.events
 import gg.essential.model.BedrockModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.util.*
 
 @Serializable
 data class AnimationEvent(
@@ -30,6 +29,10 @@ data class AnimationEvent(
     val loops: Int = 0,
     val priority: Int = 0,
 ) {
+    /** Returns [loops], or [Int.MAX_VALUE] when looping indefinitely. */
+    val loopsOrMaxInt: Int
+        get() = if (loops == 0) Int.MAX_VALUE else loops
+
     fun getTotalTime(model: BedrockModel, whenLooping: Float = Float.POSITIVE_INFINITY): Float {
         return if (loops == 0) {
             whenLooping

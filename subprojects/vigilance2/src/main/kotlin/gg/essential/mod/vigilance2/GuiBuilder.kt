@@ -159,6 +159,7 @@ class GuiBuilder internal constructor(
         var description: String // default ""
         var visible: State<Boolean> // default stateOf(true)
         var searchTags: List<String> // default emptyList()
+        var links: List<Pair<String, () -> Unit>>
     }
 
     interface SwitchPropertyBuilder : CommonPropertyBuilder
@@ -234,6 +235,7 @@ class GuiBuilder internal constructor(
         override var protected: Boolean = false
         override var visible: State<Boolean> = stateOf(true)
         override var searchTags: List<String> = listOf()
+        override var links: List<Pair<String, () -> Unit>> = emptyList()
         var customPropertyInfo: Class<out PropertyInfo> = Nothing::class.java
 
         fun build(value: PropertyValue, instance: Vigilant): PropertyData {
@@ -268,7 +270,7 @@ class GuiBuilder internal constructor(
             )
             // and finally, this is where the magic happens
             val visible = visible
-            data.dependencyPredicate = VisibleDependencyPredicate(visible)
+            data.dependencyPredicate = VisibleDependencyPredicate(visible, links)
             return data
         }
     }

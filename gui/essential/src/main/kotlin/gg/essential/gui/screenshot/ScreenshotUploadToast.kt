@@ -31,7 +31,6 @@ import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.dsl.provideDelegate
 import gg.essential.elementa.dsl.toConstraint
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.renderer.fillMcScale
 import gg.essential.elementa.state.BasicState
 import gg.essential.gui.EssentialPalette
@@ -39,7 +38,6 @@ import gg.essential.gui.common.shadow.ShadowIcon
 import gg.essential.gui.elementa.state.v2.animateTransitions
 import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.notification.Notifications
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.vigilance.utils.onLeftClick
@@ -67,18 +65,6 @@ class ScreenshotUploadToast : UIContainer() {
 
         init {
             isFloating = true
-        }
-
-        @Deprecated(
-            "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-            replaceWith = ReplaceWith("extract(extractor)")
-        )
-        override fun draw(matrixStack: UMatrixStack) {
-            @Suppress("DEPRECATION")
-            beforeDraw(matrixStack)
-            extractComponent(ImmediateElementaExtractor(matrixStack))
-            @Suppress("DEPRECATION")
-            super.draw(matrixStack)
         }
 
         override fun extractComponent(extractor: ElementaExtractor) {

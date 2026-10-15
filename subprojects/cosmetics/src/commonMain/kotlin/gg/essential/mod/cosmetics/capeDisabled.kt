@@ -16,6 +16,7 @@ import gg.essential.model.util.now
 import gg.essential.network.cosmetics.Cosmetic
 import gg.essential.network.cosmetics.CosmeticBase
 import gg.essential.network.cosmetics.CosmeticStoreInfo
+import kotlin.jvm.JvmField
 
 const val CAPE_DISABLED_COSMETIC_ID = "CAPE_DISABLED"
 

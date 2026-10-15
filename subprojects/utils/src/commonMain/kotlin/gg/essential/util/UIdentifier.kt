@@ -17,6 +17,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.jvm.JvmStatic
 
 @Serializable(with = UIdentifier.Serializer::class)
 data class UIdentifier(val namespace: String, val path: String) {

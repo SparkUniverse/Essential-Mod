@@ -125,8 +125,8 @@ class FriendsTab(
                     .map { BlockedUserEntry(it, socialMenuActions) }
                     .sortedBy { it.usernameState() }
 
-                UserEntryType.PENDING -> (relationships.incomingFriendRequests() + relationships.outgoingFriendRequests())
-                    .map { PendingUserEntry(it.user, it.since, false, socialStates, socialMenuActions, friendRequestNoticeManager) }
+                UserEntryType.PENDING -> (relationships.incomingFriendRequests().map { it to true } + relationships.outgoingFriendRequests().map { it to false })
+                    .map { (request, incoming) -> PendingUserEntry(request.user, request.since, incoming, socialStates, socialMenuActions, friendRequestNoticeManager) }
                     .sortedWith(
                         compareBy<PendingUserEntry> { it.incoming }.thenByDescending { it.since }
                     )

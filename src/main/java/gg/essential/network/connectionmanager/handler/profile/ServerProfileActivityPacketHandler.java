@@ -12,17 +12,21 @@
 package gg.essential.network.connectionmanager.handler.profile;
 
 import gg.essential.connectionmanager.common.packet.profile.ServerProfileActivityPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
+import gg.essential.network.connectionmanager.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerProfileActivityPacketHandler extends PacketHandler<ServerProfileActivityPacket> {
+public class ServerProfileActivityPacketHandler implements PacketHandler<ServerProfileActivityPacket> {
+
+    private final ProfileManager profileManager;
+
+    public ServerProfileActivityPacketHandler(ProfileManager profileManager) {
+        this.profileManager = profileManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerProfileActivityPacket packet
-    ) {
-        connectionManager.getProfileManager().setPlayerActivity(packet.getUUID(), packet.getType(), packet.getMetadata());
+    public void handle(@NotNull final ServerProfileActivityPacket packet) {
+        profileManager.setPlayerActivity(packet.getUUID(), packet.getType(), packet.getMetadata());
     }
 
 }

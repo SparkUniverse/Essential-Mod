@@ -13,10 +13,8 @@ package gg.essential.gui.screenshot.image
 
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.screenshot.providers.RegisteredTexture
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.render.UGpuSampler
 import kotlin.math.roundToInt
 
@@ -35,19 +33,6 @@ open class ScreenshotImage(val texture: State<RegisteredTexture?>) : UIComponent
             premultipliedAlpha = false,
             getColor(),
         )
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        beforeDrawCompat(matrixStack)
-
-        extractComponent(ImmediateElementaExtractor(matrixStack))
-
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     companion object {

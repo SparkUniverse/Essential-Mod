@@ -12,12 +12,11 @@
 package gg.essential.network.connectionmanager.social.handler;
 
 import gg.essential.connectionmanager.common.packet.social.SocialInviteToServerCancelPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.connectionmanager.social.SocialManager;
 import org.jetbrains.annotations.NotNull;
 
-public class SocialInviteToServerCancelPacketHandler extends PacketHandler<SocialInviteToServerCancelPacket> {
+public class SocialInviteToServerCancelPacketHandler implements PacketHandler<SocialInviteToServerCancelPacket> {
 
     @NotNull
     private final SocialManager socialManager;
@@ -27,9 +26,7 @@ public class SocialInviteToServerCancelPacketHandler extends PacketHandler<Socia
     }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final SocialInviteToServerCancelPacket packet
-    ) {
+    public void handle(@NotNull final SocialInviteToServerCancelPacket packet) {
         socialManager.removeIncomingServerInvite(packet.getUUID());
     }
 

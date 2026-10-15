@@ -31,6 +31,7 @@ import gg.essential.gui.layoutdsl.checkboxAlt
 import gg.essential.gui.layoutdsl.color
 import gg.essential.gui.layoutdsl.column
 import gg.essential.gui.layoutdsl.fillWidth
+import gg.essential.gui.layoutdsl.font
 import gg.essential.gui.layoutdsl.hoverColor
 import gg.essential.gui.layoutdsl.hoverScope
 import gg.essential.gui.layoutdsl.row
@@ -61,28 +62,33 @@ class TOSModal(
     private val termsAndPrivacyCheckbox = mutableStateOf(false)
 
     override fun LayoutScope.layoutContent(modifier: Modifier) {
-        layoutContentImpl(modifier.width(305f))
+        layoutContentImpl(modifier.width(272f))
     }
 
     override fun LayoutScope.layoutTitle() {
-        title("Welcome to Essential Mod", Modifier.color(EssentialPalette.MODAL_TITLE_BLUE))
+        title("Welcome to Essential", Modifier.color(EssentialPalette.MODAL_TITLE_BLUE).font(EssentialPalette.MINECRAFT_TEN))
     }
 
     override fun LayoutScope.layoutBody() {
         column(Modifier.fillWidth(), Arrangement.spacedBy(15f)) {
             wrappedText(
-                "We care about your safety and privacy.\n" +
-                        "Please confirm your age and accept our terms.", centered = true
+                """
+                        We care about your privacy and safety.
+                        Please read the terms carefully and
+                        confirm your age.
+                    """.trimIndent(),
+                centered = true,
+                modifier = Modifier.shadow(EssentialPalette.BLACK)
             )
-            column(Arrangement.spacedBy(9f), Alignment.Start) {
+            column(Arrangement.spacedBy(6f), Alignment.Start) {
                 row(Arrangement.spacedBy(5f), Alignment.End) {
-                    checkboxAlt(ageCheckbox)
+                    checkboxAlt(ageCheckbox, outline = false)
                     text("I'm 13+ with parental consent, or 18+", Modifier.color(EssentialPalette.TEXT_MID_GRAY)).onLeftClick {
                         ageCheckbox.set { !it }
                     }
                 }
                 row(Arrangement.spacedBy(5f)) {
-                    checkboxAlt(termsAndPrivacyCheckbox, Modifier.alignVertical(Alignment.Start))
+                    checkboxAlt(termsAndPrivacyCheckbox, outline = false, modifier = Modifier.alignVertical(Alignment.Start))
                     column {
                         spacer(height = 1f)
                         wrappedText(
@@ -117,17 +123,17 @@ class TOSModal(
     }
 
     override fun LayoutScope.layoutButtons() {
-        row(Arrangement.spacedBy(8f)) {
+        column(Arrangement.spacedBy(4f)) {
             val isConnecting = mutableStateOf(false)
-            cancelButton(isConnecting)
             agreeButton(isConnecting)
+            cancelButton(isConnecting)
         }
     }
 
     private fun LayoutScope.agreeButton(isConnecting: MutableState<Boolean>) {
         outlineButton(
             Modifier
-                .width(91f)
+                .width(238f)
                 .shadow()
                 .tag(PrimaryAction),
             style = { OutlineButtonStyle.BLUE },
@@ -141,14 +147,14 @@ class TOSModal(
                 replaceWith(continuation.resume(true))
             },
         ) { currentStyle ->
-            text({ if (isConnecting()) "Connecting..." else "Agree" }, Modifier.textStyle(currentStyle))
+            text({ if (isConnecting()) "Connecting..." else ("Agree & Continue") }, Modifier.textStyle(currentStyle))
         }
     }
 
     private fun LayoutScope.cancelButton(isConnecting: State<Boolean>) {
         outlineButton(
             Modifier
-                .width(91f)
+                .width(238f)
                 .shadow()
                 .focusable(),
             disabled = isConnecting,

@@ -167,7 +167,7 @@ object McEssentialConfig {
             ::ClientProfileAppearOfflineStateTogglePacket,
         )
 
-        var lastCollectOptionalTelemetryFromSystemSource = true
+        var lastCollectOptionalTelemetryFromSystemSource = false
 
         fun restoreCollectOptionalTelemetryFromSystemSource() {
             collectOptionalTelemetryWithSource.set(lastCollectOptionalTelemetryFromSystemSource to false)

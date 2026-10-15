@@ -16,10 +16,14 @@ import java.net.SocketAddress
 
 interface NetworkSystemExt {
     fun `essential$getIceEndpoint`(): SocketAddress
+    //#if MC < 26.2
     fun `essential$removeLanEndpoint`()
+    //#endif
 }
 
 val NetworkSystem.ext get() = this as NetworkSystemExt
 
 fun NetworkSystem.getIceEndpoint() = ext.`essential$getIceEndpoint`()
+//#if MC < 26.2
 fun NetworkSystem.removeLanEndpoint() = ext.`essential$removeLanEndpoint`()
+//#endif

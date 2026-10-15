@@ -32,9 +32,12 @@ import gg.essential.gui.wardrobe.Wardrobe
 import gg.essential.network.connectionmanager.features.Feature
 import gg.essential.universal.GuiScale
 import gg.essential.universal.UScreen
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.Job
 import me.kbrewster.eventbus.Subscribe
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.resources.I18n
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -44,7 +47,7 @@ import kotlin.contracts.contract
 //#endif
 
 object GuiUtil : GuiUtil, OverlayManager by OverlayManagerImpl, ModalManager by ModalManagerImpl(OverlayManagerImpl) {
-    private var action: (() -> Unit)? = null
+    private val action: AtomicReference<Pair<() -> Unit, CompletableJob>?> = AtomicReference(null)
 
     /**
      * Creates a new [ModalManager] and queues the modal on it (which will result in it being pushed immediately).
@@ -109,10 +112,15 @@ object GuiUtil : GuiUtil, OverlayManager by OverlayManagerImpl, ModalManager by 
         }
 
         launchModalFlow {
-            if (screenRequiresTOS || features.isNotEmpty()) {
-                ensurePrerequisites(rules = false, features = features)
+            Essential.getInstance().gameStates.setNextScreen(type)
+            try {
+                if (screenRequiresTOS || features.isNotEmpty()) {
+                    ensurePrerequisites(rules = false, features = features)
+                }
+                doOpenScreen(screen).join()
+            } finally {
+                Essential.getInstance().gameStates.setNextScreen(null)
             }
-            doOpenScreen(screen)
         }
     }
 
@@ -126,8 +134,8 @@ object GuiUtil : GuiUtil, OverlayManager by OverlayManagerImpl, ModalManager by 
         doOpenScreen { screen }
     }
 
-    private fun doOpenScreen(screen: () -> GuiScreen?) {
-        action = { screen()?.also { screen ->
+    private fun doOpenScreen(screen: () -> GuiScreen?): Job {
+        return setAction { screen()?.also { screen ->
             Essential.getInstance().connectionManager.telemetryManager.enqueue(
                 ClientTelemetryPacket(
                     "GUI_OPEN",
@@ -161,6 +169,19 @@ object GuiUtil : GuiUtil, OverlayManager by OverlayManagerImpl, ModalManager by 
 
     @Subscribe
     fun tick(event: ClientTickEvent?) {
-        action?.also { action = null }?.invoke()
+        action.getAndSet(null)?.first?.invoke()
+    }
+
+    private fun setAction(task: () -> Unit): Job {
+        val job = Job()
+        val taskWithJobCompletion: () -> Unit = {
+            try {
+                task.invoke()
+            } finally {
+                job.complete()
+            }
+        }
+        action.getAndSet(taskWithJobCompletion to job)?.second?.complete()
+        return job
     }
 }

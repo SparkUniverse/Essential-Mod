@@ -25,11 +25,17 @@ import net.irisshaders.iris.api.v0.IrisProgram
 //#endif
 import net.minecraft.client.gl.RenderPipelines
 import net.minecraft.client.render.RenderLayer
+import net.minecraft.client.render.VertexFormats
 import net.minecraft.util.Identifier
 import net.minecraft.util.TriState
 
 //#if MC >= 26.3
 //$$ import com.mojang.renderpearl.api.pipeline.ShaderType
+//#endif
+
+//#if MC >= 26.2
+//#else
+import com.mojang.blaze3d.vertex.VertexFormat
 //#endif
 
 //#if MC >= 26.1
@@ -158,7 +164,22 @@ abstract class RenderLayerFactory : RenderLayer("dummy", 0, false, false, {}, {}
                 //#endif
             )
 
-        private val entityTranslucentCullPipeline = RenderPipelines.ENTITY_TRANSLUCENT.toBuilder().withCull(true).build()
+        private val entityTranslucentCullPipeline = RenderPipelines.ENTITY_TRANSLUCENT.toBuilder()
+            .withCull(true)
+            .apply {
+                // The following Iris mixin substitutes a different vertex format while shaders are active, which
+                // would prevent our pipeline from working without shaders (such is in-GUI) if we copied it.
+                // https://github.com/IrisShaders/Iris/blob/83c2be16151f4e65fb477263c73b4170da72b4aa/common/src/main/java/net/irisshaders/iris/mixin/MixinRenderPipeline.java
+                val expectedFormat = VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL
+                if (ModLoaderUtil.isModLoaded("iris")) {
+                    //#if MC >= 26.2
+                    //$$ withVertexBinding(0, expectedFormat)
+                    //#else
+                    withVertexFormat(expectedFormat, VertexFormat.DrawMode.QUADS)
+                    //#endif
+                }
+            }
+            .build()
             //#if FABRIC
             .assignIrisProgram {{ IrisProgram.ENTITIES_TRANSLUCENT }}
             //#endif

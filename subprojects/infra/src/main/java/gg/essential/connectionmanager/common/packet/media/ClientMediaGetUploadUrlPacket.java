@@ -12,6 +12,12 @@
 package gg.essential.connectionmanager.common.packet.media;
 
 import gg.essential.connectionmanager.common.packet.Packet;
+import org.jetbrains.annotations.Nullable;
 
 public class ClientMediaGetUploadUrlPacket extends Packet {
+    private final @Nullable String sha256;
+
+    public ClientMediaGetUploadUrlPacket(final @Nullable String sha256) {
+        this.sha256 = sha256;
+    }
 }

@@ -11,10 +11,8 @@
  */
 package gg.essential.mixins.transformers.server;
 
-import gg.essential.Essential;
 import gg.essential.mixins.ext.server.MinecraftServerExt;
 import gg.essential.mixins.ext.server.integrated.IntegratedServerExt;
-import gg.essential.network.connectionmanager.sps.SPSManager;
 import gg.essential.sps.McIntegratedServerManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketBuffer;
@@ -60,7 +58,6 @@ public abstract class Mixin_PublishServerStatusResponse implements MinecraftServ
     public void essential$updateServerStatus() {
         McIntegratedServerManager manager =
             this instanceof IntegratedServerExt ? ((IntegratedServerExt) this).getEssential$manager() : null;
-        SPSManager spsManager = Essential.getInstance().getConnectionManager().getSpsManager();
         if (manager != null) {
             // Not using .getJson() directly cause that's Forge-only
             String response;

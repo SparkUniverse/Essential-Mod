@@ -13,19 +13,20 @@ package gg.essential.network.connectionmanager.handler.profile.trustedhosts;
 
 import gg.essential.profiles.model.TrustedHost;
 import gg.essential.connectionmanager.common.packet.profile.trustedhosts.ServerProfileTrustedHostsPopulatePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.connectionmanager.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerProfileTrustedHostsPopulatePacketHandler extends PacketHandler<ServerProfileTrustedHostsPopulatePacket> {
+public class ServerProfileTrustedHostsPopulatePacketHandler implements PacketHandler<ServerProfileTrustedHostsPopulatePacket> {
+
+    private final ProfileManager profileManager;
+
+    public ServerProfileTrustedHostsPopulatePacketHandler(ProfileManager profileManager) {
+        this.profileManager = profileManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull ConnectionManager connectionManager, @NotNull ServerProfileTrustedHostsPopulatePacket packet
-    ) {
-        final ProfileManager profileManager = connectionManager.getProfileManager();
-
+    public void handle(@NotNull ServerProfileTrustedHostsPopulatePacket packet) {
         for (@NotNull final TrustedHost trustedHost : packet.getTrustedHosts()) {
             profileManager.addTrustedHost(trustedHost);
         }

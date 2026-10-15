@@ -22,6 +22,10 @@ object VigilancePalette {
     val TEXT_LIGHT = Color(0xBFBFBF)
     val TEXT_SHADOW = Color(0x3F3F3F)
 
+    val TEXT_URL = TEXT_LIGHT
+    val TEXT_URL_SHADOW = TEXT_SHADOW
+    val TEXT_URL_HOVER = Color(0xFFFFFF)
+
     val SIDEBAR_DIVIDER_LIGHT = Color(0x323232)
     val SIDEBAR_DIVIDER = Color(0x232323)
     val SCROLLBAR = Color(0x5C5C5C)

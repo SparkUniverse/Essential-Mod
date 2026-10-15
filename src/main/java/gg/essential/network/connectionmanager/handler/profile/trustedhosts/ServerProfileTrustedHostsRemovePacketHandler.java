@@ -12,19 +12,20 @@
 package gg.essential.network.connectionmanager.handler.profile.trustedhosts;
 
 import gg.essential.connectionmanager.common.packet.profile.trustedhosts.ServerProfileTrustedHostsRemovePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.connectionmanager.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerProfileTrustedHostsRemovePacketHandler extends PacketHandler<ServerProfileTrustedHostsRemovePacket> {
+public class ServerProfileTrustedHostsRemovePacketHandler implements PacketHandler<ServerProfileTrustedHostsRemovePacket> {
+
+    private final ProfileManager profileManager;
+
+    public ServerProfileTrustedHostsRemovePacketHandler(ProfileManager profileManager) {
+        this.profileManager = profileManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerProfileTrustedHostsRemovePacket packet
-    ) {
-        final ProfileManager profileManager = connectionManager.getProfileManager();
-
+    public void handle(@NotNull final ServerProfileTrustedHostsRemovePacket packet) {
         for (@NotNull final String trustedHostId : packet.getIds()) {
             profileManager.removeTrustedHost(trustedHostId);
         }

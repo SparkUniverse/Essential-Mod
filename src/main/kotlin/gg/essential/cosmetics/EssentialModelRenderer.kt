@@ -75,6 +75,7 @@ class EssentialModelRenderer(
         lightInt: Int,
         parts: Set<EnumPart> = EnumPart.entries.toSet(),
         setsPose: Boolean = false,
+        needsRootTransform: Boolean = true,
     ) {
         val wearablesManager = cState.wearablesManager() ?: return
         if (wearablesManager.models.isEmpty()) return
@@ -104,6 +105,23 @@ class EssentialModelRenderer(
         matrixStack.translate(-relativeCamera.x, -relativeCamera.y, -relativeCamera.z)
         UGraphics.GL.pushMatrix()
         UGraphics.GL.translate(relativeCamera.x, relativeCamera.y, relativeCamera.z)
+        //#endif
+
+        // With 1.21.2 now properly rendering all body parts relative to the root part, some third party mods might now
+        // apply transformations to the root part, we need to account for that
+        //#if MC >= 1.21.2
+        //$$ if (needsRootTransform) {
+        //$$     val root = playerRenderer.getModel().getRootPart()
+        //$$     if (root.pivotX != 0.0F || root.pivotY != 0.0F || root.pivotZ != 0.0F) {
+        //$$         matrixStack.translate(root.pivotX / 16.0F, root.pivotY / 16.0F, root.pivotZ / 16.0F)
+        //$$     }
+        //$$     if (root.pitch != 0.0F || root.yaw != 0.0F || root.roll != 0.0F) {
+        //$$         matrixStack.multiply(org.joml.Quaternionf().rotationZYX(root.roll, root.yaw, root.pitch))
+        //$$     }
+        //$$     if (root.xScale != 1.0F || root.yScale != 1.0F || root.zScale != 1.0F) {
+        //$$         matrixStack.scale(root.xScale, root.yScale, root.zScale)
+        //$$     }
+        //$$ }
         //#endif
 
         // MC renders with y = 0 at the head, we have it at the feet

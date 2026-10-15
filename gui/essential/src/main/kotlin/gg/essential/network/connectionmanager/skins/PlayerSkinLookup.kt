@@ -50,6 +50,8 @@ import kotlin.io.path.readBytes
 import kotlin.io.path.writeBytes
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
 object PlayerSkinLookup {
     private val LOGGER = LoggerFactory.getLogger(PlayerSkinLookup::class.java)
@@ -146,14 +148,15 @@ object PlayerSkinLookup {
         }
     }
 
+    @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
     private suspend fun fetchFromMojang(uuids: List<UUID>) {
         // Intentionally not parallelizing this to not annoy Mojang's servers
         for (uuid in uuids) {
             val skin = try {
-                fetchFromMojang(uuid) ?: Skin.default(uuid)
+                fetchFromMojang(uuid) ?: Skin.default(uuid.toKotlinUuid())
             } catch (e: Exception) {
                 LOGGER.error("Error fetching skin for $uuid from Mojang", e)
-                Skin.default(uuid)
+                Skin.default(uuid.toKotlinUuid())
             }
             put(uuid, skin)
         }

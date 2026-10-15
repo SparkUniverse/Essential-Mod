@@ -13,14 +13,13 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 
 import gg.essential.config.EssentialConfig;
 import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticsUserEquippedVisibilityPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerCosmeticsUserEquippedVisibilityPacketHandler extends PacketHandler<ServerCosmeticsUserEquippedVisibilityPacket> {
+public class ServerCosmeticsUserEquippedVisibilityPacketHandler implements PacketHandler<ServerCosmeticsUserEquippedVisibilityPacket> {
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerCosmeticsUserEquippedVisibilityPacket packet) {
+    public void handle(@NotNull final ServerCosmeticsUserEquippedVisibilityPacket packet) {
         EssentialConfig.INSTANCE.getOwnCosmeticsVisibleStateWithSource().set(new kotlin.Pair<>(packet.getState(), EssentialConfig.CosmeticsVisibilitySource.System));
     }
 

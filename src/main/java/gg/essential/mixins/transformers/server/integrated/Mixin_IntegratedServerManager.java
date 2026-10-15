@@ -66,6 +66,8 @@ public abstract class Mixin_IntegratedServerManager implements IntegratedServerE
         return manager;
     }
 
+    //#if MC < 26.2
+    // Removed in 26.2 as IntegratedServer exposes unpublishServer which removes the need for undoLan
     @Override
     public void essential$undoLan(@NotNull UUID host) {
         MinecraftServer minecraftServer = (MinecraftServer) (Object) this;
@@ -91,4 +93,5 @@ public abstract class Mixin_IntegratedServerManager implements IntegratedServerE
             this.lanServerPing = null;
         }
     }
+    //#endif
 }

@@ -13,16 +13,22 @@ package gg.essential.network.connectionmanager.handler.relationships;
 
 import gg.essential.connectionmanager.common.model.relationships.Relationship;
 import gg.essential.connectionmanager.common.packet.relationships.ServerRelationshipPopulatePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
+import gg.essential.network.connectionmanager.relationship.RelationshipManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerRelationshipPopulatePacketHandler extends PacketHandler<ServerRelationshipPopulatePacket> {
+public class ServerRelationshipPopulatePacketHandler implements PacketHandler<ServerRelationshipPopulatePacket> {
+
+    private final RelationshipManager relationshipManager;
+
+    public ServerRelationshipPopulatePacketHandler(RelationshipManager relationshipManager) {
+        this.relationshipManager = relationshipManager;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerRelationshipPopulatePacket packet) {
+    public void handle(@NotNull final ServerRelationshipPopulatePacket packet) {
         for (@NotNull final Relationship relationship : packet.getRelationships()) {
-            connectionManager.getRelationshipManager().createRelationship(relationship);
+            relationshipManager.createRelationship(relationship);
         }
     }
 

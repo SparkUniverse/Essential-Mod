@@ -55,8 +55,6 @@ dependencies {
     })
     implementation(bundle(project(":kdiscordipc"))!!)
 
-    implementation(bundle("gg.essential.lib:caffeine:2.9.0")!!) // keep in sync with `/libs/build.gradle.kts`
-
     implementation(bundle(project(":cosmetics"))!!)
 
     implementation(bundle(project(":lwjgl3"))!!)
@@ -158,7 +156,7 @@ dependencies {
             12107 -> "0.128.1+1.21.7"
             12109 -> "0.133.13+1.21.9"
             12111 -> "0.139.4+1.21.11"
-            26_01_00 -> "0.143.14+26.1"
+            26_01_02 -> "0.143.14+26.1"
             26_02_00 -> "0.151.0+26.2"
             26_03_00 -> "0.159.1+26.3"
             else -> error("No fabric API version configured!")
@@ -182,21 +180,6 @@ dependencies {
         modCompileOnly("maven.modrinth:$it")
     }
 
-
-    constraints {
-        val kotlin = KotlinVersion.minimal
-        val reason: DependencyConstraint.() -> Unit = {
-            because("this is the most recent version supported by all platforms")
-        }
-        for (name in listOf("stdlib", "stdlib-common", "stdlib-jdk7", "stdlib-jdk8")) {
-            implementation("org.jetbrains.kotlin:kotlin-$name:${kotlin.stdlib}!!", reason)
-        }
-        implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlin.stdlib}!!", reason)
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}!!", reason)
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${kotlin.coroutines}!!", reason)
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}!!", reason)
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}!!", reason)
-    }
 }
 
 if (platform.isFabric) {

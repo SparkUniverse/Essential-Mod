@@ -128,7 +128,7 @@ public class Connection extends WebSocketClient {
     private ScheduledFuture<?> timeoutTask;
     private Exception lastWebsocketException = null;
 
-    private static final int MAX_PROTOCOL = (11);
+    private static final int MAX_PROTOCOL = (12);
 
     public Connection(@NotNull Callbacks callbacks) {
         super(CM_HOST_URI);

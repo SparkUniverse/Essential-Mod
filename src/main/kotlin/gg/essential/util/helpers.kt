@@ -49,7 +49,6 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import kotlin.io.path.exists
@@ -64,6 +63,7 @@ import kotlin.io.path.toPath
 //#endif
 
 //#if MC>=11800
+//$$ import java.util.Optional
 //$$ import net.minecraft.client.gui.screen.option.KeybindsScreen
 //#else
 import net.minecraft.client.gui.GuiControls
@@ -431,22 +431,6 @@ fun USession.toMC() =
         "Xbox"
         //#endif
     )
-
-class Memoize<in T, out R>(val f: (T) -> R) : (T) -> R {
-    private val values = HashMap<T, R>()
-    override fun invoke(x: T): R {
-        return values.getOrPut(x, { f(x) })
-    }
-}
-
-fun <T, R> ((T) -> R).memoize(): (T) -> R = Memoize(this)
-
-fun getOrderedPaths(files: Set<String>, rootPath: Path, timeExtractor: (Path) -> DateTime): List<Path> {
-    val memoized = timeExtractor.memoize()
-    return files.map { rootPath.resolve(it) }.sortedWith(
-        compareByDescending<Path> { memoized(it) }.thenBy { it.fileName.toString() }
-    )
-}
 
 fun combinedOrderedScreenshotsState(
     metadataManager: ScreenshotMetadataManager,

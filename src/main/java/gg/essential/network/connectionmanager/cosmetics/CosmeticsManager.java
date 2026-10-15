@@ -171,13 +171,13 @@ public class CosmeticsManager implements NetworkedManager, ICosmeticsManager {
             }
         });
 
-        connectionManager.registerPacketHandler(ServerCosmeticsPopulatePacket.class, new ServerCosmeticsPopulatePacketHandler());
-        connectionManager.registerPacketHandler(ServerCosmeticTypesPopulatePacket.class, new ServerCosmeticTypesPopulatePacketHandler());
-        connectionManager.registerPacketHandler(ServerCosmeticCategoriesPopulatePacket.class, new ServerCosmeticCategoriesPopulatePacketHandler(this));
-        connectionManager.registerPacketHandler(ServerWardrobeStoreBundlePacket.class, new ServerWardrobeStoreBundlePacketHandler());
-        connectionManager.registerPacketHandler(ServerWardrobeSettingsPacket.class, new ServerWardrobeSettingsPacketHandler());
-        connectionManager.registerPacketHandler(ServerCosmeticsUserUnlockedPacket.class, new ServerCosmeticsUserUnlockedPacketHandler());
-        connectionManager.registerPacketHandler(ServerCosmeticsRevokePurchasePacket.class, new ServerCosmeticsRevokePurchasePacketHandler());
+        connectionManager.registerPacketHandler(ServerCosmeticsPopulatePacket.class, new ServerCosmeticsPopulatePacketHandler(infraCosmeticsData));
+        connectionManager.registerPacketHandler(ServerCosmeticTypesPopulatePacket.class, new ServerCosmeticTypesPopulatePacketHandler(infraCosmeticsData));
+        connectionManager.registerPacketHandler(ServerCosmeticCategoriesPopulatePacket.class, new ServerCosmeticCategoriesPopulatePacketHandler(infraCosmeticsData));
+        connectionManager.registerPacketHandler(ServerWardrobeStoreBundlePacket.class, new ServerWardrobeStoreBundlePacketHandler(infraCosmeticsData));
+        connectionManager.registerPacketHandler(ServerWardrobeSettingsPacket.class, new ServerWardrobeSettingsPacketHandler(infraCosmeticsData, wardrobeSettings));
+        connectionManager.registerPacketHandler(ServerCosmeticsUserUnlockedPacket.class, new ServerCosmeticsUserUnlockedPacketHandler(this));
+        connectionManager.registerPacketHandler(ServerCosmeticsRevokePurchasePacket.class, new ServerCosmeticsRevokePurchasePacketHandler(this));
         connectionManager.registerPacketHandler(ServerCosmeticAnimationTriggerPacket.class, new ServerCosmeticAnimationTriggerPacketHandler());
         connectionManager.registerPacketHandler(ServerCosmeticsUserEquippedVisibilityPacket.class, new ServerCosmeticsUserEquippedVisibilityPacketHandler());
 

@@ -47,7 +47,6 @@ import gg.essential.gui.layoutdsl.text
 import gg.essential.gui.layoutdsl.then
 import gg.essential.gui.layoutdsl.width
 import gg.essential.gui.layoutdsl.wrappedText
-import gg.essential.universal.UMatrixStack
 import gg.essential.util.sumOf
 import java.awt.Color
 
@@ -274,13 +273,6 @@ private fun Modifier.afterEachDraw(block: (bound: UIComponent) -> Unit): Modifie
 
 private class AfterDrawEffect(val block: (bound: UIComponent) -> Unit) : Effect() {
     override fun extractAfter(extractor: ElementaExtractor) {
-        block(boundComponent)
-    }
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Use `extract` instead.",
-        replaceWith = ReplaceWith("extractAfter(extractor)")
-    )
-    override fun afterDraw(matrixStack: UMatrixStack) {
         block(boundComponent)
     }
 }

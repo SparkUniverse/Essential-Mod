@@ -18,12 +18,4 @@ enum class OperatingSystem {
     OTHERS
 }
 
-val os: OperatingSystem by lazy {
-    val os = System.getProperty("os.name").lowercase()
-    when {
-        "windows" in os -> OperatingSystem.WINDOWS
-        "mac" in os || "darwin" in os -> OperatingSystem.MACOS
-        "linux" in os -> OperatingSystem.LINUX
-        else -> OperatingSystem.OTHERS
-    }
-}
+// expect val os: OperatingSystem

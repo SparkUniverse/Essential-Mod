@@ -48,9 +48,7 @@ class EssentialServerSelectionList(
 ) {
     private val connectionManager = Essential.getInstance().connectionManager
     private val profileManager = connectionManager.profileManager
-    private val spsManager = connectionManager.spsManager
     private val worldsManager = Essential.getInstance().worldsManager
-    private val serverDiscoveryManager = connectionManager.serverDiscoveryManager
 
     private val serverListInternet
         get() = (serverSelectionList as ServerSelectionListAccessor).serverListInternet

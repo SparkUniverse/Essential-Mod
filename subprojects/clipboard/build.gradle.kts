@@ -10,7 +10,6 @@
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
 import essential.*
-import gg.essential.gradle.util.KotlinVersion
 import gg.essential.gradle.util.prebundle
 
 plugins {
@@ -32,7 +31,7 @@ configurations.compileOnly.configure {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
+    implementation(libs.kotlin.stdlib.jdk8)
 
     // We could use JNA 3.x from 1.8.9, but `Native.load` is `Native.loadLibrary` in that version.
     // `Native.loadLibrary` is deprecated in 5.x, and is only provided for compatibility with older versions.

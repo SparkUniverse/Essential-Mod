@@ -13,19 +13,22 @@ package gg.essential.network.connectionmanager.handler.wardrobe;
 
 import gg.essential.connectionmanager.common.packet.wardrobe.ServerWardrobeStoreBundlePacket;
 import gg.essential.cosmetics.model.CosmeticStoreBundle;
-import gg.essential.network.connectionmanager.ConnectionManager;
-import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
+import gg.essential.network.connectionmanager.cosmetics.InfraCosmeticsData;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerWardrobeStoreBundlePacketHandler extends PacketHandler<ServerWardrobeStoreBundlePacket> {
+public class ServerWardrobeStoreBundlePacketHandler implements PacketHandler<ServerWardrobeStoreBundlePacket> {
+
+    private final InfraCosmeticsData infraCosmeticsData;
+
+    public ServerWardrobeStoreBundlePacketHandler(InfraCosmeticsData infraCosmeticsData) {
+        this.infraCosmeticsData = infraCosmeticsData;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerWardrobeStoreBundlePacket packet) {
-        final CosmeticsManager cosmeticsManager = connectionManager.getCosmeticsManager();
-
+    public void handle(@NotNull final ServerWardrobeStoreBundlePacket packet) {
         for (@NotNull final CosmeticStoreBundle bundle : packet.getStoreBundles()) {
-            cosmeticsManager.getInfraCosmeticsData().addBundle(bundle);
+            infraCosmeticsData.addBundle(bundle);
         }
     }
 }

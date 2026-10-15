@@ -62,8 +62,10 @@ allprojects {
 allprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
         extensions.configure<KotlinJvmProjectExtension> {
-            val (major, minor, patch) = KotlinVersion.minimal.stdlib.split(".")
-            compilerOptions.apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion("$major.$minor"))
+            compilerOptions.apiVersion.set(libs.versions.kotlin.map { dependencyVersion ->
+                val (major, minor, patch) = dependencyVersion.toString().split(".")
+                org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion("$major.$minor")
+            })
         }
     }
 }

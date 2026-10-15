@@ -12,7 +12,6 @@
 package essential
 
 import gg.essential.gradle.multiversion.StripReferencesTransform
-import gg.essential.gradle.util.KotlinVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.attributes.Attribute
@@ -42,14 +41,7 @@ fun Project.universalLibs() {
             attributes.attribute(universalAttr, false)
         }
 
-        val kotlin = KotlinVersion.minimal
-        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin.stdlib}")
-        compileOnly("org.jetbrains.kotlin:kotlin-reflect:${kotlin.stdlib}")
-        compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")
-        compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${kotlin.coroutines}")
-        compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}")
-        compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}")
-        compileOnly("org.jetbrains:annotations:23.0.0")
+        compileOnly(catalog.findBundle("kotlin").orElseThrow())
 
         // Provided by MC on modern versions, and by `:slf4j-to-log4j` on older versions
         compileOnly(catalog.findLibrary("slf4j-api").orElseThrow())

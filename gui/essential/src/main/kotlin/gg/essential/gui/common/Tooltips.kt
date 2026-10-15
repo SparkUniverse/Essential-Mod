@@ -19,7 +19,6 @@ import gg.essential.elementa.constraints.ChildBasedSizeConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.renderer.fillMcScale
 import gg.essential.elementa.state.BasicState
 import gg.essential.elementa.state.State
@@ -32,7 +31,6 @@ import gg.essential.gui.EssentialPalette
 import gg.essential.gui.common.shadow.EssentialUIText
 import gg.essential.gui.elementa.state.v2.*
 import gg.essential.gui.layoutdsl.*
-import gg.essential.universal.UMatrixStack
 import gg.essential.gui.util.isInComponentTree
 import java.awt.Color
 import gg.essential.gui.elementa.state.v2.State as StateV2
@@ -269,11 +267,6 @@ class EssentialTooltip(
             width = ChildBasedMaxSizeConstraint() + 8.pixels
             height = ChildBasedSizeConstraint() + 6.pixels
         }
-    }
-
-    override fun beforeDraw(matrixStack: UMatrixStack) {
-        super.beforeDraw(matrixStack)
-        extractComponent(ImmediateElementaExtractor(matrixStack))
     }
 
     override fun extractComponent(extractor: ElementaExtractor) {

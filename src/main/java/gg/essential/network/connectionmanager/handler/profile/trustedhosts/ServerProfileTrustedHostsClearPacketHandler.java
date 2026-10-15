@@ -12,17 +12,21 @@
 package gg.essential.network.connectionmanager.handler.profile.trustedhosts;
 
 import gg.essential.connectionmanager.common.packet.profile.trustedhosts.ServerProfileTrustedHostsClearPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
+import gg.essential.network.connectionmanager.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerProfileTrustedHostsClearPacketHandler extends PacketHandler<ServerProfileTrustedHostsClearPacket> {
+public class ServerProfileTrustedHostsClearPacketHandler implements PacketHandler<ServerProfileTrustedHostsClearPacket> {
+
+    private final ProfileManager profileManager;
+
+    public ServerProfileTrustedHostsClearPacketHandler(ProfileManager profileManager) {
+        this.profileManager = profileManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerProfileTrustedHostsClearPacket packet
-    ) {
-        connectionManager.getProfileManager().clearTrustedHosts();
+    public void handle(@NotNull final ServerProfileTrustedHostsClearPacket packet) {
+        profileManager.clearTrustedHosts();
     }
 
 }

@@ -217,10 +217,10 @@ public abstract class Mixin_RenderExtraClientCosmeticGeometryInFirstPerson {
         EnumSet<EnumPart> parts = EnumSet.of(EnumPart.ROOT);
 
         //#if MC>=11600
-        //$$ modelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, parts, false);
+        //$$ modelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, parts, false, false);
         //#else
         matrixStack.runWithGlobalState(() -> {
-            modelRenderer.render(new UMatrixStack(), vertexConsumerProvider, null, cState, light, parts, false);
+            modelRenderer.render(new UMatrixStack(), vertexConsumerProvider, null, cState, light, parts, false, false);
         });
         //#endif
 

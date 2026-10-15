@@ -1089,6 +1089,9 @@ object EssentialPalette {
     val MAKE_GROUP_9X8: ImageFactory = ResourceImageFactory("/assets/essential/textures/friends/make_group.png")
 
     @JvmField
+    val DOWNLOAD_7X7: ImageFactory = ResourceImageFactory("/assets/essential/textures/download_7x7.png")
+
+    @JvmField
     val DOWNLOAD_7X8: ImageFactory = ResourceImageFactory("/assets/essential/textures/download_7x8.png")
 
     @JvmField
@@ -1137,7 +1140,7 @@ object EssentialPalette {
     val MINECRAFT_FIVE by lazy { BasicFontRenderer(MINECRAFT_FIVE_FONT) }
 
     @LoadsResources("/assets/essential/fonts/%name%.(json|png)")
-    private fun loadFont(name: String) = Font.fromResource("/assets/essential/fonts/$name")
+    private fun loadFont(name: String) = Font.fromResource(javaClass, "/assets/essential/fonts/$name")
 
     @LoadsResources("/assets/essential/textures/friends/group_[a-z]+.png")
     private fun createGroupIconFactory(name: String): ImageFactory =

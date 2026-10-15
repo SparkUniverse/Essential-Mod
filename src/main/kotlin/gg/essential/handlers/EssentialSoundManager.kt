@@ -44,6 +44,8 @@ import net.minecraft.util.ResourceLocation
 import net.minecraft.util.SoundCategory
 import net.minecraft.util.SoundEvent
 import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
 
 //#if MC>=11600
 //$$ import kotlin.math.roundToInt
@@ -75,6 +77,7 @@ object EssentialSoundManager {
 
     }
 
+    @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
     @JvmOverloads
     fun playSound(
         event: ModelAnimationState.SoundEvent,
@@ -105,7 +108,7 @@ object EssentialSoundManager {
         val sourceUuid = event.sourceEntity.uuid
         val finalVolume = if (enforceEmoteSoundSettings && sourceUuid != null) {
             memo {
-                if (shouldAllowEmoteSound(sourceUuid)) volume() else 0f
+                if (shouldAllowEmoteSound(sourceUuid.toJavaUuid())) volume() else 0f
             }
         } else {
             volume

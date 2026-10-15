@@ -51,10 +51,8 @@ import gg.essential.gui.common.or
 import gg.essential.gui.elementa.VanillaButtonConstraint.Companion.constrainTo
 import gg.essential.gui.elementa.VanillaButtonGroupConstraint.Companion.constrainTo
 import gg.essential.gui.elementa.state.v2.await
-import gg.essential.gui.elementa.state.v2.combinators.not
 import gg.essential.gui.elementa.state.v2.stateOf
 import gg.essential.gui.elementa.state.v2.toV2
-import gg.essential.gui.layoutdsl.Alignment
 import gg.essential.gui.layoutdsl.Modifier
 import gg.essential.gui.layoutdsl.color
 import gg.essential.gui.layoutdsl.hoverColor
@@ -124,12 +122,9 @@ class PauseMenuDisplay {
         val proxyHandler = (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`()
         if (proxyHandler != null) {
             var layer = proxyHandler.layer
-            // TODO we shouldn't have to re-create our overlay when the screen width changes; but we have some
-            //      `isMinimal.getUntracked` in the right side bar layout, so we currently rely on it being re-created
-            if (layer == null || proxyHandler.lastWidth != screen.width) {
+            if (layer == null) {
                 layer = GuiUtil.createLayer(LayerPriority.AboveScreenContent(screen))
                 proxyHandler.layer = layer
-                proxyHandler.lastWidth = screen.width
                 initContent(screen, layer.window, proxyHandler)
             }
             this.layer = layer
@@ -425,7 +420,6 @@ class PauseMenuDisplay {
         fun canRescale(screen: GuiScreen): Boolean {
             return (screen.isMainMenu || screen is GuiIngameMenu)
         }
-
     }
 
     enum class MenuType { MAIN, SINGLEPLAYER, SERVER }

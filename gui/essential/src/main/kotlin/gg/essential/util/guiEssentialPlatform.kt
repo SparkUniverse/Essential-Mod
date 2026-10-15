@@ -60,6 +60,7 @@ import gg.essential.util.image.bitmap.MutableBitmap
 import gg.essential.util.lwjgl3.Lwjgl3Loader
 import io.netty.buffer.ByteBuf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.MainCoroutineDispatcher
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
@@ -72,6 +73,7 @@ interface GuiEssentialPlatform {
     val mcVersion: Int
 
     val clientThreadDispatcher: CoroutineDispatcher
+    val gameThreadDispatcher: MainCoroutineDispatcher
 
     val renderBackend: RenderBackend
     val overlayManager: OverlayManager
@@ -102,8 +104,6 @@ interface GuiEssentialPlatform {
     fun uImageIntoReleasedDynamicTexture(uImage: UImage): ReleasedDynamicTexture
 
     fun identifierFromTexture(texture: RenderBackend.Texture): UIdentifier
-
-    fun getGlId(identifier: UIdentifier): Int
 
     fun playSound(identifier: UIdentifier)
     fun playNoteHatSound(volume: Float, pitch: Float)
@@ -177,8 +177,6 @@ interface GuiEssentialPlatform {
     fun findCodeSource(javaClass: Class<*>): CodeSource?
 
     fun trackByteBuf(alloc: LimitedAllocator, buf: ByteBuf): ByteBuf
-
-    fun newGlFrameBuffer(width: Int, height: Int, colorFormat: GpuTexture.Format, depthFormat: GpuTexture.Format): GlFrameBuffer
 
     fun newGpuTexture(width: Int, height: Int, format: GpuTexture.Format): GpuTexture
 

@@ -11,6 +11,7 @@
  */
 package gg.essential.mixins.ext.client
 
+import kotlinx.coroutines.MainCoroutineDispatcher
 import net.minecraft.client.Minecraft
 import java.util.concurrent.Executor
 
@@ -33,6 +34,15 @@ interface MinecraftExt {
      * The tasks submitted to this executor are ran immediately before MC drains its task queue.
      */
     val `essential$executor`: Executor
+
+    /**
+     * Standard [MainCoroutineDispatcher] for the main game thread.
+     * Available as [Dispatchers.Game].
+     *
+     * Called in exactly the same places as the above executor (in fact, the above executor is a wrapper around the
+     * [MainCoroutineDispatcher.immediate] of this dispatcher).
+     */
+    val `essential$dispatcher`: MainCoroutineDispatcher
 }
 
 val MinecraftExt.executor get() = `essential$executor`

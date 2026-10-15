@@ -112,24 +112,24 @@ public class ProfileManager extends StateCallbackManager<IStatusManager> impleme
      */
     private boolean loadedDefaultTrustedHosts = false;
 
+    private final long ONLINE_NOTIFICATION_COOLDOWN_MS = 15_000;
+
     public ProfileManager(@NotNull final ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
         this.updateQueue = new SequentialPacketQueue.Builder(connectionManager)
             .onTimeoutSkip()
             .create();
 
-        connectionManager.registerPacketHandler(ServerProfileActivityPacket.class, new ServerProfileActivityPacketHandler());
-        connectionManager.registerPacketHandler(ServerProfileStatusPacket.class, new ServerProfileStatusPacketHandler());
-        connectionManager.registerPacketHandler(ServerProfileTrustedHostsClearPacket.class, new ServerProfileTrustedHostsClearPacketHandler());
-        connectionManager.registerPacketHandler(ServerProfileTrustedHostsPopulatePacket.class, new ServerProfileTrustedHostsPopulatePacketHandler());
-        connectionManager.registerPacketHandler(ServerProfileTrustedHostsRemovePacket.class, new ServerProfileTrustedHostsRemovePacketHandler());
+        connectionManager.registerPacketHandler(ServerProfileActivityPacket.class, new ServerProfileActivityPacketHandler(this));
+        connectionManager.registerPacketHandler(ServerProfileStatusPacket.class, new ServerProfileStatusPacketHandler(this));
+        connectionManager.registerPacketHandler(ServerProfileTrustedHostsClearPacket.class, new ServerProfileTrustedHostsClearPacketHandler(this));
+        connectionManager.registerPacketHandler(ServerProfileTrustedHostsPopulatePacket.class, new ServerProfileTrustedHostsPopulatePacketHandler(this));
+        connectionManager.registerPacketHandler(ServerProfileTrustedHostsRemovePacket.class, new ServerProfileTrustedHostsRemovePacketHandler(this));
         connectionManager.registerPacketHandler(ServerProfileLastDisconnectVisibilityPacket.class, packet -> {
             EssentialConfig.INSTANCE.getShareProfileLastOnline().set(new Pair<>(packet.getState(), false));
-            return Unit.INSTANCE;
         });
         connectionManager.registerPacketHandler(ServerProfileAppearOfflineStatePacket.class, packet -> {
             EssentialConfig.INSTANCE.getAppearOffline().set(new Pair<>(packet.getState(), false));
-            return Unit.INSTANCE;
         });
     }
 
@@ -218,24 +218,11 @@ public class ProfileManager extends StateCallbackManager<IStatusManager> impleme
         final ProfileStatus put = this.statuses.put(uuid, status);
 
         if (put == ProfileStatus.OFFLINE && status == ProfileStatus.ONLINE && connectionManager.getRelationshipManager().isFriend(uuid) && EssentialConfig.INSTANCE.getFriendConnectionStatus()) {
-            UUIDUtil.getName(uuid).thenAcceptAsync(username -> Notifications.INSTANCE.push(
-                    "",
-                    "",
-                    4f,
-                    () -> {
-                        GuiEssentialPlatform.Companion.getPlatform()
-                            .openSocialMenu(null, uuid);
-                        return Unit.INSTANCE;
-                    },
-                    () -> Unit.INSTANCE,
-                    (notificationBuilder) -> {
-                        ExtensionsKt.iconAndMarkdownBody(notificationBuilder,
-                            CachedAvatarImage.create(uuid),
-                            StringsKt.colored(username, EssentialPalette.TEXT_HIGHLIGHT) + " is online!"
-                        );
-                        return Unit.INSTANCE;
-                    }
-            ), Multithreading.getPool());
+            long cooldownTime = (timestamp != null ? timestamp : System.currentTimeMillis()) - ONLINE_NOTIFICATION_COOLDOWN_MS;
+            @Nullable Long previous = lastOnline.get(uuid);
+            if (previous == null || previous < cooldownTime) {
+                UUIDUtil.getName(uuid).thenAcceptAsync(username -> pushOnlineNotification(uuid, username), Multithreading.getPool());
+            }
         } else if (status == ProfileStatus.OFFLINE) {
             this.lastOnline.put(uuid, timestamp);
         }
@@ -243,6 +230,27 @@ public class ProfileManager extends StateCallbackManager<IStatusManager> impleme
         for (IStatusManager statusManager : getCallbacks()) {
             statusManager.refreshActivity(uuid);
         }
+    }
+
+    private void pushOnlineNotification(@NotNull final UUID uuid, @NotNull final String username) {
+        Notifications.INSTANCE.push(
+                "",
+                "",
+                4f,
+                () -> {
+                    GuiEssentialPlatform.Companion.getPlatform()
+                        .openSocialMenu(null, uuid);
+                    return Unit.INSTANCE;
+                },
+                () -> Unit.INSTANCE,
+                (notificationBuilder) -> {
+                    ExtensionsKt.iconAndMarkdownBody(notificationBuilder,
+                        CachedAvatarImage.create(uuid),
+                        StringsKt.colored(username, EssentialPalette.TEXT_HIGHLIGHT) + " is online!"
+                    );
+                    return Unit.INSTANCE;
+                }
+        );
     }
 
     public void setPlayerSuspension(@NotNull final UUID uuid, @Nullable final ProfilePunishmentStatus suspension) {

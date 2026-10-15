@@ -27,7 +27,6 @@ import gg.essential.cosmetics.CosmeticId
 import gg.essential.cosmetics.CosmeticsState
 import gg.essential.cosmetics.EquippedCosmetic
 import gg.essential.cosmetics.WearablesManager
-import gg.essential.cosmetics.events.AnimationEventType
 import gg.essential.cosmetics.events.CosmeticEventDispatcher.dispatchEvents
 import gg.essential.cosmetics.renderCosmeticsForOutlines
 import gg.essential.cosmetics.skinmask.MaskedSkinProvider
@@ -45,32 +44,20 @@ import gg.essential.gui.elementa.state.v2.State as StateV2
 import gg.essential.mixins.ext.client.ParticleSystemHolder
 import gg.essential.mixins.impl.client.entity.AbstractClientPlayerExt
 import gg.essential.mod.Model
-import gg.essential.mod.cosmetics.CAPE_DISABLED_COSMETIC_ID
-import gg.essential.mod.cosmetics.CapeModel
 import gg.essential.mod.cosmetics.CosmeticSlot
-import gg.essential.mod.cosmetics.CosmeticsSubject
-import gg.essential.mod.cosmetics.PlayerModel
 import gg.essential.mod.cosmetics.preview.PerspectiveCamera
-import gg.essential.model.EnumPart
+import gg.essential.mod.player.AbstractPlayerRenderer
+import gg.essential.model.BedrockModel
 import gg.essential.model.ModelAnimationState
-import gg.essential.model.ModelInstance
 import gg.essential.model.ParticleSystem
 import gg.essential.model.PlayerMolangQuery
-import gg.essential.model.RenderMetadata
-import gg.essential.model.Vector3
 import gg.essential.model.backend.PlayerPose
 import gg.essential.model.backend.RenderBackend
 import gg.essential.model.backend.minecraft.MinecraftRenderBackend
-import gg.essential.model.bones.BakedAnimations
-import gg.essential.model.collision.PlaneCollisionProvider
 import gg.essential.model.light.Light
-import gg.essential.model.light.LightProvider
-import gg.essential.model.molang.MolangQueryEntity
-import gg.essential.model.util.PlayerPoseManager
 import gg.essential.model.util.Quaternion
 import gg.essential.model.util.rotateBy
 import gg.essential.network.connectionmanager.cosmetics.AssetLoader
-import gg.essential.network.cosmetics.Cosmetic
 import gg.essential.model.util.UMatrixStack as CMatrixStack
 import gg.essential.universal.UGraphics
 import gg.essential.universal.UMatrixStack
@@ -87,12 +74,10 @@ import gg.essential.util.withDefaultMcGuiRenderingSetup
 import gg.essential.util.toUC
 import gg.essential.vigilance.utils.onLeftClick
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import net.minecraft.client.Minecraft
 import net.minecraft.client.entity.AbstractClientPlayer
@@ -107,8 +92,10 @@ import org.lwjgl.opengl.GL11
 import kotlin.math.min
 import kotlin.math.PI
 import kotlin.math.roundToInt
-import kotlin.random.Random
 import java.util.*
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlin.uuid.toKotlinUuid
 
 //#if MC >= 26.3
 //#else
@@ -904,6 +891,7 @@ open class UI3DPlayer(
         restoreLighting()
     }
 
+    @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
     private fun doDrawParticles(particleSystem: ParticleSystem) {
         val commandQueue = MinecraftRenderBackend.CommandQueue()
 
@@ -926,10 +914,10 @@ open class UI3DPlayer(
             cameraPos,
             realRotation * camera.rotation,
             commandQueue,
-            UUID(0, 0),
+            Uuid.NIL,
             false,
             false,
-            player.takeUnless { errored }?.uniqueID, // try to only render this player's particles
+            player.takeUnless { errored }?.uniqueID?.toKotlinUuid(), // try to only render this player's particles
             MAX_LIGHT,
         )
 
@@ -953,11 +941,13 @@ open class UI3DPlayer(
         //#endif
     }
 
-    private inner class FallbackPlayer {
+    private inner class FallbackPlayer : AbstractPlayerRenderer(
+        renderBackend = MinecraftRenderBackend,
+        scope = CoroutineScope(SupervisorJob()) + Dispatchers.Client,
+    ) {
         private val essential = Essential.getInstance()
         private val cosmeticsManager = essential.connectionManager.cosmeticsManager
 
-        private val scope = CoroutineScope(SupervisorJob()) + Dispatchers.Client
         private val maskedSkinProvider = MaskedSkinProvider()
 
         private var currentProfileConfigured: WrappedGameProfile? = null
@@ -965,61 +955,17 @@ open class UI3DPlayer(
         private var currentSkin: ResourceLocation = DefaultPlayerSkin.getDefaultSkinLegacy()
         private var currentCape: ResourceLocation? = null
 
-        private val entity = MolangQueryEntityImpl(0f, 0f, 0f, null)
-        private var subject = CosmeticsSubject(entity)
-        private var playerModel: ModelInstance =
-            ModelInstance(PlayerModel.steveBedrockModel, entity, subject.animationTargets, CosmeticsState.EMPTY) {}
-        private val poseManager = PlayerPoseManager(entity)
-        val particleSystem = ParticleSystem(Random(0), PlaneCollisionProvider.PlaneXZ, LightProvider.FullBright, ::playSound)
-
         private var liveCosmeticsSource: StateV2<Map<CosmeticSlot, EquippedCosmetic>>? = null
         private val cosmeticsSource: StateV2<Map<CosmeticSlot, EquippedCosmetic>>
             get() = this@UI3DPlayer.cosmeticsSource ?: liveCosmeticsSource ?: stateOf(emptyMap())
-        private var cosmetics: Map<CosmeticSlot, EquippedCosmetic> = emptyMap()
-        val wearablesManager = WearablesManager(MinecraftRenderBackend, entity, subject.animationTargets) { _, _, -> }
-
-        private var currentOutfitUpdate: Job? = null
 
         private var thirdPartyCapeErrored = false
 
         val cosmeticsState: CosmeticsState
             get() = wearablesManager.state
 
-        private fun updateCosmeticsState() {
-            currentOutfitUpdate?.cancel()
-            currentOutfitUpdate = scope.launch {
-                val subject = subject
-                val cosmetics = cosmetics
-                val modelLoader = Essential.getInstance().connectionManager.cosmeticsManager.modelLoader
-                val bedrockModels =
-                    cosmetics
-                        .values
-                        .map { modelLoader.getModel(it.cosmetic, it.variant, subject.skinType, AssetLoader.Priority.High) }
-                        .map { it.asDeferred().await() }
-                        .associateBy { it.cosmetic }
-
-                val newState = CosmeticsState(
-                    skinType = subject.skinType,
-                    cosmetics = cosmetics,
-                    bedrockModels = bedrockModels,
-                    armor = subject.armor,
-                )
-                wearablesManager.updateState(newState)
-            }
-        }
-
-        private fun updateSkinType(skinType: Model) {
-            if (skinType == subject.skinType) return
-
-            subject = CosmeticsSubject(entity, skinType)
-            val model = when (skinType) {
-                Model.ALEX -> PlayerModel.alexBedrockModel
-                Model.STEVE -> PlayerModel.steveBedrockModel
-            }
-            playerModel = ModelInstance(model, entity, subject.animationTargets, CosmeticsState.EMPTY) {}
-
-            updateCosmeticsState()
-        }
+        override val light: Light
+            get() = MAX_LIGHT
 
         private fun loadTextures(profile: GameProfile) {
             //#if MC>=12002
@@ -1056,6 +1002,7 @@ open class UI3DPlayer(
             //#endif
         }
 
+        @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
         fun checkForUpdates() {
             // Check if the profile configured for this UI3DPlayer has changed
             val profileConfigured = player?.gameProfile?.wrapped() ?: profile.get() ?: EmulatedUI3DPlayer.getLocalGameProfile()
@@ -1068,7 +1015,7 @@ open class UI3DPlayer(
                 // UUID may have changed, need to update live cosmetic source accordingly
                 liveCosmeticsSource = cosmeticsManager.infraEquippedOutfitsManager.getVisibleCosmeticsState(profileConfigured.id)
 
-                entity.uuid = profileConfigured.id
+                entity.uuid = profileConfigured.id.toKotlinUuid()
             }
 
             // Check if there are any new overwrites for the current profile
@@ -1089,83 +1036,16 @@ open class UI3DPlayer(
 
             // Check if the equipped cosmetics or any of their settings have changed
             // FIXME should use State effect instead of checking every frame (though note that this field isn't a proper state yet!)
-            val newCosmetics = cosmeticsSource.getUntracked()
-            if (cosmetics != newCosmetics) {
-                cosmetics = newCosmetics
-                updateCosmeticsState()
-            }
+            updateCosmetics(cosmeticsSource.getUntracked())
         }
 
-        fun render(stack: CMatrixStack, playerQueue: RenderBackend.CommandQueue, cosmeticQueues: WearablesManager.CommandQueueProvider) {
-            checkForUpdates()
-
-            val state = cosmeticsState
-
+        override fun getCurrentSkin(): RenderBackend.Texture {
             val rawSkin = skinTextureOverride ?: currentSkin
-            val skinLocation =
-                maskedSkinProvider.provide(rawSkin, state.skinMask)
-                    ?: rawSkin
-            val skin = MinecraftRenderBackend.SkinTexture(skinLocation)
-
-            val selectedCape = cosmetics[CosmeticSlot.CAPE]?.cosmetic
-            val (cape, capeEmissive) = when {
-                selectedCape?.id == CAPE_DISABLED_COSMETIC_ID -> Pair(null, null)
-                selectedCape != null -> wearablesManager.models[selectedCape]?.model.let { Pair(it?.texture, it?.emissiveTexture) }
-                else -> Pair(getThirdPartyCape(), null)
-            }
-
-            playerModel.essentialAnimationSystem.updateAnimationState() // processes arm swing
-            wearablesManager.update()
-            poseManager.update(wearablesManager)
-
-            var pose = PlayerPose.neutral()
-
-            pose = playerModel.computePose(pose)
-            pose = poseManager.computePose(wearablesManager, pose)
-
-            // Don't have any of these, so we'll move them far away so any events they spawn won't be visible.
-            pose = pose.copy(
-                rightShoulderEntity = PlayerPose.Part.MISSING,
-                leftShoulderEntity = PlayerPose.Part.MISSING,
-                rightWing = PlayerPose.Part.MISSING,
-                leftWing = PlayerPose.Part.MISSING,
-            )
-            // Similar to above, if we don't have a cape, hide its part
-            if (cape == null) {
-                pose = pose.copy(cape = PlayerPose.Part.MISSING)
-            }
-
-            val light = MAX_LIGHT
-            val renderMetadata =
-                RenderMetadata(
-                    pose,
-                    skin,
-                    light,
-                    null,
-                    emptySet(),
-                    Vector3(),
-                    EnumPart.values().toSet(),
-                )
-
-            playerModel.render(stack, playerQueue, playerModel.model.defaultRenderGeometry, renderMetadata)
-            if (cape != null) {
-                renderCape(stack, cosmeticQueues, renderMetadata, selectedCape, cape, capeEmissive)
-            }
-
-            wearablesManager.render(stack, cosmeticQueues, light, pose, skin)
-
-            wearablesManager.updateLocators(pose)
-            wearablesManager.collectEvents { event ->
-                when (event) {
-                    is ModelAnimationState.ParticleEvent -> particleSystem.spawn(event)
-                    is ModelAnimationState.SoundEvent -> playSound(event)
-                }
-            }
-
-            particleSystem.update()
+            val skinLocation = maskedSkinProvider.provide(rawSkin, cosmeticsState.skinMask) ?: rawSkin
+            return MinecraftRenderBackend.SkinTexture(skinLocation)
         }
 
-        private fun getThirdPartyCape(): MinecraftRenderBackend.CapeTexture? {
+        override fun getThirdPartyCape(): MinecraftRenderBackend.CapeTexture? {
             if (thirdPartyCapeErrored || CosmeticSlot.CAPE in cosmetics) {
                 return null
             }
@@ -1186,43 +1066,22 @@ open class UI3DPlayer(
             }
         }
 
-        private fun renderCape(
-            stack: CMatrixStack,
-            queues: WearablesManager.CommandQueueProvider,
-            renderMetadata: RenderMetadata,
-            cape: Cosmetic?, // may be null in case of third-party capes
-            texture: RenderBackend.Texture,
-            emissiveTexture: RenderBackend.Texture?,
-        ) {
-            val queue = queues.forCosmetic(cape?.id ?: CAPE_DISABLED_COSMETIC_ID)
-            val model = CapeModel.get(texture.height)
-            model.texture = texture
-            model.emissiveTexture = emissiveTexture
-            model.render(stack, queue, model.defaultRenderGeometry, BakedAnimations.EMPTY, renderMetadata, entity.lifeTime)
-            model.texture = null
-            model.emissiveTexture = null
+        override fun playSound(event: ModelAnimationState.SoundEvent) {
+            this@UI3DPlayer.playSound(event)
+        }
+
+        override fun loadModel(cosmetic: EquippedCosmetic, skinType: Model): Deferred<BedrockModel> {
+            return cosmeticsManager.modelLoader
+                .getModel(cosmetic.cosmetic, cosmetic.variant, skinType, AssetLoader.Priority.High)
+                .asDeferred()
+        }
+
+        override fun beforeRender() {
+            checkForUpdates()
         }
 
         init {
             addUpdateFunc { dt, _ -> update(dt) }
-        }
-        fun update(dt: Float) {
-            val newLifeTime = entity.lifeTime + dt.coerceAtMost(1f)
-
-            val ticksOld = (entity.lifeTime * 20).toInt()
-            val ticksNew = (newLifeTime * 20).toInt()
-            repeat(ticksNew - ticksOld) {
-                for (model in wearablesManager.models.values) {
-                    model.essentialAnimationSystem.processEvent(AnimationEventType.TICK)
-                }
-            }
-
-            entity.lifeTime = newLifeTime
-        }
-
-        fun close() {
-            scope.cancel()
-            entity.isValid = false
         }
     }
 
@@ -1230,16 +1089,6 @@ open class UI3DPlayer(
         if (sounds.getUntracked()) {
             EssentialSoundManager.playSound(event, forceGlobal = true, volume = soundsVolume, enforceEmoteSoundSettings = false)
         }
-    }
-
-    private class MolangQueryEntityImpl(
-        override var lifeTime: Float,
-        override var modifiedDistanceMoved: Float,
-        override var modifiedMoveSpeed: Float,
-        override var uuid: UUID?,
-    ) : MolangQueryEntity, ParticleSystem.Locator by ParticleSystem.Locator.Zero {
-        override val locator: ParticleSystem.Locator = this
-        override var isValid: Boolean = true
     }
 
     companion object {

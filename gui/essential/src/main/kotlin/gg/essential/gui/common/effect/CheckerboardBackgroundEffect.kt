@@ -13,7 +13,6 @@ package gg.essential.gui.common.effect
 
 import gg.essential.elementa.effects.Effect
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.gui.EssentialPalette
 import gg.essential.universal.UGraphics
 import gg.essential.universal.UMatrixStack
@@ -23,14 +22,6 @@ import java.awt.Color
 import kotlin.math.roundToInt
 
 class CheckerboardBackgroundEffect : Effect() {
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Use `extract` instead.",
-        replaceWith = ReplaceWith("extractBefore(extractor)")
-    )
-    override fun beforeDraw(matrixStack: UMatrixStack) {
-        extractBefore(ImmediateElementaExtractor(matrixStack))
-    }
-
     override fun extractBefore(extractor: ElementaExtractor) {
         val component = boundComponent
         val scale = extractor.guiScale

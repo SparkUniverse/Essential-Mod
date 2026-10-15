@@ -12,7 +12,6 @@
 package gg.essential.network.connectionmanager.handler.mojang;
 
 import gg.essential.connectionmanager.common.packet.relationships.ServerUuidNameMapPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.util.UUIDUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.UUID;
 
-public class ServerUuidNameMapPacketHandler extends PacketHandler<ServerUuidNameMapPacket> {
+public class ServerUuidNameMapPacketHandler implements PacketHandler<ServerUuidNameMapPacket> {
 
     @Override
-    protected void onHandle(@NotNull ConnectionManager connectionManager, @NotNull ServerUuidNameMapPacket packet) {
+    public void handle(@NotNull ServerUuidNameMapPacket packet) {
         for (Map.Entry<UUID, String> uuidStringEntry : packet.getMappedUuids().entrySet()) {
             UUIDUtil.populate(uuidStringEntry.getValue(), uuidStringEntry.getKey());
         }

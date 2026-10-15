@@ -45,11 +45,11 @@ class ModelAnimationState(
     private val locators = mutableMapOf<String, BoneLocator>()
     private var lastLocatorUpdateTime = 0f // velocity will not be computed on the first update anyway
 
-    fun startAnimation(animation: Animation) {
+    fun startAnimation(animation: Animation, maxLoops: Int) {
         if (active.any { it.animation == animation }) {
             return
         }
-        active.add(AnimationState(animation, entity))
+        active.add(AnimationState(animation, entity, maxLoops))
 
         animation.effects.values.forEach { list ->
             list.forEach { event ->
@@ -182,7 +182,7 @@ class ModelAnimationState(
             }
             while (true) {
                 val (nextTime, effects) = state.animation.effects.higherEntry(state.lastEffectTime)
-                    ?: if (state.animation.loop == AnimationFile.Loop.True) {
+                    ?: if (state.animation.loop == AnimationFile.Loop.True && state.effectLoops + 1 < state.maxLoops) {
                         state.effectLoops++
                         state.lastEffectTime = Float.NEGATIVE_INFINITY
                         continue
@@ -221,6 +221,7 @@ class ModelAnimationState(
     class AnimationState(
         val animation: Animation,
         val entity: MolangQueryEntity,
+        val maxLoops: Int,
         val animStartTime: Float = entity.lifeTime,
         private val contextVariables: VariablesMap = VariablesMap(),
         internal var lastEffectTime: Float = Float.NEGATIVE_INFINITY, // Effects up to and including this time have already been emitted.
@@ -241,12 +242,13 @@ class ModelAnimationState(
         fun copy(
             animation: Animation = this.animation,
             entity: MolangQueryEntity = this.entity,
+            maxLoops: Int = this.maxLoops,
             animStartTime: Float = this.animStartTime,
             contextVariables: VariablesMap = this.contextVariables.copy(),
             lastEffectTime: Float = this.lastEffectTime,
             effectLoops: Int = this.effectLoops,
         ): AnimationState {
-            return AnimationState(animation, entity, animStartTime, contextVariables, lastEffectTime, effectLoops)
+            return AnimationState(animation, entity, maxLoops, animStartTime, contextVariables, lastEffectTime, effectLoops)
         }
 
         internal val effectLoopsDuration: Float

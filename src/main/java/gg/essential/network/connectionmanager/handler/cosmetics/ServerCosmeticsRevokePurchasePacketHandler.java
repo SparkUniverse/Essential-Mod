@@ -15,7 +15,6 @@ import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticsRevo
 import gg.essential.gui.notification.ExtensionsKt;
 import gg.essential.gui.notification.Notifications;
 import gg.essential.mod.cosmetics.settings.CosmeticProperty;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.cosmetics.Cosmetic;
@@ -23,12 +22,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class ServerCosmeticsRevokePurchasePacketHandler extends PacketHandler<ServerCosmeticsRevokePurchasePacket> {
+public class ServerCosmeticsRevokePurchasePacketHandler implements PacketHandler<ServerCosmeticsRevokePurchasePacket> {
+
+    private final CosmeticsManager cosmeticsManager;
+
+    public ServerCosmeticsRevokePurchasePacketHandler(CosmeticsManager cosmeticsManager) {
+        this.cosmeticsManager = cosmeticsManager;
+    }
 
     @Override
-    protected void onHandle(@NotNull ConnectionManager connectionManager, @NotNull ServerCosmeticsRevokePurchasePacket packet) {
-        CosmeticsManager cosmeticsManager = connectionManager.getCosmeticsManager();
-
+    public void handle(@NotNull ServerCosmeticsRevokePurchasePacket packet) {
         cosmeticsManager.removeUnlockedCosmetics(packet.getRevokedIds());
 
         for (String revokedId : packet.getRevokedIds()) {

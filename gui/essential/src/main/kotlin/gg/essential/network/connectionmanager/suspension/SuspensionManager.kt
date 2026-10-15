@@ -13,7 +13,7 @@ package gg.essential.network.connectionmanager.suspension
 
 import gg.essential.config.EssentialConfig
 import gg.essential.connectionmanager.common.packet.social.ServerSocialSuspensionStatePacket
-import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl
+import gg.essential.elementa.state.v2.ReferenceHolder
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.combinators.letState
 import gg.essential.gui.elementa.state.v2.effect
@@ -25,8 +25,6 @@ import gg.essential.network.connectionmanager.social.Suspension
 import gg.essential.network.registerPacketHandler
 
 abstract class SuspensionManager(protected val connectionManager: CMConnection) : NetworkedManager {
-
-    private val referenceHolder = ReferenceHolderImpl()
 
     private var suspension = mutableStateOf<SuspensionStatus?>(null)
     val activeSuspension: State<Suspension?> = stateUsingSystemTime { now -> suspension()?.value?.takeIf { it.isActive(now) } }
@@ -41,10 +39,12 @@ abstract class SuspensionManager(protected val connectionManager: CMConnection) 
             }
             EssentialConfig.acknowledgedPermanentSuspension.set(false)
         }
+    }
 
+    fun hookUp(referenceHolder: ReferenceHolder, canShowModal: State<Boolean>) {
         effect(referenceHolder) {
             activeSuspension()?.let { suspension ->
-                if (suspension.unseen && isSuspensionShowable()) {
+                if (suspension.unseen && canShowModal.getUntracked()) {
                     showSuspension(suspension)
                 }
             }
@@ -54,8 +54,6 @@ abstract class SuspensionManager(protected val connectionManager: CMConnection) 
     fun setPermanentlySuspended(reason: String) {
         suspension.set(SuspensionStatus(Suspension(reason, null, !EssentialConfig.acknowledgedPermanentSuspension.getUntracked())))
     }
-
-    protected abstract fun isSuspensionShowable(): Boolean
 
     protected abstract fun showSuspension(suspension: Suspension)
 

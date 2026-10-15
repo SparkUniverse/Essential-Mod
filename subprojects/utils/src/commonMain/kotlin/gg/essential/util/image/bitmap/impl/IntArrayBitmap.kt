@@ -38,6 +38,6 @@ internal class IntArrayBitmap(
     }
 
     override fun mutableCopy(): MutableBitmap {
-        return IntArrayBitmap(width, height, pixelData.clone())
+        return IntArrayBitmap(width, height, pixelData.copyOf())
     }
 }

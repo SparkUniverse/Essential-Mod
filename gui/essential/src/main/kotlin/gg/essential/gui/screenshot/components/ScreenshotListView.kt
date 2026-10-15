@@ -59,7 +59,6 @@ import gg.essential.gui.util.walkTopMostNotNull
 import gg.essential.handlers.screenshot.ClientScreenshotMetadata
 import gg.essential.network.connectionmanager.features.Feature
 import gg.essential.network.connectionmanager.media.IScreenshotManager
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.util.*
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
@@ -151,13 +150,6 @@ abstract class ScreenshotListView(
         //       Should only be needed until we switch to the V2 scroll component.
         scroller.enableEffect(object : Effect() {
             override fun extractBeforeChildren(extractor: ElementaExtractor) {
-                updateVisibleTextures()
-            }
-            @Deprecated(
-                "`draw`-style rendering is deprecated. Use `extract` instead.",
-                replaceWith = ReplaceWith("extractBeforeChildren(extractor)")
-            )
-            override fun beforeChildrenDraw(matrixStack: UMatrixStack) {
                 updateVisibleTextures()
             }
         })

@@ -11,9 +11,7 @@
  */
 package gg.essential.mixins.transformers.feature.sps;
 
-import gg.essential.Essential;
 import gg.essential.mixins.ext.server.integrated.IntegratedServerExt;
-import gg.essential.network.connectionmanager.sps.SPSManager;
 import gg.essential.sps.IntegratedServerManager;
 import gg.essential.sps.McIntegratedServerManager;
 import net.minecraft.server.MinecraftServer;
@@ -47,21 +45,7 @@ public class Mixin_IntegratedServerResourcePack {
                     //$$ UUID.nameUUIDFromBytes(url.getBytes(StandardCharsets.UTF_8)),
                     //#endif
                     url, checksum, false, null)));
-                return;
             }
-        }
-
-        final SPSManager spsManager = Essential.getInstance().getConnectionManager().getSpsManager();
-        final String resourcePackUrl = spsManager.getResourcePackUrl();
-        final String resourcePackChecksum = spsManager.getResourcePackChecksum();
-        if (spsManager.isShareResourcePack() && resourcePackUrl != null && resourcePackChecksum != null) {
-            info.setReturnValue(Optional.of(new MinecraftServer.ServerResourcePackProperties(
-                //#if MC>=12004
-                //$$ // Server resource packs are now given a unique ID for caching purposes.
-                //$$ // Vanilla uses this fallback when the ID is not present.
-                //$$ UUID.nameUUIDFromBytes(resourcePackUrl.getBytes(StandardCharsets.UTF_8)),
-                //#endif
-                resourcePackUrl, resourcePackChecksum, false, null)));
         }
     }
 }

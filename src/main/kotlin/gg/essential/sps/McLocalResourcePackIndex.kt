@@ -27,6 +27,15 @@ class McLocalResourcePackIndex(essentialBaseDirectory: Path): LocalResourcePackI
             resourcePackRepository.updateRepositoryEntriesAll()
         }
         loadedResourcePacks.set(resourcePackRepository.repositoryEntriesAll
+            //#if MC < 1.16
+            .sortedBy { it.resourcePackName }
+            //#endif
+            //#if NEOFORGE
+            //$$ // Undoes https://github.com/neoforged/NeoForge/commit/3b3223b6e5e1fe372d2b24713c0d96366ee3e86d#diff-fd8521cdc5d9e4fefca7c4e8dae5c1e33d1ce05ce6baff52fd08b5fc370d9588
+            //$$ // for consistency across platforms and because having the vanilla packs always first doesn't seem all
+            //$$ // too useful for our purposes.
+            //$$ .sortedBy { it.id }
+            //#endif
             .mapNotNull { pack ->
                 //#if FORGELIKE && MC >= 1.16
                 //$$ if (pack.isHidden) return@mapNotNull null

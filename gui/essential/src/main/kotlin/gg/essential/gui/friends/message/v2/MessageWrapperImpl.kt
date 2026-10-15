@@ -63,7 +63,6 @@ import gg.essential.gui.util.hoveredState
 import gg.essential.gui.util.hoveredStateV2
 import gg.essential.universal.UDesktop
 import gg.essential.universal.UKeyboard
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.util.*
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
@@ -481,16 +480,6 @@ class MessageWrapperImpl(
     }
 
     override fun extractComponent(extractor: ElementaExtractor) {
-        maybeLoadReplyTo()
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
         maybeLoadReplyTo()
     }
 

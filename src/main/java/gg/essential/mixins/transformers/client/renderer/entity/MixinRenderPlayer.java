@@ -165,7 +165,7 @@ public abstract class MixinRenderPlayer
         //#endif
         CosmeticsRenderState cState = new CosmeticsRenderState.Live(player);
         // render only cosmetics connected to LEFT_ARM and no other EnumParts
-        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.LEFT_ARM), false);
+        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.LEFT_ARM), false, false);
         EmoteWheel.isPlayerArmRendering = false;
     }
 
@@ -205,7 +205,7 @@ public abstract class MixinRenderPlayer
         //#endif
         CosmeticsRenderState cState = new CosmeticsRenderState.Live(player);
         // render only cosmetics connected to RIGHT_ARM and no other EnumParts
-        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.RIGHT_ARM), false);
+        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.RIGHT_ARM), false, false);
         EmoteWheel.isPlayerArmRendering = false;
     }
 
@@ -226,6 +226,25 @@ public abstract class MixinRenderPlayer
         //$$ // process the transforms with our modified yaw
         //$$ this.updateRenderState(player, state, partialTicks);
         //$$ this.setupTransforms(state, stack, state.bodyYaw, state.baseScale);
+        //$$
+        //$$ // With 1.21.2 now properly rendering all body parts relative to the root part, some third party mods might now
+        //$$ // apply transformations to the root part, we need to account for that.
+        //$$
+        //$$ // To do this properly we first need to replicate all the transforms applied by minecraft between the vanilla
+        //$$ // setupTransforms() call and the vanilla model rendering call (which is where the root transforms apply).
+        //$$ // These values come from, and are applied by, the LivingEntityRenderer's render method & PlayerRenderer
+        //$$ stack.scale(-1.0F, -1.0F, 1.0F);
+        //$$ stack.scale(0.9375f, 0.9375f, 0.9375f);
+        //$$ stack.translate(0.0f, -1.501f, 0.0f);
+        //$$
+        //$$ // Now we apply the root transform to the correctly prepared stack
+        //$$ getModel().setAngles(state);
+        //$$ getModel().getRootPart().rotate(stack);
+        //$$
+        //$$ // Now we revert those vanilla transforms except for the ones from the root part.
+        //$$ stack.translate(0.0f, 1.501f, 0.0f);
+        //$$ stack.scale(1 / 0.9375f, 1 / 0.9375f, 1 / 0.9375f);
+        //$$ stack.scale(-1.0F, -1.0F, 1.0F);
         //$$
         //$$ // reset the yaw to the original value
         //$$ player.bodyYaw = oldYaw;

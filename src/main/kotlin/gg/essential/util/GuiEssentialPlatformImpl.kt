@@ -69,6 +69,7 @@ import gg.essential.handlers.MojangSkinManager
 import gg.essential.handlers.account.WebAccountManager
 import gg.essential.handlers.discord.DiscordIntegration
 import gg.essential.key.EssentialKeybindingRegistry
+import gg.essential.mixins.ext.client.ext
 import gg.essential.mod.Skin
 import gg.essential.mod.cosmetics.CosmeticSlot
 import gg.essential.mod.cosmetics.preview.PerspectiveCamera
@@ -87,7 +88,6 @@ import gg.essential.network.connectionmanager.notices.INoticesManager
 import gg.essential.network.connectionmanager.skins.SkinsManager
 import gg.essential.network.connectionmanager.social.ProfileSuspension
 import gg.essential.network.connectionmanager.social.RulesManager
-import gg.essential.network.connectionmanager.sps.SPSSessionSource
 import gg.essential.network.connectionmanager.suspension.SuspensionManager
 import gg.essential.sps.GameModLoader
 import gg.essential.sps.LocalResourcePackIndex
@@ -111,6 +111,7 @@ import gg.essential.util.image.bitmap.forEachPixel
 import gg.essential.util.lwjgl3.Lwjgl3Loader
 import io.netty.buffer.ByteBuf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.MainCoroutineDispatcher
 import me.kbrewster.eventbus.Subscribe
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiCreateWorld
@@ -137,7 +138,6 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement
 //#endif
 
 //#if MC>=12105
-//$$ import net.minecraft.client.texture.GlTexture
 //$$ import com.mojang.blaze3d.opengl.GlStateManager
 //#endif
 
@@ -154,6 +154,9 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
 
     override val clientThreadDispatcher: CoroutineDispatcher
         get() = MinecraftCoroutineDispatchers.clientThread
+
+    override val gameThreadDispatcher: MainCoroutineDispatcher
+        get() = Minecraft.getMinecraft().ext.`essential$dispatcher`
 
     override val renderBackend: RenderBackend
         get() = MinecraftRenderBackend
@@ -211,24 +214,6 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
 
     override fun identifierFromTexture(texture: RenderBackend.Texture): UIdentifier {
         return (texture as MinecraftRenderBackend.MinecraftTexture).identifier.toU()
-    }
-
-    override fun getGlId(identifier: UIdentifier): Int {
-        val textureManager = Minecraft.getMinecraft().textureManager
-        //#if MC<16000
-        @Suppress("USELESS_ELVIS") // method inappropriately marked as non-null by Forge
-        //#endif
-        val texture = textureManager.getTexture(identifier.toMC())
-            //#if MC<11700
-            ?: net.minecraft.client.renderer.texture.SimpleTexture(identifier.toMC()).also {
-                textureManager.loadTexture(identifier.toMC(), it)
-            }
-            //#endif
-        //#if MC>=12105
-        //$$ return (texture.glTexture as GlTexture).glId
-        //#else
-        return texture.glTextureId
-        //#endif
     }
 
     override fun playSound(identifier: UIdentifier) {
@@ -354,7 +339,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
         return object : SocialStates {
             override val relationships: IRelationshipStates by lazy { RelationshipStateManagerImpl(cm.relationshipManager) }
             override val messages: IMessengerStates by lazy { MessengerStateManagerImpl(cm.chatManager) }
-            override val activity: IStatusStates by lazy { StatusStateManagerImpl(cm.profileManager, cm.spsManager) }
+            override val activity: IStatusStates by lazy { StatusStateManagerImpl(cm.profileManager) }
             override val suspensions: ListState<ProfileSuspension>
                 get() = cm.profileManager.suspensions
         }
@@ -429,9 +414,6 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
 
     override fun trackByteBuf(alloc: LimitedAllocator, buf: ByteBuf): ByteBuf =
         gg.essential.gui.screenshot.bytebuf.trackByteBuf(alloc, buf)
-
-    override fun newGlFrameBuffer(width: Int, height: Int, colorFormat: GpuTexture.Format, depthFormat: GpuTexture.Format): GlFrameBuffer =
-        GlFrameBufferImpl(width, height, colorFormat, depthFormat)
 
     override fun newGpuTexture(width: Int, height: Int, format: GpuTexture.Format): GpuTexture =
         OwnedGpuTextureImpl(width, height, format)
@@ -587,7 +569,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
     override fun shouldHideNotificationForHost(uuid: UUID): Boolean = DiscordIntegration.partyManager.shouldHideNotificationForHost(uuid)
 
     override fun createServerInviteModal(modalManager: ModalManager): Modal =
-        InviteFriendsModal.showInviteModal(modalManager, source = SPSSessionSource.MAIN_MENU, onComplete = {})
+        InviteFriendsModal.showInviteModal(modalManager, onComplete = {})
 
     override fun openWardrobe(highlight: ItemId?) {
         val openedScreen = GuiUtil.openedScreen()

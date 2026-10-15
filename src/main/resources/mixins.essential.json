@@ -294,6 +294,7 @@
     "server.Mixin_PublishServerStatusResponse",
     "server.integrated.LanConnectionsAccessor",
     "server.integrated.Mixin_DisableForcedGameType",
+    "server.integrated.Mixin_FixCheatsAndOpPermissions",
     "server.integrated.Mixin_FixDefaultOpPermissionLevel",
     "server.integrated.Mixin_IntegratedServerManager",
     "server.integrated.Mixin_IntegratedServerOnTick",

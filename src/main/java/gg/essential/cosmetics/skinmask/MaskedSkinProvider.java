@@ -11,16 +11,14 @@
  */
 package gg.essential.cosmetics.skinmask;
 
-import gg.essential.lib.caffeine.cache.Cache;
-import gg.essential.lib.caffeine.cache.Caffeine;
-import gg.essential.lib.caffeine.cache.RemovalCause;
-import gg.essential.lib.caffeine.cache.RemovalListener;
-import gg.essential.lib.caffeine.cache.Scheduler;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import gg.essential.universal.UImage;
 import gg.essential.universal.UMinecraft;
 import gg.essential.util.ExtensionsKt;
 import gg.essential.util.HelpersKt;
-import gg.essential.util.Multithreading;
 import gg.essential.util.image.bitmap.Bitmap;
 import gg.essential.util.image.bitmap.UImageBitmap;
 import net.minecraft.client.Minecraft;
@@ -31,7 +29,6 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -133,10 +130,8 @@ public class MaskedSkinProvider {
     }
 
     private static class DynamicTextureManager implements RemovalListener<MaskedSkinProvider, ResourceLocation> {
-        private final Cache<MaskedSkinProvider, ResourceLocation> loaded = Caffeine.newBuilder()
+        private final Cache<MaskedSkinProvider, ResourceLocation> loaded = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)
-            .executor(Multithreading.POOL)
-            .scheduler(Scheduler.forScheduledExecutorService(Multithreading.getScheduledPool()))
             .removalListener(this)
             .build();
 
@@ -156,11 +151,9 @@ public class MaskedSkinProvider {
         }
 
         @Override
-        public void onRemoval(@Nullable MaskedSkinProvider provider, @Nullable ResourceLocation id, @NotNull RemovalCause cause) {
-            if (id == null || provider == null) {
-                return;
-            }
-            ExtensionsKt.getExecutor(UMinecraft.getMinecraft()).execute(() -> provider.expireTexture(id));
+        public void onRemoval(@NotNull RemovalNotification<MaskedSkinProvider, ResourceLocation> notification) {
+            ExtensionsKt.getExecutor(UMinecraft.getMinecraft()).execute(() ->
+                notification.getKey().expireTexture(notification.getValue()));
         }
     }
 

@@ -34,6 +34,5 @@ dependencies {
 
     api(prebundle(relocated))
 
-    api("gg.essential.lib:caffeine:2.9.0") // keep in sync with `/api/build.gradle.kts`
     api("com.squareup.okhttp3:okhttp:3.9.0")
 }

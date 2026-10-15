@@ -52,7 +52,6 @@ import gg.essential.gui.layoutdsl.alignVertical
 import gg.essential.gui.layoutdsl.layout
 import gg.essential.gui.notification.Notifications
 import gg.essential.gui.notification.error
-import gg.essential.universal.UMatrixStack
 import gg.essential.util.*
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import gg.essential.vigilance.utils.onLeftClick
@@ -292,18 +291,6 @@ class ReplyableMessageScreen(
         content.children.sortWith(contentSortComparator)
         recalculateTimestampVisibility()
         insertUnreadDivider()
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        if (!markedManuallyUnread) {
-            findAndMarkLatestMessageAsRead()
-        }
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     override fun extractComponent(extractor: ElementaExtractor) {

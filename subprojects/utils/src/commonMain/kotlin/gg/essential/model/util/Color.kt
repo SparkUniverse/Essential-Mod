@@ -12,6 +12,7 @@
 package gg.essential.model.util
 
 import dev.folomeev.kotgl.matrix.vectors.Vec4
+import kotlin.jvm.JvmInline
 
 /** Value type for a 32-bit (8 bits per channel) RGBA color value. The lowest byte contains the alpha value. */
 @JvmInline
@@ -20,7 +21,7 @@ value class Color(val rgba: UInt) {
         r: UByte,
         g: UByte,
         b: UByte,
-        a: UByte = 1u,
+        a: UByte = 255u,
     ) : this((r.toUInt() shl 24) or (g.toUInt() shl 16) or (b.toUInt() shl 8) or a.toUInt())
 
     val r: UByte

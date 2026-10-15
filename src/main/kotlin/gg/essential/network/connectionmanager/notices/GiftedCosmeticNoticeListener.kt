@@ -11,33 +11,51 @@
  */
 package gg.essential.network.connectionmanager.notices
 
+import gg.essential.elementa.state.v2.ReferenceHolder
+import gg.essential.gui.elementa.state.v2.collections.effectOnChange
+import gg.essential.gui.elementa.state.v2.filter
+import gg.essential.gui.elementa.state.v2.mapEach
+import gg.essential.gui.elementa.state.v2.mapList
+import gg.essential.gui.elementa.state.v2.memo
 import gg.essential.gui.wardrobe.components.showGiftReceivedToast
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsData
+import gg.essential.network.cosmetics.Cosmetic
 import gg.essential.notices.NoticeType
-import gg.essential.notices.model.Notice
-import gg.essential.util.UUIDUtil
-import gg.essential.util.thenAcceptOnMainThread
+import gg.essential.util.UuidNameLookup
 import java.util.UUID
 
 class GiftedCosmeticNoticeListener(
-    private val noticeManager: NoticesManager,
+    private val noticesManager: NoticesManager,
     private val cosmeticsData: CosmeticsData,
-) : NoticeListener {
+) {
+    private val notices = noticesManager.activeNotices.filter { it.type == NoticeType.GIFTED_COSMETIC_TOAST }
+        .mapEach { notice ->
+            val byUuid = UUID.fromString(notice.metadata["gifted_by_id"] as String)
+            val byName = UuidNameLookup.nameState(byUuid, null)
+            val cosmeticId = notice.metadata["cosmetic_id"] as String
+            val cosmetic = cosmeticsData.cosmetic(cosmeticId)
+            memo {
+                ResolvedNotice(
+                    notice.id,
+                    byUuid,
+                    byName() ?: return@memo null,
+                    cosmetic() ?: return@memo null,
+                )
+            }
+        }
+        .mapList { list -> list.mapNotNull { it() } }
 
-    override fun noticeAdded(notice: Notice) {
-        if (notice.type != NoticeType.GIFTED_COSMETIC_TOAST) {
-            return
-        }
-        val uuid = UUID.fromString(notice.metadata["gifted_by_id"] as? String ?: return)
-        val cosmeticId = notice.metadata["cosmetic_id"] as? String ?: return
-        val cosmetic = cosmeticsData.getCosmetic(cosmeticId) ?: return
-        UUIDUtil.getName(uuid).thenAcceptOnMainThread { name ->
-            showGiftReceivedToast(cosmetic, uuid, name)
-            noticeManager.dismissNotice(notice.id)
-        }
+    private class ResolvedNotice(
+        val id: String,
+        val byUuid: UUID,
+        val byName: String,
+        val cosmetic: Cosmetic,
+    )
+
+    fun hookUp(refHolder: ReferenceHolder) {
+        notices.effectOnChange(refHolder, add = { (_, notice) ->
+            showGiftReceivedToast(notice.cosmetic, notice.byUuid, notice.byName)
+            noticesManager.dismissNotice(notice.id)
+        }, remove = {})
     }
-
-    override fun noticeRemoved(notice: Notice?) {}
-
-    override fun onConnect() {}
 }

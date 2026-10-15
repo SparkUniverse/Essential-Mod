@@ -41,7 +41,7 @@ public class SocialManager implements NetworkedManager {
     private final @NotNull ConnectionManager connectionManager;
 
     public SocialManager(@NotNull final ConnectionManager connectionManager) {
-        connectionManager.registerPacketHandler(SocialInviteToServerPacket.class, new SocialInviteToServerPacketHandler());
+        connectionManager.registerPacketHandler(SocialInviteToServerPacket.class, new SocialInviteToServerPacketHandler(this));
         connectionManager.registerPacketHandler(SocialInviteToServerCancelPacket.class, new SocialInviteToServerCancelPacketHandler(this));
         this.connectionManager = connectionManager;
     }

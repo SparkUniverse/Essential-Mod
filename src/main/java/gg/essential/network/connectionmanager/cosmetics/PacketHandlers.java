@@ -13,78 +13,34 @@ package gg.essential.network.connectionmanager.cosmetics;
 
 import com.google.common.collect.Maps;
 import gg.essential.connectionmanager.common.packet.Packet;
-import gg.essential.lib.caffeine.cache.Cache;
-import gg.essential.lib.caffeine.cache.Caffeine;
-import gg.essential.lib.caffeine.cache.Expiry;
-import gg.essential.lib.caffeine.cache.RemovalCause;
-import gg.essential.lib.caffeine.cache.Scheduler;
 import gg.essential.network.connectionmanager.AsyncResponseHandler;
 import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.EarlyResponseHandler;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.universal.UMinecraft;
 import gg.essential.util.ExtensionsKt;
-import gg.essential.util.Multithreading;
-import org.apache.commons.lang3.tuple.Pair;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class PacketHandlers {
+public class PacketHandlers extends PacketHandlersKt {
     @NotNull
     private final Executor mainThreadExecutor = ExtensionsKt.getExecutor(UMinecraft.getMinecraft());
 
     @NotNull
     private final Map<Class<? extends Packet>, PacketHandler<?>> packetHandlers = Maps.newHashMap();
 
-    @NotNull
-    private final Cache<@NotNull UUID, @NotNull Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>>> awaitingPacketResponses =
-        Caffeine.newBuilder()
-            .maximumSize(10000)
-            .executor(Multithreading.getPool())
-            .scheduler(Scheduler.forScheduledExecutorService(Multithreading.getScheduledPool()))
-            .expireAfter(new Expiry<UUID, Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>>>() {
-
-                @Override
-                public long expireAfterCreate(@NotNull final UUID packetId, @NotNull final Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>> valueData, final long currentTime) {
-                    return valueData.getKey();
-                }
-
-                @Override
-                public long expireAfterUpdate(@NotNull final UUID packetId, @NotNull final Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>> valueData, final long currentTime, final long currentDuration) {
-                    return currentDuration;
-                }
-
-                @Override
-                public long expireAfterRead(@NotNull final UUID packetId, @NotNull final Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>> valueData, final long currentTime, final long currentDuration) {
-                    return currentDuration;
-                }
-
-            })
-            .evictionListener((key, value, cause) -> {
-                if (value != null && (RemovalCause.EXPIRED == cause || RemovalCause.SIZE == cause)) {
-                    Consumer<@NotNull Optional<Packet>> packetHandler = value.getRight();
-                    this.mainThreadExecutor.execute(() -> packetHandler.accept(Optional.empty()));
-                }
-            })
-            .build();
+    public PacketHandlers(@NotNull CoroutineScope coroutineScope) {
+        super(coroutineScope);
+    }
 
     public <T extends Packet> void register(Class<T> cls, PacketHandler<T> handler) {
         this.packetHandlers.put(cls, handler);
-    }
-
-    public void register(
-        @NotNull final UUID packetId,
-        @NotNull final TimeUnit timeoutUnit,
-        @NotNull final Long timeoutValue,
-        @NotNull final Consumer<Optional<Packet>> responseCallback
-    ) {
-        this.awaitingPacketResponses.put(packetId, Pair.of(timeoutUnit.toNanos(timeoutValue), responseCallback));
     }
 
     public void handle(ConnectionManager connectionManager, Packet packet) {
@@ -96,12 +52,7 @@ public class PacketHandlers {
         UUID packetId = packet.getPacketUniqueId();
         Consumer<Optional<Packet>> responseHandler = null;
         if (packetId != null) {
-            final Pair<@NotNull Long, @NotNull Consumer<@NotNull Optional<Packet>>> responseCallbackPair = this.awaitingPacketResponses.getIfPresent(packetId);
-
-            if (responseCallbackPair != null) {
-                this.awaitingPacketResponses.invalidate(packetId);
-                responseHandler = responseCallbackPair.getRight();
-            }
+            responseHandler = takePacketResponseHandler(packetId);
         }
         if (responseHandler instanceof AsyncResponseHandler) {
             fResponseHandler = null;
@@ -114,16 +65,6 @@ public class PacketHandlers {
         if (packetHandler == null && responseHandler == null) {
             return;
         }
-
-        Runnable syncPacketHandler = null;
-        if (packetHandler != null) {
-            try {
-                syncPacketHandler = packetHandler.handleAsync(connectionManager, packet);
-            } catch (final Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }
-        Runnable fSyncPacketHandler = syncPacketHandler;
 
         if (asyncResponseHandler != null) {
             try {
@@ -150,9 +91,9 @@ public class PacketHandlers {
                 responseHandlerSync = null;
             }
 
-            if (fSyncPacketHandler != null) {
+            if (packetHandler != null) {
                 try {
-                    fSyncPacketHandler.run();
+                    packetHandler.handle(packet);
                 } catch (final Throwable throwable) {
                     throwable.printStackTrace();
                 }

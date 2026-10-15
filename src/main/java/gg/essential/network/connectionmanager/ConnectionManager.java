@@ -26,7 +26,6 @@ import gg.essential.handlers.MojangSkinManager;
 import gg.essential.mod.Skin;
 import gg.essential.network.GatewayService;
 import gg.essential.network.GatewayServicesManager;
-import gg.essential.network.client.MinecraftHook;
 import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.coins.CoinsManager;
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
@@ -55,15 +54,14 @@ import gg.essential.network.connectionmanager.profile.ProfileManager;
 import gg.essential.network.connectionmanager.profile.SuspensionDisconnectHandler;
 import gg.essential.network.connectionmanager.relationship.RelationshipManager;
 import gg.essential.network.connectionmanager.serverdiscovery.NewServerDiscoveryManager;
-import gg.essential.network.connectionmanager.serverdiscovery.ServerDiscoveryManager;
 import gg.essential.network.connectionmanager.skins.PlayerSkinLookup;
 import gg.essential.network.connectionmanager.skins.SkinsManager;
 import gg.essential.network.connectionmanager.social.RulesManager;
 import gg.essential.network.connectionmanager.social.SocialManager;
-import gg.essential.network.connectionmanager.sps.SPSManager;
 import gg.essential.network.connectionmanager.subscription.SubscriptionManager;
 import gg.essential.network.connectionmanager.suspension.McSuspensionManager;
 import gg.essential.network.connectionmanager.suspension.SuspensionManager;
+import gg.essential.network.connectionmanager.telemetry.TelemetryGatherer;
 import gg.essential.network.connectionmanager.telemetry.TelemetryManager;
 import gg.essential.sps.McIntegratedServerManager;
 import gg.essential.util.ModLoaderUtil;
@@ -71,7 +69,7 @@ import gg.essential.util.USession;
 import gg.essential.util.lwjgl3.Lwjgl3Loader;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
+import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.JobKt;
 import me.kbrewster.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
@@ -88,15 +86,13 @@ import static kotlinx.coroutines.ExceptionsKt.CancellationException;
 public class ConnectionManager extends ConnectionManagerKt {
 
     @NotNull
-    final PacketHandlers packetHandlers = new PacketHandlers();
+    final PacketHandlers packetHandlers;
     @NotNull
     private final ReferenceHolder refHolder = new ReferenceHolderImpl();
     @NotNull
-    private final MinecraftHook minecraftHook;
-    @NotNull
     private final List<NetworkedManager> managers = new ArrayList<>();
     @NotNull
-    private final GatewayServicesManager gatewayServicesManager = new GatewayServicesManager(this);
+    private final GatewayServicesManager gatewayServicesManager;
     @NotNull
     private final NoticesManager noticesManager;
     @NotNull
@@ -112,10 +108,6 @@ public class ConnectionManager extends ConnectionManagerKt {
     @NotNull
     private final ProfileManager profileManager;
     @NotNull
-    private final SPSManager spsManager;
-    @NotNull
-    private final ServerDiscoveryManager serverDiscoveryManager;
-    @NotNull
     private final SocialManager socialManager;
     @NotNull
     private final IceManager iceManager;
@@ -123,6 +115,8 @@ public class ConnectionManager extends ConnectionManagerKt {
     private final ScreenshotManager screenshotManager;
     @NotNull
     private final TelemetryManager telemetryManager;
+    @NotNull
+    private final TelemetryGatherer telemetryGatherer;
     //@NotNull
     private /*final*/ CoinsManager coinsManager;
     //@NotNull
@@ -149,18 +143,21 @@ public class ConnectionManager extends ConnectionManagerKt {
     private int previouslyConnectedProtocol = 1;
 
     public ConnectionManager(
-            @NotNull final MinecraftHook minecraftHook,
+            CoroutineScope coroutineScope,
             File baseDir,
             Lwjgl3Loader lwjgl3,
             State<@Nullable McIntegratedServerManager> integratedServerManager
     ) {
-        this.minecraftHook = minecraftHook;
+        this.packetHandlers = new PacketHandlers(coroutineScope);
+
+        this.gatewayServicesManager = new GatewayServicesManager(this);
+
         this.subscriptionManager = new SubscriptionManager(this);
         this.managers.add(this.subscriptionManager);
 
         // Connections
-        this.registerPacketHandler(ClientConnectionDisconnectPacket.class, new ClientConnectionDisconnectPacketHandler());
-        this.registerPacketHandler(ServerConnectionReconnectPacket.class, new ServerConnectionReconnectPacketHandler());
+        this.registerPacketHandler(ClientConnectionDisconnectPacket.class, new ClientConnectionDisconnectPacketHandler(this));
+        this.registerPacketHandler(ServerConnectionReconnectPacket.class, new ServerConnectionReconnectPacketHandler(this));
 
         // Multiplayer
         this.registerPacketHandler(ServerMultiplayerJoinServerPacket.class, new ServerMultiplayerJoinServerPacketHandler());
@@ -171,14 +168,12 @@ public class ConnectionManager extends ConnectionManagerKt {
         // Mod Partners
         this.registerPacketHandler(ServerPartneredModsPopulatePacket.class, packet -> {
             ModLoaderUtil.populatePartnerMods(packet.getMods());
-            return Unit.INSTANCE;
         });
 
         // Notices
         this.managers.add((this.noticesManager = new NoticesManager(this)));
 
         noticeBannerManager = new NoticeBannerManager(noticesManager);
-        new PersistentToastNoticeListener(refHolder, noticesManager);
 
         // Disabled Features
         this.managers.add(this.disabledFeaturesManager = new DisabledFeaturesManager(this));
@@ -189,7 +184,8 @@ public class ConnectionManager extends ConnectionManagerKt {
         this.managers.add(this.cosmeticsManager.getInfraEquippedOutfitsManager());
         cosmeticNotices = new CosmeticNotices(noticesManager, cosmeticsManager.getCosmeticsData());
         saleNoticeManager = new SaleNoticeManager(noticesManager);
-        noticesManager.register(new GiftedCosmeticNoticeListener(noticesManager, cosmeticsManager.getCosmeticsData()));
+        new GiftedCosmeticNoticeListener(noticesManager, cosmeticsManager.getCosmeticsData())
+            .hookUp(refHolder);
 
         // Relationships
         this.relationshipManager = new RelationshipManager(this);
@@ -203,14 +199,6 @@ public class ConnectionManager extends ConnectionManagerKt {
         this.profileManager = new ProfileManager(this);
         this.managers.add(this.profileManager);
 
-        // SPS
-        this.spsManager = new SPSManager(this);
-        this.managers.add(this.spsManager);
-
-        // Server Discovery
-        this.serverDiscoveryManager = new ServerDiscoveryManager(this);
-        this.managers.add(this.serverDiscoveryManager);
-
         // Social Manager
         this.managers.add(this.socialManager = new SocialManager(this));
         noticesManager.register(new FriendRequestToastNoticeListener(this, noticesManager));
@@ -222,9 +210,6 @@ public class ConnectionManager extends ConnectionManagerKt {
             baseDir.toPath(),
             integratedServerManager,
             uuid -> {
-                if (this.spsManager.getInvitedUsers().contains(uuid)) {
-                    return true;
-                }
                 McIntegratedServerManager server = integratedServerManager.getUntracked();
                 if (server != null && server.getOpenToLan().getUntracked()) {
                     Set<UUID> whitelist = server.getWhitelist().getUntracked();
@@ -235,10 +220,12 @@ public class ConnectionManager extends ConnectionManagerKt {
         );
 
         //Screenshots
-        this.managers.add(this.screenshotManager = new ScreenshotManager(this, baseDir, lwjgl3));
+        this.screenshotManager = new ScreenshotManager(this, baseDir, lwjgl3);
+        this.managers.add(this.screenshotManager.getRemoteMediaManager());
 
         // Telemetry
         this.managers.add(this.telemetryManager = new TelemetryManager(this));
+        this.managers.add(this.telemetryGatherer = new TelemetryGatherer(this.telemetryManager));
 
         // Coins
         this.managers.add(this.coinsManager = new CoinsManager(this));
@@ -286,11 +273,6 @@ public class ConnectionManager extends ConnectionManagerKt {
         PlayerSkinLookup.INSTANCE.register(this);
     }
 
-    @NotNull
-    public MinecraftHook getMinecraftHook() {
-        return this.minecraftHook;
-    }
-
     @Override
     public @NotNull GatewayService getGatewayService(@NotNull String id) {
         return gatewayServicesManager.getService(id);
@@ -329,11 +311,6 @@ public class ConnectionManager extends ConnectionManagerKt {
     @NotNull
     public ProfileManager getProfileManager() {
         return this.profileManager;
-    }
-
-    @NotNull
-    public SPSManager getSpsManager() {
-        return this.spsManager;
     }
 
     @NotNull
@@ -410,6 +387,16 @@ public class ConnectionManager extends ConnectionManagerKt {
         return this.rulesManager;
     }
 
+    public void hookUpToGame(ReferenceHolder refHolder, GameStates gameStates) {
+        telemetryManager.hookUp(refHolder, gameStates.isScreenFineForUnpromptedModal());
+        telemetryGatherer.hookUp(refHolder);
+        suspensionManager.hookUp(refHolder, gameStates.isScreenFineForUnpromptedModal());
+
+        new PersistentToastNoticeListener(noticesManager)
+            .hookUp(refHolder, gameStates.isTitleScreen());
+
+    }
+
     @Override
     public boolean isOpen() {
         Connection connection = this.connection;
@@ -432,16 +419,6 @@ public class ConnectionManager extends ConnectionManagerKt {
 
     public <T extends Packet> void registerPacketHandler(Class<T> cls, PacketHandler<T> handler) {
         this.packetHandlers.register(cls, handler);
-    }
-
-    @Override
-    public <T extends Packet> void registerPacketHandler(@NotNull Class<T> cls, @NotNull Function1<? super T, Unit> handler) {
-        registerPacketHandler(cls, new PacketHandler<T>() {
-            @Override
-            protected void onHandle(@NotNull ConnectionManager connectionManager, @NotNull T packet) {
-                handler.invoke(packet);
-            }
-        });
     }
 
     protected void completeConnection(Connection connection) {
@@ -539,10 +516,6 @@ public class ConnectionManager extends ConnectionManagerKt {
     @Subscribe
     public void onPostInit(PostInitializationEvent event) {
         ModLoaderUtil.setModsLoaded();
-    }
-
-    public ServerDiscoveryManager getServerDiscoveryManager() {
-        return this.serverDiscoveryManager;
     }
 
     public void onTosRevokedOrEssentialDisabled() {

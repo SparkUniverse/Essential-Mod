@@ -118,6 +118,7 @@ class StunSocket(
                         if (e is SocketException && e.message?.startsWith("Network is unreachable:") == true
                             || e is BindException && e.message == "Cannot assign requested address: no further information"
                             || e is IOException && e.message == "Network is unreachable (sendto failed)"
+                            || e is IOException && e.message == "No route to host (sendto failed)"
                             || e is NoRouteToHostException) {
                             logger.trace("Failed to send to {}: {}", packet.socketAddress, e.message)
                             knownUnreachable.add(packet.address)

@@ -65,10 +65,6 @@ class FilesIndexTracker(
     fun getSha256(path: Path): ByteArray? =
         path.relativeToOrNull(rootPath)?.let { entries[it] }?.sha256
 
-    fun invalidate(path: Path) {
-        entries.remove(path)
-    }
-
     fun update(fileReader: FileReader = SimpleFileReader) {
         entries.values.forEach { it.visited = false }
         update(fileReader, rootPath, IsInThePast())

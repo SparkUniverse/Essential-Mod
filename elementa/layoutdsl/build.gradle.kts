@@ -10,7 +10,6 @@
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
 import essential.universalLibs
-import gg.essential.gradle.util.KotlinVersion
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 
 plugins {
@@ -21,7 +20,6 @@ plugins {
 universalLibs()
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
     implementation(project(":feature-flags"))
     api(project(":elementa:statev2"))
 }

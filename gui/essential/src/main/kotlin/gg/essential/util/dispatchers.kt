@@ -15,5 +15,7 @@ import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import kotlinx.coroutines.Dispatchers
 
 @Suppress("unused") // receiver is specified to mirror builtin dispatchers
+@Deprecated("Equivalent to `Dispatchers.Game.immediate` (except in case of nested calls, see the \"Event loop\" section of `Dispatchers.Unconfined` kdocs). " +
+        "For use with `asExecutor`, beware that the new dispatcher will not catch uncaught exceptions and instead crash the game (coroutines exception handling is unaffected).")
 val Dispatchers.Client
     get() = platform.clientThreadDispatcher

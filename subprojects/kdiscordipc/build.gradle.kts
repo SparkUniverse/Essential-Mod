@@ -10,7 +10,6 @@
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
 import essential.*
-import gg.essential.gradle.util.KotlinVersion
 import gg.essential.gradle.util.prebundle
 
 plugins {
@@ -32,7 +31,7 @@ configurations.compileOnly.configure {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
+    implementation(libs.kotlin.stdlib.jdk8)
     implementation(project(":classloaders"))
 
     junixsocket("com.kohlschutter.junixsocket:junixsocket-core:2.6.2")

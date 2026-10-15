@@ -59,7 +59,7 @@ class ResourceImageFactory @LoadsResources("%resource%") constructor(
             }
         }
 
-        private val cache: ResourceCache = ResourceCache(Int.MAX_VALUE)
+        private val cache: ResourceCache = ResourceCache(Int.MAX_VALUE, javaClass)
 
         init {
             Inspector.registerComponentFactory(ResourceImageFactory::class.java)

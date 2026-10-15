@@ -18,7 +18,6 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.effects.OutlineEffect
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.state.BasicState
 import gg.essential.elementa.state.State
 import gg.essential.elementa.state.toConstraint
@@ -387,18 +386,6 @@ class MenuButton @JvmOverloads constructor(
             }
         }
         return text
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        @Suppress("DEPRECATION")
-        beforeDraw(matrixStack)
-        extractComponent(ImmediateElementaExtractor(matrixStack))
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     override fun extractComponent(extractor: ElementaExtractor) {

@@ -40,14 +40,7 @@ repositories {
 
 dependencies {
     // Kotlin
-    val kotlin = platform.kotlinVersion
-    api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin.stdlib}")
-    api("org.jetbrains.kotlin:kotlin-reflect:${kotlin.stdlib}")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${kotlin.coroutines}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}")
-    compileOnly("org.jetbrains:annotations:23.0.0")
+    api(libs.bundles.kotlin)
 
     // Core Libraries
     api("org.kodein.di:kodein-di-jvm:7.6.0")
@@ -58,6 +51,7 @@ dependencies {
 
     // Core Gui Libraries
     val ucMcVersion = when (platform.mcVersion) {
+        26_01_02 -> "26.1"
         12101 -> "1.21"
         11802 -> "1.18.1"
         11605 -> "1.16.2"
@@ -75,7 +69,7 @@ dependencies {
             exclude(module = "asm-tree")
             exclude(module = "asm")
         }
-        api("gg.essential.lib:caffeine:2.9.0") // keep in sync with `/libs/build.gradle.kts`
+        api("gg.essential.lib:caffeine:2.9.0")
         api("gg.essential.lib:mixinextras:${libs.versions.mixinextras.get()}")
     }
 }

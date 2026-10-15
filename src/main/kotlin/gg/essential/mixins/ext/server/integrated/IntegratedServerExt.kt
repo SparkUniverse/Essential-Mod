@@ -17,10 +17,14 @@ import java.util.UUID
 
 interface IntegratedServerExt {
     val `essential$manager`: McIntegratedServerManager
-    fun `essential$undoLan`(host: UUID)
+    //#if MC < 26.2
+    fun `essential$undoLan`(host: UUID) // Replaced with IntegratedServer unpublishServer method in 26.2
+    //#endif
 }
 
 val IntegratedServer.ext get() = this as IntegratedServerExt
 val IntegratedServer.manager get() = ext.`essential$manager`
 
+//#if MC < 26.2
 fun IntegratedServer.undoLan(host: UUID) = ext.`essential$undoLan`(host)
+//#endif

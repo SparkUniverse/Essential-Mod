@@ -11,7 +11,10 @@
  */
 package gg.essential.mixins.transformers.client;
 
-import gg.essential.util.TargetThreadExecutor;
+import gg.essential.Essential;
+import gg.essential.util.SingleThreadDispatcher;
+import kotlinx.coroutines.ExecutorsKt;
+import kotlinx.coroutines.MainCoroutineDispatcher;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +33,29 @@ public class Mixin_RunEssentialTasks
     implements gg.essential.mixins.ext.client.MinecraftExt {
 
     @Unique
-    private final TargetThreadExecutor essentialExecutor = new TargetThreadExecutor();
+    private final SingleThreadDispatcher dispatcher = initSingleThreadDispatcher();
+    // Note: Separate method because otherwise Mixin will place it directly in the constructor and third-party mixins
+    //       may accidentally target it.
+    @Unique
+    private SingleThreadDispatcher initSingleThreadDispatcher() {
+        return new SingleThreadDispatcher("Game", Thread.currentThread());
+    }
+
+    @Unique
+    private final Executor essentialExecutor = (task) -> {
+        ExecutorsKt.asExecutor(dispatcher.getImmediate()).execute(() -> {
+            try {
+                task.run();
+            } catch (Exception e) {
+                Essential.logger.fatal("Error executing task", e);
+            }
+        });
+    };
+
+    @Override
+    public @NotNull MainCoroutineDispatcher getEssential$dispatcher() {
+        return this.dispatcher;
+    }
 
     @NotNull
     @Override
@@ -41,12 +66,12 @@ public class Mixin_RunEssentialTasks
     //#if MC>=11600
     //$$ @Override
     //$$ public void runEssentialTasks(CallbackInfo callbackInfo) {
-    //$$     this.essentialExecutor.run();
+    //$$     this.dispatcher.runTasks();
     //$$ }
     //#else
     @Inject(method = "runGameLoop", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/profiler/Profiler;startSection(Ljava/lang/String;)V", args = "ldc=scheduledExecutables", shift = At.Shift.AFTER))
     private void runEssentialExecutor(CallbackInfo ci) {
-        this.essentialExecutor.run();
+        this.dispatcher.runTasks();
     }
     //#endif
 
@@ -70,7 +95,7 @@ public class Mixin_RunEssentialTasks
         )
     )
     private void runEssentialExecutorDuringInit(CallbackInfo ci) {
-        this.essentialExecutor.run();
+        this.dispatcher.runTasks();
     }
 
 }

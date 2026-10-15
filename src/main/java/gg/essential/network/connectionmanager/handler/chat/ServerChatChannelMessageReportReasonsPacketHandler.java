@@ -12,18 +12,21 @@
 package gg.essential.network.connectionmanager.handler.chat;
 
 import gg.essential.connectionmanager.common.packet.chat.ServerChatChannelMessageReportReasonsPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
+import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerChatChannelMessageReportReasonsPacketHandler extends PacketHandler<ServerChatChannelMessageReportReasonsPacket> {
+public class ServerChatChannelMessageReportReasonsPacketHandler implements PacketHandler<ServerChatChannelMessageReportReasonsPacket> {
+
+    private final ChatManager chatManager;
+
+    public ServerChatChannelMessageReportReasonsPacketHandler(ChatManager chatManager) {
+        this.chatManager = chatManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager,
-        @NotNull final ServerChatChannelMessageReportReasonsPacket packet
-    ) {
-        connectionManager.getChatManager().setReportReasons(packet.getReasons());
+    public void handle(@NotNull final ServerChatChannelMessageReportReasonsPacket packet) {
+        chatManager.setReportReasons(packet.getReasons());
     }
 
 }

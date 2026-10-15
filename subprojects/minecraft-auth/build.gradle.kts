@@ -9,8 +9,6 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
-
 plugins {
     kotlin("jvm")
     id("java-library")
@@ -24,10 +22,6 @@ repositories {
 }
 
 dependencies {
-    val kotlin = KotlinVersion.minimal
-    implementation(kotlin("stdlib", kotlin.stdlib))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}")
+    implementation(libs.bundles.kotlin)
     implementation(project(":utils"))
 }

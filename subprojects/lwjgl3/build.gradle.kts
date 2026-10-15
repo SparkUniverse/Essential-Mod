@@ -9,8 +9,6 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
-
 plugins {
     kotlin("jvm")
     id("java-library")
@@ -23,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
+    implementation(libs.kotlin.stdlib.jdk8)
     implementation(project(":classloaders"))
     compileOnly("com.google.guava:guava:17.0") // will at runtime be provided by MC
     compileOnly("org.ow2.asm:asm-debug-all:5.2") // will at runtime be provided by MC

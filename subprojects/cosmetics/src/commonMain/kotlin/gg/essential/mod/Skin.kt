@@ -13,6 +13,10 @@ package gg.essential.mod
 
 import kotlinx.serialization.Serializable
 import java.util.*
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmStatic
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Serializable
 data class Skin(
@@ -85,10 +89,12 @@ data class Skin(
             ZURI_WIDE,
         )
         @JvmName("defaultFor")
-        fun default(uuid: UUID) = DEFAULT_SKINS[Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.size)]
+        @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
+        fun default(uuid: Uuid) = DEFAULT_SKINS[uuid.hashCode().mod(DEFAULT_SKINS.size)]
 
         @JvmName("defaultPre1_19_3For")
-        fun defaultPre1_19_3(uuid: UUID) =
+        @OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
+        fun defaultPre1_19_3(uuid: Uuid) =
             if ((uuid.hashCode() and 1) == 1) ALEX_SLIM else STEVE_WIDE
     }
 }

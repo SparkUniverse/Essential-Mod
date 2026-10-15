@@ -19,7 +19,6 @@ import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.collections.effectOnChange
 import gg.essential.network.connectionmanager.profile.ProfileManager
-import gg.essential.network.connectionmanager.sps.SPSManager
 import gg.essential.sps.SpsAddress
 import gg.essential.util.AddressUtil
 import gg.essential.util.MinecraftUtils
@@ -30,7 +29,6 @@ import java.util.*
 
 class StatusStateManagerImpl(
     private val profileManager: ProfileManager,
-    private val spsManager: SPSManager
 ) : IStatusStates, IStatusManager {
 
     private val refHolder = ReferenceHolderImpl()
@@ -40,7 +38,6 @@ class StatusStateManagerImpl(
 
     init {
         profileManager.registerStateManager(this)
-        spsManager.registerStateManager(this)
 
         remoteSpsSessions.effectOnChange(
             refHolder,

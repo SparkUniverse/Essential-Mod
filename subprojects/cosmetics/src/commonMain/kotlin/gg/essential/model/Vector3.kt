@@ -173,14 +173,6 @@ data class Vector3(
         return this
     }
 
-    fun clamp(min: Vector3, max: Vector3): Vector3 {
-        this.x = kotlin.math.max(min.x, kotlin.math.min(max.x, this.x))
-        this.y = kotlin.math.max(min.y, kotlin.math.min(max.y, this.y))
-        this.z = kotlin.math.max(min.z, kotlin.math.min(max.z, this.z))
-
-        return this
-    }
-
     fun floor(): Vector3 {
         this.x = kotlin.math.floor(this.x)
         this.y = kotlin.math.floor(this.y)

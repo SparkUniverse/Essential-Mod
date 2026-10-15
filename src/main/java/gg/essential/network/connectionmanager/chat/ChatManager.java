@@ -112,7 +112,7 @@ public class ChatManager extends StateCallbackManager<IMessengerManager> impleme
     private final Map<Long, EagerMessageResolver> channelEagerMessageResolverMap = new HashMap<>();
 
     @NotNull
-    private final ServerChatChannelMessagePacketHandler serverChatChannelMessagePacketHandler = new ServerChatChannelMessagePacketHandler();
+    private final ServerChatChannelMessagePacketHandler serverChatChannelMessagePacketHandler = new ServerChatChannelMessagePacketHandler(this);
 
     public ChatManager(@NotNull final ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
@@ -124,19 +124,18 @@ public class ChatManager extends StateCallbackManager<IMessengerManager> impleme
                 .onTimeoutRetransmit()
                 .create();
 
-        connectionManager.registerPacketHandler(ChatChannelMemberAddPacket.class, new ChatChannelMemberAddPacketHandler());
-        connectionManager.registerPacketHandler(ChatChannelMessageDeletePacket.class, new ChatChannelMessageDeletePacketHandler());
-        connectionManager.registerPacketHandler(ChatChannelMemberRemovePacket.class, new ChatChannelMemberRemovePacketHandler());
-        connectionManager.registerPacketHandler(ChatChannelUpdatePacket.class, new ChatChannelUpdatePacketHandler());
-        connectionManager.registerPacketHandler(ServerChatChannelAddPacket.class, new ServerChatChannelAddPacketHandler());
-        connectionManager.registerPacketHandler(ServerChatChannelClearPacket.class, new ServerChatChannelClearPacketHandler());
+        connectionManager.registerPacketHandler(ChatChannelMemberAddPacket.class, new ChatChannelMemberAddPacketHandler(this));
+        connectionManager.registerPacketHandler(ChatChannelMessageDeletePacket.class, new ChatChannelMessageDeletePacketHandler(this));
+        connectionManager.registerPacketHandler(ChatChannelMemberRemovePacket.class, new ChatChannelMemberRemovePacketHandler(this));
+        connectionManager.registerPacketHandler(ChatChannelUpdatePacket.class, new ChatChannelUpdatePacketHandler(this));
+        connectionManager.registerPacketHandler(ServerChatChannelAddPacket.class, new ServerChatChannelAddPacketHandler(this));
+        connectionManager.registerPacketHandler(ServerChatChannelClearPacket.class, new ServerChatChannelClearPacketHandler(this));
         connectionManager.registerPacketHandler(ServerChatChannelMessagePacket.class, serverChatChannelMessagePacketHandler);
-        connectionManager.registerPacketHandler(ServerChatChannelRemovePacket.class, new ServerChatChannelRemovePacketHandler());
-        connectionManager.registerPacketHandler(ServerChatChannelMessageReportReasonsPacket.class, new ServerChatChannelMessageReportReasonsPacketHandler());
+        connectionManager.registerPacketHandler(ServerChatChannelRemovePacket.class, new ServerChatChannelRemovePacketHandler(this));
+        connectionManager.registerPacketHandler(ServerChatChannelMessageReportReasonsPacket.class, new ServerChatChannelMessageReportReasonsPacketHandler(this));
 
         connectionManager.registerPacketHandler(ChatUnfilteredContentSettingPacket.class, packet -> {
             EssentialConfig.INSTANCE.getChatFilterWithSource().set(new Pair<>(!packet.getShowUnfilteredContent(), false));
-            return Unit.INSTANCE;
         });
     }
 

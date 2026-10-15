@@ -40,15 +40,16 @@ fun LayoutScope.checkbox(
 }
 
 // Alternative checkbox style used in modern modals
-fun LayoutScope.checkboxAlt(selected: MutableState<Boolean>, modifier: Modifier = Modifier, disabled: State<Boolean> = stateOf(false)) {
+fun LayoutScope.checkboxAlt(selected: MutableState<Boolean>, modifier: Modifier = Modifier, disabled: State<Boolean> = stateOf(false), outline: Boolean = true) {
     val selectedModifier = Modifier.color(EssentialPalette.CHECKBOX_SELECTED_BACKGROUND)
         .whenTrue(disabled, Modifier.color(EssentialPalette.CHECKBOX_SELECTED_BACKGROUND.darker()), Modifier.hoverColor(EssentialPalette.CHECKBOX_SELECTED_BACKGROUND_HOVER))
     val outlineColorModifier = Modifier.whenTrue(selected, selectedModifier, Modifier.color(EssentialPalette.CHECKBOX_OUTLINE)
         .whenTrue(disabled, Modifier.color(EssentialPalette.CHECKBOX_OUTLINE.darker())))
     val innerColorModifier = Modifier.whenTrue(selected, selectedModifier, Modifier.color(EssentialPalette.CHECKBOX_BACKGROUND)
         .whenTrue(disabled, Modifier.color(EssentialPalette.CHECKBOX_BACKGROUND.darker()), Modifier.hoverColor(EssentialPalette.CHECKBOX_BACKGROUND_HOVER)))
+    val outerColorModifier = if (outline) outlineColorModifier else innerColorModifier
 
-    box(Modifier.width(9f).heightAspect(1f).hoverScope() then outlineColorModifier then modifier) {
+    box(Modifier.width(9f).heightAspect(1f).hoverScope() then outerColorModifier then modifier) {
         box(Modifier.width(7f).heightAspect(1f) then innerColorModifier) {
             if_(selected) {
                 image(EssentialPalette.CHECKMARK_7X5, Modifier.color(EssentialPalette.TEXT_HIGHLIGHT).whenTrue(disabled, Modifier.color(EssentialPalette.TEXT_HIGHLIGHT.darker())))

@@ -37,7 +37,6 @@ import net.minecraft.client.gui.GuiScreenResourcePacks;
 import net.minecraft.client.gui.GuiSlot;
 import net.minecraft.client.gui.ServerSelectionList;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,6 +81,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static gg.essential.elementa.renderer.ElementaExtractorKt.fillMcScale;
+import static kotlin.ranges.RangesKt.coerceIn;
 
 public class
         //#if MC>=11904
@@ -512,7 +512,7 @@ public class
         float scrollAreaTop = 1 - scrollAreaBottom;
 
         // gradient of dragY between top and bottom of list
-        float gradientTopToBottom = (float) MathHelper.clamp((yPos - top) / (float) (bottom - top), 0, 1);
+        float gradientTopToBottom = (float) coerceIn((yPos - top) / (float) (bottom - top), 0, 1);
 
         // process scrolling
         if ((gradientTopToBottom > scrollAreaTop || gradientTopToBottom < scrollAreaBottom)) {

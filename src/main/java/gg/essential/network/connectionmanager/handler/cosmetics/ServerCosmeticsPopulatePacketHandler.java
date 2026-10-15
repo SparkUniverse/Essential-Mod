@@ -13,24 +13,27 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 
 import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticsPopulatePacket;
 import gg.essential.cosmetics.model.Cosmetic;
-import gg.essential.network.connectionmanager.ConnectionManager;
-import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
+import gg.essential.network.connectionmanager.cosmetics.InfraCosmeticsData;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerCosmeticsPopulatePacketHandler extends PacketHandler<ServerCosmeticsPopulatePacket> {
+public class ServerCosmeticsPopulatePacketHandler implements PacketHandler<ServerCosmeticsPopulatePacket> {
+
+    private final InfraCosmeticsData infraCosmeticsData;
+
+    public ServerCosmeticsPopulatePacketHandler(InfraCosmeticsData infraCosmeticsData) {
+        this.infraCosmeticsData = infraCosmeticsData;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerCosmeticsPopulatePacket packet) {
-        final CosmeticsManager cosmeticsManager = connectionManager.getCosmeticsManager();
-
+    public void handle(@NotNull final ServerCosmeticsPopulatePacket packet) {
         for (@NotNull final Cosmetic cosmetic : packet.getCosmetics()) {
             // FIXME these should not appear in production and are merely an artifact of improper migration
             //noinspection ConstantConditions
             if (cosmetic.getType() == null) {
                 continue;
             }
-            cosmeticsManager.getInfraCosmeticsData().addCosmetic(cosmetic);
+            infraCosmeticsData.addCosmetic(cosmetic);
         }
     }
 }

@@ -51,8 +51,19 @@ class Call(
         return await<ResponseActionPacket>()?.isSuccessful == true
     }
 
+    suspend fun awaitSuccessOrThrow() {
+        val response = awaitOrThrow<ResponseActionPacket>()
+        if (!response.isSuccessful) {
+            throw UnsuccessfulResponseException(packet, response.errorMessage)
+        }
+    }
+
     suspend inline fun <reified T : Packet> await(): T? {
         return awaitOneOf(T::class.java) as T?
+    }
+
+    suspend inline fun <reified T : Packet> awaitOrThrow(): T {
+        return await<T>() ?: throw NoResponseException(packet)
     }
 
     suspend fun awaitOneOf(vararg classes: Class<out Packet>): Packet? {
@@ -100,4 +111,6 @@ class CallWithRetry(
     }
 }
 
+class NoResponseException(val request: Packet) : Exception("No response for $request")
 class UnexpectedResponseException(val request: Packet, val response: Packet) : Exception("Unexpected response $response for $request")
+class UnsuccessfulResponseException(val request: Packet, val errorMessage: String?) : Exception("Unsuccessful response for $request: ${errorMessage ?: "no error message"}")

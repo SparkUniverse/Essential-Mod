@@ -8,11 +8,11 @@ jobs:
     env:
       GRADLE_ARGS: --stacktrace
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: corretto
           java-version: |
@@ -27,7 +27,7 @@ jobs:
       - name: Generate checksums
         run: sha256sum versions/*/build/libs/* loader/{container,stage{0,1,2}}/{fabric,launchwrapper,modlauncher{8,9}}/build/libs/* | tee checksums.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: checksums
           path: checksums.txt
@@ -75,7 +75,7 @@ jobs:
           fi
 
       # Upload the raw jars to aid in debugging non-determinism issues if we got a checksum mismatch
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ failure() && steps.verify.conclusion == 'failure' }}
         with:
           name: mod-jars

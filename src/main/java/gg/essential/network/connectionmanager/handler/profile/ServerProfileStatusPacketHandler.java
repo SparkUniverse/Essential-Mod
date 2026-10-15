@@ -12,18 +12,20 @@
 package gg.essential.network.connectionmanager.handler.profile;
 
 import gg.essential.connectionmanager.common.packet.profile.ServerProfileStatusPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.connectionmanager.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerProfileStatusPacketHandler extends PacketHandler<ServerProfileStatusPacket> {
+public class ServerProfileStatusPacketHandler implements PacketHandler<ServerProfileStatusPacket> {
+
+    private final ProfileManager profileManager;
+
+    public ServerProfileStatusPacketHandler(ProfileManager profileManager) {
+        this.profileManager = profileManager;
+    }
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerProfileStatusPacket packet
-    ) {
-        ProfileManager profileManager = connectionManager.getProfileManager();
+    public void handle(@NotNull final ServerProfileStatusPacket packet) {
         profileManager.setPlayerStatus(packet.getUUID(), packet.getStatus(), packet.getLastOnlineTimestamp());
 
         profileManager.setPlayerSuspension(packet.getUUID(), packet.getPunishmentStatus());

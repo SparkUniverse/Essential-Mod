@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.net.InetAddress;
 import java.util.List;
 
+// Removed in 26.2 as IntegratedServer exposes unpublishServer which removes the need for this mixin
 @Mixin(NetworkSystem.class)
 public abstract class Mixin_RemoveLanEndpoint implements NetworkSystemExt {
 

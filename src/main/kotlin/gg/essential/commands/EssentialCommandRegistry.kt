@@ -80,13 +80,13 @@ object EssentialCommandRegistry : CommandRegistry {
         }
     }
 
-    fun registerSPSHostCommands() {
+    private fun registerSPSHostCommands() {
         for (spsHostCommand in spsHostCommands) {
             registerCommand(spsHostCommand)
         }
     }
 
-    fun unregisterSPSHostCommands() {
+    private fun unregisterSPSHostCommands() {
         for (spsHostCommand in spsHostCommands) {
             unregisterCommand(spsHostCommand)
         }

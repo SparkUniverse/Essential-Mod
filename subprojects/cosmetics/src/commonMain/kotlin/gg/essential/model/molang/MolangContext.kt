@@ -12,9 +12,10 @@
 package gg.essential.model.molang
 
 import gg.essential.model.ParticleSystem
-import java.util.UUID
 import kotlin.random.Random
 import kotlin.reflect.KProperty
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class MolangContext(
     val query: MolangQuery,
@@ -40,13 +41,14 @@ interface MolangQueryTime : MolangQuery {
     val time: Float
 }
 
+@OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
 interface MolangQueryEntity : MolangQuery, MolangQueryTime {
     val lifeTime: Float
     val modifiedDistanceMoved: Float
     val modifiedMoveSpeed: Float
     /** Internal query for retrieving entity the position and rotation of the entity (for global-space particles). */
     val locator: ParticleSystem.Locator
-    val uuid: UUID?
+    val uuid: Uuid?
 
     override val time: Float
         get() = lifeTime

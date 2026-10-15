@@ -11,9 +11,12 @@
  */
 package gg.essential.connectionmanager.common.packet.media;
 
-import gg.essential.lib.gson.annotations.SerializedName;
 import gg.essential.connectionmanager.common.packet.Packet;
+import gg.essential.lib.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class ServerMediaUploadUrlPacket extends Packet {
 
@@ -23,12 +26,17 @@ public class ServerMediaUploadUrlPacket extends Packet {
     @SerializedName("upload_url")
     private final @NotNull String uploadUrl;
 
+    @SerializedName("upload_headers")
+    private final @Nullable Map<String, String> uploadHeaders;
+
     public ServerMediaUploadUrlPacket(
             final @NotNull String mediaId,
-            final @NotNull String uploadUrl
+            final @NotNull String uploadUrl,
+            final @Nullable Map<String, String> uploadHeaders
     ) {
         this.mediaId = mediaId;
         this.uploadUrl = uploadUrl;
+        this.uploadHeaders = uploadHeaders;
     }
 
     public @NotNull String getMediaId() {
@@ -37,6 +45,10 @@ public class ServerMediaUploadUrlPacket extends Packet {
 
     public @NotNull String getUploadUrl() {
         return this.uploadUrl;
+    }
+
+    public @Nullable Map<String, String> getUploadHeaders() {
+        return this.uploadHeaders;
     }
 
 }

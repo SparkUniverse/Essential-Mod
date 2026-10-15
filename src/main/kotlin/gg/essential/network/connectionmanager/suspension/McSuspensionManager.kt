@@ -22,22 +22,11 @@ import gg.essential.network.connectionmanager.social.Suspension
 import gg.essential.universal.UMinecraft
 import gg.essential.universal.UScreen
 import gg.essential.util.GuiUtil
-import gg.essential.util.isMainMenu
-import net.minecraft.client.gui.GuiIngameMenu
 
 class McSuspensionManager(connectionManager: ConnectionManager) : SuspensionManager(connectionManager) {
 
     init {
         Essential.EVENT_BUS.register(this)
-    }
-
-    override fun isSuspensionShowable(): Boolean {
-        //#if MC >= 26.2
-        //$$ @Suppress("SENSELESS_COMPARISON")
-        //$$ if (net.minecraft.client.Minecraft.getInstance().gui == null) return false
-        //#endif
-        val openedScreen = GuiUtil.openedScreen()
-        return openedScreen is InternalEssentialGUI || openedScreen.isMainMenu || openedScreen is GuiIngameMenu
     }
 
     override fun showSuspension(suspension: Suspension) {

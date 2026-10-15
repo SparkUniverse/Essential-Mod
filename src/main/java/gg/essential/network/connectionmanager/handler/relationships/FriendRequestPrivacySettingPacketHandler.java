@@ -13,14 +13,13 @@ package gg.essential.network.connectionmanager.handler.relationships;
 
 import gg.essential.Essential;
 import gg.essential.connectionmanager.common.packet.relationships.privacy.FriendRequestPrivacySettingPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class FriendRequestPrivacySettingPacketHandler extends PacketHandler<FriendRequestPrivacySettingPacket> {
+public class FriendRequestPrivacySettingPacketHandler implements PacketHandler<FriendRequestPrivacySettingPacket> {
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final FriendRequestPrivacySettingPacket packet) {
+    public void handle(@NotNull final FriendRequestPrivacySettingPacket packet) {
         Essential.getInstance().config().setFriendRequestPrivacy(packet.getSetting().ordinal());
     }
 

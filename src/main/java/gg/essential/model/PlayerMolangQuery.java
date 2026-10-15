@@ -19,6 +19,8 @@ import gg.essential.gui.common.EmulatedUI3DPlayer.EmulatedPlayer;
 import gg.essential.mixins.impl.client.renderer.entity.PlayerEntityRendererExt;
 import gg.essential.model.util.Quaternion;
 import kotlin.Pair;
+import kotlin.uuid.Uuid;
+import kotlin.uuid.UuidKt;
 import me.kbrewster.eventbus.Subscribe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -28,8 +30,6 @@ import gg.essential.model.molang.MolangQueryEntity;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 import static dev.folomeev.kotgl.matrix.vectors.Vectors.vec3;
 import static dev.folomeev.kotgl.matrix.vectors.Vectors.vecUnitY;
@@ -159,8 +159,8 @@ public class PlayerMolangQuery implements MolangQueryEntity, ParticleSystem.Loca
 
     @NotNull
     @Override
-    public UUID getUuid() {
-        return player.getUniqueID();
+    public Uuid getUuid() {
+        return UuidKt.toKotlinUuid(player.getUniqueID());
     }
 
     @Nullable

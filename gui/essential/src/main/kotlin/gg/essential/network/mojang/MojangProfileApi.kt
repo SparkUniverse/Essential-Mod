@@ -84,23 +84,27 @@ class MojangProfileApi(
         }
     }
 
-    suspend fun putSkin(skin: gg.essential.mod.Skin?): Profile = call(Dispatchers.IO) {
-        val request = Request.Builder().apply {
-            url("$URL_BASE/skins")
-            header("Authorization", "Bearer $accessToken")
-
-            if (skin != null) {
-                @Serializable
-                data class Payload(val url: String, val variant: Model)
-                val payload = json.encodeToString(Payload(skin.url, skin.model))
-                post(payload.toRequestBody(JSON))
-            } else {
-                delete()
+    suspend fun putSkin(skin: gg.essential.mod.Skin?): Profile {
+        return if (skin != null) {
+            val image = call(Dispatchers.IO) {
+                httpClient().newCall(Request.Builder().url(skin.url).build()).executeAwait().use { response ->
+                    response.body.bytes()
+                }
             }
-        }.build()
 
-        httpClient().newCall(request).executeAwait().use { response ->
-            decodeMojangResponse<Profile>(response)
+            putSkin(image, skin.model)
+        } else {
+            call(Dispatchers.IO) {
+                val request = Request.Builder().apply {
+                    url("$URL_BASE/skins")
+                    header("Authorization", "Bearer $accessToken")
+                    delete()
+                }.build()
+
+                httpClient().newCall(request).executeAwait().use { response ->
+                    decodeMojangResponse<Profile>(response)
+                }
+            }
         }
     }
 

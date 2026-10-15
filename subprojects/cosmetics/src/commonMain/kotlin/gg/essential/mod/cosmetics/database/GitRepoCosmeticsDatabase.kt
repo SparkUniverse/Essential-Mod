@@ -46,6 +46,7 @@ import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.modules.plus
+import kotlin.jvm.JvmInline
 
 /**
  * Loads cosmetics from a local clone of the cosmetics git repository.

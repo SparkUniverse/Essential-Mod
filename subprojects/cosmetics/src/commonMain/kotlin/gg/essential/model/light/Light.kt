@@ -11,6 +11,8 @@
  */
 package gg.essential.model.light
 
+import kotlin.jvm.JvmInline
+
 /** Value type containing sky and block light information at a single point. Equivalent to MC's packed light `int`s. */
 @JvmInline
 value class Light(val value: UInt) {

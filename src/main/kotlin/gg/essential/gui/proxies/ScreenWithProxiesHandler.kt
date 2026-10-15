@@ -41,7 +41,6 @@ class ScreenWithProxiesHandler(
     private val access = screen as GuiScreenAccessor
 
     var layer: Layer? = null
-    var lastWidth = -1 // TODO remove, see usages
 
     fun initGui() {
         val proxies = mutableListOf<EssentialProxyElement<*>>()

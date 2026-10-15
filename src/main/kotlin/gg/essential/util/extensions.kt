@@ -13,7 +13,6 @@ package gg.essential.util
 
 import dev.folomeev.kotgl.matrix.matrices.mat3
 import dev.folomeev.kotgl.matrix.matrices.mat4
-import gg.essential.Essential
 import gg.essential.connectionmanager.common.model.knownserver.KnownServer
 import gg.essential.elementa.utils.elementaDebug
 import gg.essential.lib.gson.JsonElement
@@ -36,20 +35,14 @@ import net.minecraft.client.gui.GuiMainMenu
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.multiplayer.ServerData
 import net.minecraft.client.resources.I18n
-import net.minecraft.nbt.CompressedStreamTools
-import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.integrated.IntegratedServer
-import net.minecraft.world.storage.WorldSummary
 import java.awt.Color
 import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
 
 //#if MC>=11400
 //$$ import gg.essential.mixins.impl.util.math.Matrix3fExt
@@ -67,10 +60,6 @@ import kotlin.io.path.inputStream
 //#if MC==11903
 //$$ import net.minecraft.client.gui.Element
 //$$ import net.minecraft.client.gui.ParentElement
-//#endif
-
-//#if MC>=12004
-//$$ import net.minecraft.nbt.NbtSizeTracker
 //#endif
 
 val JsonElement?.optBoolean get() = if (this is JsonPrimitive && isBoolean) asBoolean else null
@@ -293,33 +282,6 @@ val IntegratedServer.worldDirectory: Path
         //#else
         this.getWorld(0 )!!.saveHandler.worldDirectory.toPath()
         //#endif
-
-val WorldSummary.worldDirectory: Path
-    get() =
-        //#if MC>=11602
-        //$$ getMinecraft().saveLoader.savesDir / this.fileName
-        //#else
-        UMinecraft.getMinecraft().saveLoader.getSaveLoader(this.fileName, false).worldDirectory.toPath()
-        //#endif
-
-fun <T> WorldSummary.getLevelNbtValue(nbtAction: (NBTTagCompound) -> T): T? {
-    val file = worldDirectory.resolve("level.dat")
-    if (file.exists()) {
-        try {
-            return file.inputStream().use { nbtAction(
-                //#if MC>=12004
-                //$$ // Max size from LevelStorage#readLevelProperties
-                //$$ NbtIo.readCompressed(it, NbtSizeTracker.of(0x6400000))
-                //#else
-                CompressedStreamTools.readCompressed(it)
-                //#endif
-            ) }
-        } catch (exception: Exception) {
-            Essential.logger.warn("An error occurred reading level.dat for ${displayName}.", exception)
-        }
-    }
-    return null
-}
 
 val GuiScreen?.isMainMenu: Boolean
     get() = if (this != null) {

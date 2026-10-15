@@ -1,9 +1,16 @@
 [versions]
-universalcraft = "534"
-elementa = "774"
+universalcraft = "536"
+elementa = "787"
 vigilance = "306"
 mixinextras = "0.4.0"
 commonmark = "0.17.1"
+
+# Note: All these versions must match what's bundled in the declared fabricLanguageKotlin version!
+# Note: When updating stdlib version, also update the check at the start of `IntegrationTestBootstrap.initialize`!
+kotlin = "2.3.0"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.9.0"
+fabricLanguageKotlin = "1.13.8+kotlin.2.3.0"
 
 [libraries]
 universalcraft-standalone = { module = "gg.essential:universalcraft-standalone", version.ref = "universalcraft" }
@@ -17,3 +24,14 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.1" }
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-ext-gfm-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-ext-ins = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
+
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-jdk8 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8", version.ref = "kotlinx-coroutines" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+
+[bundles]
+kotlin = ["kotlin-stdlib", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlinx-coroutines-core", "kotlinx-coroutines-jdk8", "kotlinx-serialization-core", "kotlinx-serialization-json"]

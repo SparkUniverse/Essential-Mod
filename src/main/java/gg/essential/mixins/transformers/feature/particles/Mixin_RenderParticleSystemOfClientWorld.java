@@ -15,6 +15,7 @@ import gg.essential.config.EssentialConfig;
 import gg.essential.mixins.ext.client.ParticleSystemHolder;
 import gg.essential.model.ParticleSystem;
 import gg.essential.model.backend.minecraft.MinecraftRenderBackend;
+import gg.essential.model.util.ParticleSystemJvmKt;
 import gg.essential.model.util.Quaternion;
 import gg.essential.model.util.UMatrixStack;
 import net.minecraft.client.Minecraft;
@@ -230,7 +231,8 @@ public abstract class Mixin_RenderParticleSystemOfClientWorld {
 
         //#if MC>=12109
         //$$ batch.add((queue, camera) -> {
-        //$$     particleSystem.render(
+        //$$     ParticleSystemJvmKt.render(
+        //$$         particleSystem,
         //$$         stack,
         //$$         cameraPos,
         //$$         cameraRot,
@@ -238,13 +240,14 @@ public abstract class Mixin_RenderParticleSystemOfClientWorld {
         //$$         cameraUuid,
         //$$         isFirstPerson,
         //$$         hideCosmeticParticlesInFirstPerson,
-        //$$         null
+        //$$         /* onlyRenderFromSource */ null
         //$$     );
         //$$ });
         //#else
         MinecraftRenderBackend.CommandQueue commandQueue = new MinecraftRenderBackend.CommandQueue();
 
-        particleSystem.render(
+        ParticleSystemJvmKt.render(
+                particleSystem,
                 stack,
                 cameraPos,
                 cameraRot,
@@ -252,7 +255,7 @@ public abstract class Mixin_RenderParticleSystemOfClientWorld {
                 cameraUuid,
                 isFirstPerson,
                 hideCosmeticParticlesInFirstPerson,
-                null
+                /* onlyRenderFromSource */ null
         );
 
         commandQueue.render(new MinecraftRenderBackend.ParticleVertexConsumerProvider(

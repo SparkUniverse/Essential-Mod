@@ -11,6 +11,7 @@
  */
 package gg.essential.util
 
+import com.google.common.collect.MapMaker
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -20,7 +21,6 @@ import gg.essential.gui.elementa.state.v2.MutableState
 import gg.essential.gui.elementa.state.v2.Observer
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.mutableStateOf
-import gg.essential.lib.caffeine.cache.Caffeine
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -142,11 +142,11 @@ class ServerPingInfoState(private val address: String) : State<ServerPingInfo?> 
     }
 
     companion object {
-        private val servers = Caffeine.newBuilder().weakValues().build<String, ServerPingInfoState>()
+        private val servers = MapMaker().weakValues().makeMap<String, ServerPingInfoState>()
         private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Client)
 
         fun forServer(address: String): ServerPingInfoState {
-            return servers.get(address) { ServerPingInfoState(it) }!!
+            return servers.computeIfAbsent(address) { ServerPingInfoState(it) }!!
         }
     }
 

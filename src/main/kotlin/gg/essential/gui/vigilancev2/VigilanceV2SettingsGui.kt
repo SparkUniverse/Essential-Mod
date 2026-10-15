@@ -25,6 +25,7 @@ import gg.essential.elementa.dsl.pixels
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.InternalEssentialGUI
 import gg.essential.gui.elementa.state.v2.*
+import gg.essential.gui.elementa.state.v2.Untracked.invoke
 import gg.essential.gui.elementa.state.v2.combinators.map
 import gg.essential.gui.layoutdsl.*
 import gg.essential.gui.modals.communityRulesModal
@@ -105,30 +106,27 @@ class VigilanceV2SettingsGui @JvmOverloads constructor(
                 currentCategoryName,
                 searchState,
                 scrollbar,
-                sidebarSections = listOf(
+                sidebarSections = listOfNotNull<LayoutScope.() -> Unit>(
                     {
-                        listOf(
+                        listOfNotNull(
                             "Changelog" to URI("https://essential.gg/changelog"),
-                            "Privacy Policy" to URI("https://essential.gg/privacy-policy"),
-                            "Terms of Service" to URI("https://essential.gg/terms-of-use")
+                            null,
+                            null,
+                            ("Wiki" to URI("https://essential.gg/wiki")),
+                            ("Discord" to URI("https://discord.gg/essential")),
+                            ("Twitter" to URI("https://x.com/EssentialMod")),
                         ).forEach { (text, uri) -> sidebarLink(text, uri) }
 
                         val rulesManager = Essential.getInstance().connectionManager.rulesManager
                         if_(rulesManager.hasRules) {
-                            sidebarElement("Community & Chat Rules") {
+                            sidebarElement("Community Rules") {
                                 launchModalFlow {
                                     communityRulesModal(rulesManager, UMinecraft.getSettings().language, false)
                                 }
                             }
                         }
                     },
-                    {
-                        listOf(
-                            "Discord" to URI("https://discord.gg/essential"),
-                            "Twitter" to URI("https://x.com/EssentialMod"),
-                            "Website" to URI("https://essential.gg/")
-                        ).forEach { (text, uri) -> sidebarLink(text, uri) }
-                    },
+                    null,
                     { versionInformation() },
                 ),
                 bottomSidebarContent = { bottomSidebarContent() },

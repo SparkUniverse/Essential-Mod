@@ -9,7 +9,6 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
 import gg.essential.gradle.util.prebundle
 
 plugins {
@@ -52,5 +51,5 @@ dependencies {
 
     compileOnly("io.netty:netty-all:4.0.23.Final") // will at runtime be provided by MC
     compileOnly(project(":feature-flags"))
-    compileOnly(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
+    compileOnly(libs.kotlin.stdlib.jdk8)
 }

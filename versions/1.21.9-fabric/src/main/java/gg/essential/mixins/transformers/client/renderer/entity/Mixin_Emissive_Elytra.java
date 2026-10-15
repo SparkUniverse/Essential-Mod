@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EquipmentRenderer.class)
@@ -37,8 +38,16 @@ public abstract class Mixin_Emissive_Elytra {
 
     private static final String RENDER = "render(Lnet/minecraft/client/render/entity/equipment/EquipmentModel$LayerType;Lnet/minecraft/registry/RegistryKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;ILnet/minecraft/util/Identifier;II)V";
 
-    @Inject(method = RENDER, at = @At("TAIL"))
+    // Note: We cannot just target TAIL because NeoForge recompiles the class in such a way that
+    // `nextOrder` ends up out of scope at TAIL. So we target the code right after the main loop.
+    //#if MC >= 26.3
+    //$$ @ModifyVariable(method = RENDER, at = @At(value = "LOAD", ordinal = 1), name = "hasTrim")
+    //$$ private <S> boolean renderWithEmissiveLayer(
+    //$$     boolean hasTrim,
+    //#else
+    @Inject(method = RENDER, at = @At(value = "FIELD", target = "Lnet/minecraft/component/DataComponentTypes;TRIM:Lnet/minecraft/component/ComponentType;"))
     private <S> void renderWithEmissiveLayer(
+    //#endif
         EquipmentModel.LayerType layerType,
         RegistryKey<EquipmentAsset> modelId,
         Model<? super S> model,
@@ -50,21 +59,39 @@ public abstract class Mixin_Emissive_Elytra {
         @Nullable Identifier texture,
         int outlineColor,
         int order,
+        //#if MC < 26.3
         CallbackInfo ci,
+        //#endif
+        //#if MC >= 26.1
+        //$$ @Local(name = "nextOrder") LocalIntRef layerOrderRef
+        //#else
         @Local(ordinal = 4) LocalIntRef layerOrderRef
+        //#endif
     ) {
         if (layerType != EquipmentModel.LayerType.WINGS) {
+            //#if MC >= 26.3
+            //$$ return hasTrim;
+            //#else
             return;
+            //#endif
         }
 
         if (!(state instanceof PlayerEntityRenderStateExt)) {
+            //#if MC >= 26.3
+            //$$ return hasTrim;
+            //#else
             return;
+            //#endif
         }
         CosmeticsRenderState cState = ((PlayerEntityRenderStateExt) state).essential$getCosmetics();
 
         Identifier emissiveTexture = cState.emissiveCapeTexture();
         if (emissiveTexture == null) {
+            //#if MC >= 26.3
+            //$$ return hasTrim;
+            //#else
             return;
+            //#endif
         }
 
         int layerOrder = layerOrderRef.get();
@@ -83,5 +110,8 @@ public abstract class Mixin_Emissive_Elytra {
             , null
             //#endif
         );
+        //#if MC >= 26.3
+        //$$ return hasTrim;
+        //#endif
     }
 }

@@ -130,7 +130,7 @@ abstract class ConnectionManagerKt : CMConnection {
                 return
             }
 
-            if (java.minecraftHook.session == "undefined") {
+            if (USession.activeNow().token == "undefined") {
                 // Session token not yet set, refresh session before connecting
                 LOGGER.info("Fetching/refreshing initial MC session token")
                 val error = suspendCoroutine { continuation ->

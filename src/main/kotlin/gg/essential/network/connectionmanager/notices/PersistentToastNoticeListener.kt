@@ -13,12 +13,11 @@ package gg.essential.network.connectionmanager.notices
 
 import gg.essential.Essential
 import gg.essential.elementa.state.v2.ReferenceHolder
-import gg.essential.event.gui.GuiOpenedEvent
+import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.collections.effectOnChange
 import gg.essential.gui.elementa.state.v2.filter
 import gg.essential.gui.elementa.state.v2.mapEach
 import gg.essential.gui.elementa.state.v2.mapList
-import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.notification.Notifications
 import gg.essential.gui.wardrobe.Wardrobe
 import gg.essential.gui.wardrobe.WardrobeCategory
@@ -26,17 +25,12 @@ import gg.essential.network.connectionmanager.telemetry.TelemetryManager
 import gg.essential.notices.NoticeType
 import gg.essential.notices.model.Notice
 import gg.essential.util.GuiUtil
-import gg.essential.util.isMainMenu
-import me.kbrewster.eventbus.Subscribe
 
 class PersistentToastNoticeListener(
-    refHolder: ReferenceHolder,
     private val noticesManager: NoticesManager,
 ) {
 
     private val notices = noticesManager.activeNotices.filter { it.type == NoticeType.DISMISSIBLE_TOAST }
-
-    private val isMainMenu = mutableStateOf(false)
 
     class ToastState(val notice: Notice) {
         var close: (() -> Unit)? = null
@@ -46,9 +40,7 @@ class PersistentToastNoticeListener(
         "OPEN_EMOTES" to { GuiUtil.openScreen { Wardrobe(initialCategory = WardrobeCategory.Emotes) } },
     )
 
-    init {
-        Essential.EVENT_BUS.register(this)
-
+    fun hookUp(refHolder: ReferenceHolder, isMainMenu: State<Boolean>) {
         val toasts = notices
             .mapList { if (isMainMenu()) it else emptyList() }
             .mapEach { ToastState(it) }
@@ -91,10 +83,5 @@ class PersistentToastNoticeListener(
                 }
             },
         )
-    }
-
-    @Subscribe
-    fun guiOpenedEvent(event: GuiOpenedEvent) {
-        isMainMenu.set(event.screen.isMainMenu)
     }
 }

@@ -38,7 +38,6 @@ import gg.essential.gui.wardrobe.components.noItemsFound
 import gg.essential.gui.wardrobe.something.CosmeticGroup
 import gg.essential.network.connectionmanager.notices.WardrobeBannerColor
 import gg.essential.universal.ChatColor
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.gui.util.isInComponentTree
 import gg.essential.gui.util.pollingStateV2
@@ -206,16 +205,6 @@ class CategoryComponent(
 
     override fun extractComponent(extractor: ElementaExtractor) {
         checkScrolling()
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        checkScrolling()
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     private fun updatedCurrentCategoryBasedOnScrollPosition() {

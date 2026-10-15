@@ -11,8 +11,9 @@
  */
 package gg.essential.data
 
-import gg.essential.lib.caffeine.cache.AsyncLoadingCache
-import gg.essential.lib.caffeine.cache.Caffeine
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import gg.essential.lib.gson.Gson
 import gg.essential.util.httpGetToStringBlocking
 import java.net.URLEncoder
@@ -27,9 +28,9 @@ object MenuData {
         System.getenv().getOrDefault("ESSENTIAL_API_URL", "https://api.essential.gg")
     )
 
-    val CHANGELOGS: AsyncLoadingCache<String, Pair<String?, Changelog>> = Caffeine.newBuilder()
+    val CHANGELOGS: LoadingCache<String, CompletableFuture<Pair<String?, Changelog>>> = CacheBuilder.newBuilder()
         .expireAfterAccess(15, TimeUnit.MINUTES)
-        .buildAsync { version -> fetchChangelogs(version) }
+        .build(CacheLoader.from { version -> CompletableFuture.supplyAsync { fetchChangelogs(version!!) } })
 
     // Fetch five changelogs before provided version and populate CHANGELOGS cache, then return current changelog
     private fun fetchChangelogs(version: String): Pair<String?, Changelog> {

@@ -266,8 +266,6 @@ object MinecraftUtils : MinecraftUtils {
         //#endif
     }
 
-    fun isHostingSPS() = Essential.getInstance().connectionManager.spsManager.localSession != null
-
     fun shutdown() =
         UMinecraft.getMinecraft().shutdown()
 

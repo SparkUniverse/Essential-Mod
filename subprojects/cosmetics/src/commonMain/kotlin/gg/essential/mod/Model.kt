@@ -14,6 +14,7 @@ package gg.essential.mod
 import gg.essential.serialization.SnakeAsUpperCaseSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmStatic
 
 /**
  * Skin model.

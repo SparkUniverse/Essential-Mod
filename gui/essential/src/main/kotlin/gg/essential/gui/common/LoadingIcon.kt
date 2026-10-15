@@ -15,9 +15,7 @@ import gg.essential.elementa.UIComponent
 import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.renderer.fillMcScaleXYWH
-import gg.essential.universal.UMatrixStack
 import java.awt.Color
 
 class LoadingIcon(val scale: Double) : UIComponent() {
@@ -35,18 +33,6 @@ class LoadingIcon(val scale: Double) : UIComponent() {
 
     override fun extractComponent(extractor: ElementaExtractor) {
         extract(extractor, (getLeft() + getRight()) / 2, (getTop() + getBottom()) / 2, scale.toFloat(), time, getColor())
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        @Suppress("DEPRECATION")
-        beforeDraw(matrixStack)
-        extractComponent(ImmediateElementaExtractor(matrixStack))
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     companion object {

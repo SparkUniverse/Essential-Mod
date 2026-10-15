@@ -12,19 +12,21 @@
 package gg.essential.network.connectionmanager.handler.chat;
 
 import gg.essential.connectionmanager.common.packet.chat.ChatChannelMemberRemovePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ChatChannelMemberRemovePacketHandler extends PacketHandler<ChatChannelMemberRemovePacket> {
+public class ChatChannelMemberRemovePacketHandler implements PacketHandler<ChatChannelMemberRemovePacket> {
+
+    private final ChatManager chatManager;
+
+    public ChatChannelMemberRemovePacketHandler(ChatManager chatManager) {
+        this.chatManager = chatManager;
+    }
+
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ChatChannelMemberRemovePacket packet
-    ) {
-        final ChatManager chatManager = connectionManager.getChatManager();
-
+    public void handle(@NotNull final ChatChannelMemberRemovePacket packet) {
         chatManager.membersRemoved(packet.getChannelId(), packet.getMembers());
     }
 

@@ -14,7 +14,6 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 import gg.essential.Essential;
 import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticAnimationTriggerPacket;
 import gg.essential.mod.cosmetics.CosmeticSlot;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,12 +21,10 @@ import java.util.UUID;
 
 import static gg.essential.network.cosmetics.ConversionsKt.toMod;
 
-public class ServerCosmeticAnimationTriggerPacketHandler extends PacketHandler<ServerCosmeticAnimationTriggerPacket> {
+public class ServerCosmeticAnimationTriggerPacketHandler implements PacketHandler<ServerCosmeticAnimationTriggerPacket> {
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerCosmeticAnimationTriggerPacket packet
-    ) {
+    public void handle(@NotNull final ServerCosmeticAnimationTriggerPacket packet) {
         UUID userId = packet.getUserId();
         CosmeticSlot slot = toMod(packet.getCosmeticSlot());
         String triggerName = packet.getTriggerName();

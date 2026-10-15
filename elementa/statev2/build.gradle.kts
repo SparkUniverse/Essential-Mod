@@ -11,7 +11,6 @@
  */
 
 import essential.universalLibs
-import gg.essential.gradle.util.KotlinVersion
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 
 plugins {
@@ -22,7 +21,6 @@ plugins {
 universalLibs()
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
     implementation(project(":feature-flags"))
 
     testImplementation(kotlin("test"))

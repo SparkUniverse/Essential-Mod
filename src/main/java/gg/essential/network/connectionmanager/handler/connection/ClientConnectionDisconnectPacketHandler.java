@@ -17,10 +17,16 @@ import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ClientConnectionDisconnectPacketHandler extends PacketHandler<ClientConnectionDisconnectPacket> {
+public class ClientConnectionDisconnectPacketHandler implements PacketHandler<ClientConnectionDisconnectPacket> {
+
+    private final ConnectionManager connectionManager;
+
+    public ClientConnectionDisconnectPacketHandler(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ClientConnectionDisconnectPacket packet) {
+    public void handle(@NotNull final ClientConnectionDisconnectPacket packet) {
         connectionManager.close(CloseReason.SERVER_REQUESTED);
     }
 

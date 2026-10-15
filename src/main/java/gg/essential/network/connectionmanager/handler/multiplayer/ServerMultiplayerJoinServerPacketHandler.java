@@ -12,7 +12,6 @@
 package gg.essential.network.connectionmanager.handler.multiplayer;
 
 import gg.essential.connectionmanager.common.packet.multiplayer.ServerMultiplayerJoinServerPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.universal.UMinecraft;
 import gg.essential.util.MinecraftUtils;
@@ -24,11 +23,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class ServerMultiplayerJoinServerPacketHandler extends PacketHandler<ServerMultiplayerJoinServerPacket> {
+public class ServerMultiplayerJoinServerPacketHandler implements PacketHandler<ServerMultiplayerJoinServerPacket> {
     private final Set<String> cooldowns = new HashSet<>();
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerMultiplayerJoinServerPacket packet) {
+    public void handle(@NotNull final ServerMultiplayerJoinServerPacket packet) {
         String serverIP = packet.getAddress();
         if (cooldowns.contains(serverIP)) return;
         cooldowns.add(serverIP);

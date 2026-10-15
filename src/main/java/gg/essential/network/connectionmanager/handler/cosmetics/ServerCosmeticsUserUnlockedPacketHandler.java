@@ -14,7 +14,6 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 import gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticsUserUnlockedPacket;
 import gg.essential.cosmetics.model.CosmeticUnlockData;
 import gg.essential.gui.common.CosmeticToastsKt;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.network.cosmetics.Cosmetic;
@@ -25,12 +24,15 @@ import java.util.Set;
 
 import static gg.essential.connectionmanager.common.packet.cosmetic.ServerCosmeticsUserUnlockedPacket.suppressNotifications;
 
-public class ServerCosmeticsUserUnlockedPacketHandler extends PacketHandler<ServerCosmeticsUserUnlockedPacket> {
+public class ServerCosmeticsUserUnlockedPacketHandler implements PacketHandler<ServerCosmeticsUserUnlockedPacket> {
+    private final CosmeticsManager cosmeticsManager;
+
+    public ServerCosmeticsUserUnlockedPacketHandler(CosmeticsManager cosmeticsManager) {
+        this.cosmeticsManager = cosmeticsManager;
+    }
+
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ServerCosmeticsUserUnlockedPacket packet
-    ) {
-        final CosmeticsManager cosmeticsManager = connectionManager.getCosmeticsManager();
+    public void handle(@NotNull final ServerCosmeticsUserUnlockedPacket packet) {
         final Set<String> currentUnlocks = cosmeticsManager.getUnlockedCosmetics().get();
 
         Map<String, CosmeticUnlockData> newUnlocks = packet.getUnlockedCosmetics();

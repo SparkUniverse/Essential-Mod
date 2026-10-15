@@ -28,8 +28,6 @@ interface IScreenshotManager {
     val screenshotFolder: Path
 
     val screenshotMetadataManager: IScreenshotMetadataManager
-    val uploadedMedia: Collection<Media>
-    val orderedPaths: List<Path>
     val screenshots: ListState<ScreenshotInfo>
 
     fun setFavorite(path: Path, value: Boolean): ClientScreenshotMetadata

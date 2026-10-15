@@ -148,7 +148,7 @@ abstract class EssentialModal2(
      * We can't make `layoutContent` take a `Modifier`, and make the implementation call on `super`, since you can't
      * call a superclass' implementation of an extension function. ([KT-11488](https://youtrack.jetbrains.com/issue/KT-11488/When-overriding-a-member-extension-function-cannot-call-superclass-implementation))
      */
-    fun LayoutScope.layoutContentImpl(modifier: Modifier = Modifier) {
+    fun LayoutScope.layoutContentImpl(modifier: Modifier = Modifier, verticalArrangement: Arrangement = Arrangement.spacedBy(17f)) {
         lateinit var titleContainer: UIComponent
         lateinit var bodyContainer: UIComponent
         lateinit var buttonsContainer: UIComponent
@@ -157,7 +157,7 @@ abstract class EssentialModal2(
         val hasButtons = mutableStateOf(true)
 
         // Width = 190 (Main) + 16 * 2 (Padding)
-        column(Modifier.width(222f).then(modifier), Arrangement.spacedBy(17f)) {
+        column(Modifier.width(222f).then(modifier), verticalArrangement) {
             if_(hasTitle) {
                 titleContainer = layoutTitleContainer()
             }

@@ -9,21 +9,34 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
-
 plugins {
     kotlin("jvm")
-    id("java-library")
 }
-
-kotlin.jvmToolchain(8)
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
+kotlin {
+    jvmToolchain(8)
 
-    compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
+    // Common dependencies
+    dependencies {
+        implementation(libs.kotlin.stdlib.jdk8)
+    }
+
+    // JVM dependencies
+    dependencies {
+        compileOnly("org.apache.logging.log4j:log4j-api:2.0-beta9")
+    }
+
+}
+
+// Using src dirs matching what kotlin-multiplatform would do because we ideally want to be using that,
+// but have moved away from it for the time being because it was too unreliable.
+sourceSets.main {
+    java.srcDir("src/commonMain/java")
+    java.srcDir("src/jvmMain/java")
+    kotlin.srcDir("src/commonMain/kotlin")
+    kotlin.srcDir("src/jvmMain/kotlin")
 }

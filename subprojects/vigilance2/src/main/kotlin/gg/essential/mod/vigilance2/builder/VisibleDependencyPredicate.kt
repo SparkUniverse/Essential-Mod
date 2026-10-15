@@ -16,8 +16,10 @@ import gg.essential.gui.elementa.state.v2.State
 /**
  * Used in [gg.essential.config.GuiBuilder.PropertyBuilderImpl.build] to expose a [State] indicating whether a property
  * is visible or not to the [gg.essential.gui.vigilancev2.components.settingsCategory] component.
+ *
+ * The links field is unrelated and passed along as a hack to avoid changing the vigilance api.
  */
-class VisibleDependencyPredicate(val visible: State<Boolean>) : (Any?) -> Boolean {
+class VisibleDependencyPredicate(val visible: State<Boolean>, val links: List<Pair<String, () -> Unit>>) : (Any?) -> Boolean {
     override fun invoke(any: Any?): Boolean {
         return visible.getUntracked()
     }

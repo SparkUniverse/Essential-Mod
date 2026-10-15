@@ -89,7 +89,7 @@ class EssentialAnimationSystem(
             val animation = bedrockModel.getAnimationByName(highestPriority.name)
             if (animation != null) {
                 if (animationState.active.isEmpty()) {
-                    animationState.startAnimation(animation)
+                    animationState.startAnimation(animation, highestPriority.loopsOrMaxInt)
                 }
 
                 val state = animationState.active.find { it.animation == animation }

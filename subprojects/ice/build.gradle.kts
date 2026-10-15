@@ -9,8 +9,6 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
-
 plugins {
     kotlin("jvm")
     id("java-library")
@@ -24,7 +22,7 @@ repositories {
 
 dependencies {
     implementation(libs.slf4j.api)
-    implementation(kotlin("stdlib-jdk8", KotlinVersion.minimal.stdlib))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${KotlinVersion.minimal.coroutines}")
+    implementation(libs.kotlin.stdlib.jdk8)
+    implementation(libs.kotlinx.coroutines.jdk8)
     implementation(project(":utils"))
 }

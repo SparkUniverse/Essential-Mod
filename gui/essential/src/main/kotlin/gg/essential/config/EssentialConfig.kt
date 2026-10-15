@@ -20,9 +20,12 @@ import gg.essential.gui.overlay.ModalManager
 import gg.essential.gui.screenshot.toast.ScreenshotPreviewAction
 import gg.essential.gui.screenshot.toast.ScreenshotPreviewActionSlot
 import gg.essential.mod.vigilance2.Vigilant2
+import gg.essential.util.ESSENTIAL_ANALYTICS_AND_DATA_SHARING_URI
 import gg.essential.util.GuiEssentialPlatform
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
+import gg.essential.util.openInBrowser
 import gg.essential.vigilance.data.*
+import java.net.URI
 import kotlin.reflect.KProperty
 
 object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
@@ -65,9 +68,6 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
 
     val updateModalState = property("Notifications.General.Update Notifications", true)
     var updateModal by updateModalState
-
-    val spsIPWarningState = property("Notifications.General.Host World IP Warning", true)
-    var spsIPWarning by spsIPWarningState
 
     enum class ScreenshotToastDuration(val seconds: Int) {
         SHORT(3),
@@ -284,7 +284,7 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
 
     val acknowledgedPermanentSuspension = property("Hidden.acknowledged_permanent_suspension", false)
 
-    val collectOptionalTelemetryWithSource = mutableStateOf(/*state*/true to /*updateInfra*/false)
+    val collectOptionalTelemetryWithSource = mutableStateOf(/*state*/(false) to /*updateInfra*/false)
 
     val chatFilterWithSource = mutableStateOf(/*state*/true to /*updateInfra*/false)
 
@@ -377,6 +377,7 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
             }
         },
         Migration { it.remove("general.general.essential_gui_scale") },
+        Migration { it.remove("notifications.general.host_world_ip_warning") },
     ) + listOf()
 
     val gui by lazyBuildGui("Essential Settings") {
@@ -545,11 +546,6 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
                     name = "Link opening warning"
                     description = "Show a confirmation modal before opening any third-party link."
                 }
-
-                switch(spsIPWarningState) {
-                    name = "World hosting IP visibility warning"
-                    description = "Show an IP warning modal when hosting a world."
-                }
             }
         }
 
@@ -700,14 +696,21 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
         category("Privacy & Data") {
             subcategory("Privacy & Data") {
                 switch(collectOptionalTelemetryWithSource.bimap({ it.first }, { it to true })) {
-                    name = "Collect optional telemetry data"
-                    description = "Give Essential permission to collect additional telemetry data to help improve your experience."
+                    name = "Share analytics with Essential"
+                    description = "Help us improve Essential’s features and services by sharing usage data."
+                    links = listOf(
+                        "Learn more about analytics" to { openInBrowser(ESSENTIAL_ANALYTICS_AND_DATA_SHARING_URI) },
+                    )
                 }
 
                 button(::revokeTosButton) {
-                    name = "Terms of Service and Privacy Policy"
-                    description = "Deny the Essential terms of service and privacy policy. Warning! This will prevent the use of Essential features."
-                    label = "Deny TOS & PP"
+                    name = "Terms and privacy"
+                    description = "Warning! Denying the terms of service and privacy policy will prevent you from being able to use most of Essential’s features."
+                    label = "Deny"
+                    links = listOf(
+                        "Terms of Service" to { openInBrowser(URI("https://essential.gg/terms-of-use")) },
+                        "Privacy Policy" to { openInBrowser(URI("https://essential.gg/privacy-policy")) },
+                    )
                 }
             }
         }

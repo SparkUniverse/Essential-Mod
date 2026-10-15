@@ -42,7 +42,7 @@ public abstract class Mixin_ServerCoroutineScope implements MinecraftServerExt {
     //#endif
     private void init(CallbackInfo ci) {
         // FIXME mixin doesn't emit the first of these two lines if I make them field initializers, why?
-        dispatcher = new SingleThreadDispatcher("MinecraftServer.dispatcher");
+        dispatcher = new SingleThreadDispatcher("MinecraftServer.dispatcher", null);
         coroutineScope = CoroutineScope(SupervisorJob(null).plus(dispatcher));
     }
 

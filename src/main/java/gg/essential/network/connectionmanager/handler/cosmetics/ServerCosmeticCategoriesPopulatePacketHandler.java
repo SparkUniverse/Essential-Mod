@@ -13,22 +13,21 @@ package gg.essential.network.connectionmanager.handler.cosmetics;
 
 import gg.essential.connectionmanager.common.packet.cosmetic.categories.ServerCosmeticCategoriesPopulatePacket;
 import gg.essential.cosmetics.model.CosmeticCategory;
-import gg.essential.network.connectionmanager.ConnectionManager;
-import gg.essential.network.connectionmanager.cosmetics.CosmeticsManager;
+import gg.essential.network.connectionmanager.cosmetics.InfraCosmeticsData;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerCosmeticCategoriesPopulatePacketHandler extends PacketHandler<ServerCosmeticCategoriesPopulatePacket>{
-    private final CosmeticsManager cosmeticsManager;
+public class ServerCosmeticCategoriesPopulatePacketHandler implements PacketHandler<ServerCosmeticCategoriesPopulatePacket>{
+    private final InfraCosmeticsData infraCosmeticsData;
 
-    public ServerCosmeticCategoriesPopulatePacketHandler(CosmeticsManager cosmeticsManager) {
-        this.cosmeticsManager = cosmeticsManager;
+    public ServerCosmeticCategoriesPopulatePacketHandler(InfraCosmeticsData infraCosmeticsData) {
+        this.infraCosmeticsData = infraCosmeticsData;
     }
 
     @Override
-    protected void onHandle(@NotNull ConnectionManager connectionManager, @NotNull ServerCosmeticCategoriesPopulatePacket packet) {
+    public void handle(@NotNull ServerCosmeticCategoriesPopulatePacket packet) {
         for (CosmeticCategory category : packet.getCategories()) {
-            cosmeticsManager.getInfraCosmeticsData().addCategory(category);
+            infraCosmeticsData.addCategory(category);
         }
     }
 }

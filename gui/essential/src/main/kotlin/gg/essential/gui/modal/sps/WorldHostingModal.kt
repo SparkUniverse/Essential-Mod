@@ -52,6 +52,7 @@ import gg.essential.gui.elementa.state.v2.asyncMap
 import gg.essential.gui.elementa.state.v2.combinators.bimap
 import gg.essential.gui.elementa.state.v2.combinators.letState
 import gg.essential.gui.elementa.state.v2.combinators.map
+import gg.essential.gui.elementa.state.v2.combinators.not
 import gg.essential.gui.elementa.state.v2.combinators.or
 import gg.essential.gui.elementa.state.v2.effect
 import gg.essential.gui.elementa.state.v2.flatten
@@ -175,6 +176,8 @@ class WorldHostingModal(
     val worldsManager: WorldsManager,
     val worldManager: WorldManager,
 ) : EssentialModal2(modalManager) {
+
+    constructor(modalManager: ModalManager, worldManager: WorldManager) : this(modalManager, platform.worldsManager, worldManager)
 
     private lateinit var mainPane: UIComponent
 
@@ -455,6 +458,8 @@ class WorldHostingModal(
                         forEach(sortedPlayers) { uuid ->
                             val isOwner = memo { uuid == worldManager.owner() }
                             val isOp = memo { uuid in worldManager.gameSettings().ops }
+                            val isHost = memo { uuid == worldManager.host() }
+                            val isConnected = memo { uuid in worldManager.connectedMembers() }
                             val isInviteDisabled = mutableStateOf(false)
 
                             fun createPlayerContextMenu(clickEvent: UIClickEvent, uiComponent: UIComponent) {
@@ -879,7 +884,6 @@ class WorldHostingModal(
     private fun LayoutScope.layoutTopButtons() {
         bind(activeTab) { tab ->
             when (tab) {
-
                 Tab.GameRules -> {
                     val input = UITextInput("Search")
                     gameRuleSearchSource.set(input.textState)

@@ -16,7 +16,6 @@ import gg.essential.elementa.components.image.extractMcScale
 import gg.essential.elementa.dsl.constrain
 import gg.essential.elementa.dsl.pixels
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.renderer.fillMcScale
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.elementa.state.v2.MutableState
@@ -33,7 +32,6 @@ import gg.essential.gui.layoutdsl.hoverScope
 import gg.essential.gui.layoutdsl.onLeftClick
 import gg.essential.gui.util.hoverScopeV2
 import gg.essential.model.lerp
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.util.darker
 import java.awt.Color
@@ -63,18 +61,6 @@ abstract class EssentialToggle(
             }
             click.stopPropagation()
         }.applyToComponent(this)
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        @Suppress("DEPRECATION")
-        beforeDraw(matrixStack)
-        extractComponent(ImmediateElementaExtractor(matrixStack))
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     override fun extractComponent(extractor: ElementaExtractor) {

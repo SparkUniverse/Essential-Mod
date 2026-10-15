@@ -12,7 +12,6 @@
 package gg.essential.mixins.transformers.server;
 
 import gg.essential.Essential;
-import gg.essential.network.connectionmanager.sps.SPSManager;
 import gg.essential.sps.McIntegratedServerManager;
 import net.minecraft.world.WorldSettings;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,15 +29,8 @@ public class Mixin_ControlAreCommandsAllowed {
             Boolean cheatsEnabled = manager.getAppliedCheatsEnabled();
             if (cheatsEnabled != null) {
                 cir.setReturnValue(cheatsEnabled);
-                return;
             }
         }
-
-        final SPSManager spsManager = Essential.getInstance().getConnectionManager().getSpsManager();
-        if (spsManager.getLocalSession() == null) {
-            return;
-        }
-        cir.setReturnValue(spsManager.isAllowCheats());
     }
 
 }

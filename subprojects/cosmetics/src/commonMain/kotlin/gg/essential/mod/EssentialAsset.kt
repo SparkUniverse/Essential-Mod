@@ -26,5 +26,6 @@ data class EssentialAsset(
         fun of(content: String): EssentialAsset = of(content.encodeToByteArray())
         fun of(content: ByteArray): EssentialAsset =
             EssentialAsset("data:;base64," + base64Encode(content), md5Hex(content))
+
     }
 }

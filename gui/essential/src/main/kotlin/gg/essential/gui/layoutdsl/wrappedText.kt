@@ -11,6 +11,8 @@
  */
 package gg.essential.gui.layoutdsl
 
+import gg.essential.elementa.UIComponent
+
 private sealed interface TemplatedStringMember {
     data class ComponentReference(val name: String) : TemplatedStringMember
 
@@ -43,12 +45,12 @@ fun LayoutScope.wrappedText(
     textModifier: Modifier = Modifier,
     verticalArrangement: Arrangement = Arrangement.spacedBy(4f),
     block: WrappedTextBuilder.() -> Unit
-) {
+): UIComponent {
     val builder = WrappedTextBuilder()
     val components = builder.apply(block).build()
     val lines = text.split("\n")
 
-    column(modifier, verticalArrangement) {
+    return column(modifier, verticalArrangement) {
         lines.forEach { line ->
            row(Arrangement.spacedBy(1f)) {
                line.splitByComponentTemplate().forEach { part ->

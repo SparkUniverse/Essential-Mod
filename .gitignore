@@ -19,6 +19,7 @@ classes
 # gradle
 build
 .gradle
+.kotlin
 
 #Netbeans
 .nb-gradle

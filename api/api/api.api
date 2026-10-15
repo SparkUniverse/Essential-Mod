@@ -424,13 +424,13 @@ public abstract interface class gg/essential/api/utils/GuiUtil {
 	public static final field Companion Lgg/essential/api/utils/GuiUtil$Companion;
 	public abstract fun getGuiScale ()I
 	public abstract fun getGuiScale (I)I
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public static fun getOpenedScreen ()Lnet/minecraft/client/gui/screens/Screen;
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public static fun open (Lnet/minecraft/client/gui/screens/Screen;)V
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public abstract fun openScreen (Lnet/minecraft/client/gui/screens/Screen;)V
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public abstract fun openedScreen ()Lnet/minecraft/client/gui/screens/Screen;
 	@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.18.2-fabric,1.19-fabric,1.19.2-fabric,1.19.3-fabric,1.19.4-fabric,1.20-fabric,1.20.1-fabric,1.20.2-fabric,1.20.4-fabric,1.20.6-fabric,1.21.1-fabric,1.21.11-fabric,1.21.3-fabric,1.21.4-fabric,1.21.5-fabric,1.21.6-fabric,1.21.7-fabric,1.21.9-fabric
 	public static fun getOpenedScreen ()Lnet/minecraft/client/gui/screen/Screen;
@@ -451,9 +451,9 @@ public abstract interface class gg/essential/api/utils/GuiUtil {
 }
 
 public final class gg/essential/api/utils/GuiUtil$Companion {
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public final fun getOpenedScreen ()Lnet/minecraft/client/gui/screens/Screen;
-	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1-fabric,26.2-fabric,26.3-fabric
+	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge,26.1.2-fabric,26.2-fabric,26.3-fabric
 	public final fun open (Lnet/minecraft/client/gui/screens/Screen;)V
 	@1.16.5-fabric,1.16.5-forge,1.17.1-fabric,1.18.1-fabric,1.18.2-fabric,1.19-fabric,1.19.2-fabric,1.19.3-fabric,1.19.4-fabric,1.20-fabric,1.20.1-fabric,1.20.2-fabric,1.20.4-fabric,1.20.6-fabric,1.21.1-fabric,1.21.11-fabric,1.21.3-fabric,1.21.4-fabric,1.21.5-fabric,1.21.6-fabric,1.21.7-fabric,1.21.9-fabric
 	public final fun getOpenedScreen ()Lnet/minecraft/client/gui/screen/Screen;
@@ -519,7 +519,7 @@ public final class gg/essential/api/utils/KotlinAdapter : net/minecraftforge/fml
 }
 
 public abstract interface class gg/essential/api/utils/MinecraftUtils {
-	@26.1-fabric,26.2-fabric,26.3-fabric
+	@26.1.2-fabric,26.2-fabric,26.3-fabric
 	public abstract fun getResourceImage (Lnet/minecraft/resources/Identifier;)Ljava/awt/image/BufferedImage;
 	@1.17.1-forge,1.18.2-forge,1.19.2-forge,1.19.3-forge,1.19.4-forge,1.20.1-forge,1.20.2-forge,1.20.4-forge,1.20.4-neoforge,1.20.6-forge,1.20.6-neoforge,1.21.1-forge,1.21.1-neoforge,1.21.3-forge,1.21.3-neoforge,1.21.4-forge,1.21.4-neoforge,1.21.5-forge,1.21.5-neoforge,1.21.7-forge,1.21.7-neoforge
 	public abstract fun getResourceImage (Lnet/minecraft/resources/ResourceLocation;)Ljava/awt/image/BufferedImage;

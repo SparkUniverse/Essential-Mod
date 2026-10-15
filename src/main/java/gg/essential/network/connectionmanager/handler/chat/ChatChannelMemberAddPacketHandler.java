@@ -12,19 +12,21 @@
 package gg.essential.network.connectionmanager.handler.chat;
 
 import gg.essential.connectionmanager.common.packet.chat.ChatChannelMemberAddPacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ChatChannelMemberAddPacketHandler extends PacketHandler<ChatChannelMemberAddPacket> {
+public class ChatChannelMemberAddPacketHandler implements PacketHandler<ChatChannelMemberAddPacket> {
+
+    private final ChatManager chatManager;
+
+    public ChatChannelMemberAddPacketHandler(ChatManager chatManager) {
+        this.chatManager = chatManager;
+    }
+
 
     @Override
-    protected void onHandle(
-        @NotNull final ConnectionManager connectionManager, @NotNull final ChatChannelMemberAddPacket packet
-    ) {
-        final ChatManager chatManager = connectionManager.getChatManager();
-
+    public void handle(@NotNull final ChatChannelMemberAddPacket packet) {
         chatManager.membersAdded(packet.getChannelId(), packet.getMembers());
     }
 

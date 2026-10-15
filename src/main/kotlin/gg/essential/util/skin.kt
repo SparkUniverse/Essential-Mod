@@ -21,7 +21,10 @@ import kotlinx.coroutines.asExecutor
 import net.minecraft.client.Minecraft
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.firstOrNull
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
+@OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
 fun getSkinFromMinecraft(): CompletableFuture<Skin> {
     return CompletableFuture.supplyAsync(
         //#if MC>=12002
@@ -37,9 +40,9 @@ fun getSkinFromMinecraft(): CompletableFuture<Skin> {
             .firstOrNull()
             ?.propertyToSkin()
             //#if MC>=11903
-            //$$ ?: Skin.default(USession.activeNow().uuid)
+            //$$ ?: Skin.default(USession.activeNow().uuid.toKotlinUuid())
             //#else
-            ?: Skin.defaultPre1_19_3(USession.activeNow().uuid)
+            ?: Skin.defaultPre1_19_3(USession.activeNow().uuid.toKotlinUuid())
             //#endif
     }
 }

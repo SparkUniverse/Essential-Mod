@@ -19,7 +19,6 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.effects.OutlineEffect
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.state.BasicState
 import gg.essential.elementa.state.State
 import gg.essential.elementa.state.toConstraint
@@ -42,7 +41,6 @@ import gg.essential.model.util.Color
 import gg.essential.model.util.toJavaColor
 import gg.essential.network.connectionmanager.cosmetics.*
 import gg.essential.network.cosmetics.Cosmetic
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.USound
 import gg.essential.util.*
 import gg.essential.vigilance.utils.onLeftClick
@@ -198,17 +196,6 @@ class VariantsPropertyConfiguration(
             override fun extractComponent(extractor: ElementaExtractor) {
                 extractHueLine(extractor, this)
             }
-            @Deprecated(
-                "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-                replaceWith = ReplaceWith("extract(extractor)")
-            )
-            override fun draw(matrixStack: UMatrixStack) {
-                @Suppress("DEPRECATION")
-                beforeDraw(matrixStack)
-                extractComponent(ImmediateElementaExtractor(matrixStack))
-                @Suppress("DEPRECATION")
-                super.draw(matrixStack)
-            }
         }.centered().constrain {
             width = 100.percent() - 4.pixels
             height = 100.percent() - 4.pixels
@@ -224,17 +211,6 @@ class VariantsPropertyConfiguration(
         private val saturationBrightnessArea by object : UIComponent() {
             override fun extractComponent(extractor: ElementaExtractor) {
                 extractColorPicker(extractor, this, hue.get())
-            }
-            @Deprecated(
-                "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-                replaceWith = ReplaceWith("extract(extractor)")
-            )
-            override fun draw(matrixStack: UMatrixStack) {
-                @Suppress("DEPRECATION")
-                beforeDraw(matrixStack)
-                extractComponent(ImmediateElementaExtractor(matrixStack))
-                @Suppress("DEPRECATION")
-                super.draw(matrixStack)
             }
         }.centered().constrain {
             width = 100.percent() - 4.pixels

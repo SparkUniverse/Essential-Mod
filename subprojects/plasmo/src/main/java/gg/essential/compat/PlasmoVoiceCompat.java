@@ -24,7 +24,7 @@ import java.util.Optional;
  * Compatibility with plasmovoice 2.x (which uses the modid <code>plasmovoice</code>).
  * Unless a port is set in the plasmo config, a random port is used by default, so we must
  * register an addon to detect the port.
- * Compatibility with 1.x (which uses the modid <code>plasmo_voice</code>) is handled in SPSManager.
+ * Compatibility with 1.x (which uses the modid <code>plasmo_voice</code>) is handled in McIntegratedServerManager.
  */
 public class PlasmoVoiceCompat {
 

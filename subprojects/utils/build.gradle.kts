@@ -9,8 +9,6 @@
  * commercialize, or otherwise exploit, or create derivative works based
  * upon, this file or any other in this repository, all of which is reserved by Essential.
  */
-import gg.essential.gradle.util.KotlinVersion
-
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -24,11 +22,10 @@ repositories {
 kotlin {
     // Common dependencies
     dependencies {
-        val kotlin = KotlinVersion.minimal
-        implementation(kotlin("stdlib", kotlin.stdlib))
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlin.coroutines}")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${kotlin.serialization}")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlin.serialization}")
+        implementation(libs.kotlin.stdlib)
+        implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
         api("dev.folomeev.kotgl:kotgl-matrix:0.0.1-beta")
     }
 

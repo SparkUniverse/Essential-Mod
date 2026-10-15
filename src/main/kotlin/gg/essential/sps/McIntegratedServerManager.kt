@@ -26,7 +26,6 @@ import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.elementa.state.v2.withSetter
 import gg.essential.mixins.ext.server.coroutineScope
 import gg.essential.mixins.ext.server.dispatcher
-import gg.essential.mixins.ext.server.integrated.undoLan
 import gg.essential.mixins.transformers.server.integrated.LanConnectionsAccessor
 import gg.essential.sps.IntegratedServerManager.Difficulty
 import gg.essential.sps.IntegratedServerManager.GameMode
@@ -68,6 +67,8 @@ import kotlin.io.path.inputStream
 
 //#if MC >= 26.2
 //$$ import net.minecraft.server.MinecraftServer
+//#else
+import gg.essential.mixins.ext.server.integrated.undoLan
 //#endif
 
 //#if MC >= 1.21.11
@@ -145,6 +146,11 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
     //#if MC>=11600
     //$$ // For Mixin_ControlAreCommandsAllowed only
     //$$ var appliedCheatsEnabled: Boolean? = null
+    //#endif
+
+    //#if MC >= 26.3
+    //$$ // For Mixin_FixCheatsAndOpPermissions only
+    //$$ var appliedOps: Set<UUID>? = null
     //#endif
 
     var appliedOpenToLan: Boolean = false
@@ -303,7 +309,11 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
                         maxPlayers.set(maxPlayersValue)
                     }
                 } else if (!openToLan && server.public) {
+                    //#if MC >= 26.2
+                    //$$ server.unpublishServer()
+                    //#else
                     server.undoLan(hostUuid)
+                    //#endif
                 }
             }
         }
@@ -327,6 +337,11 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
 
             opsUpdateJob?.cancel()
             opsUpdateJob = server.coroutineScope.launch {
+                // appliedOps must be set before actually setting op level, as this field being set is required by the
+                // applyOps call via Mixin_FixCheatsAndOpPermissions.
+                //#if MC >= 26.3
+                //$$ appliedOps = ops
+                //#endif
                 applyOps(ops)
             }
         }
@@ -396,10 +411,14 @@ class McIntegratedServerManager(val server: IntegratedServer) : IntegratedServer
             val cheatsEnabled = (cheatsEnabledSourceState() ?: return@effect)()
 
             server.coroutineScope.launch {
-                //#if MC>=11600
+                //#if MC >= 1.16
                 //$$ appliedCheatsEnabled = cheatsEnabled
                 //#else
                 server.worlds.firstOrNull()?.worldInfo?.setAllowCommands(cheatsEnabled);
+                //#endif
+
+                //#if MC >= 1.12
+                server.playerList.players.forEach { server.playerList.updatePermissionLevel(it) }
                 //#endif
             }
         }

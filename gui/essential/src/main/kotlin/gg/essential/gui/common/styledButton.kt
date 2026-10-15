@@ -13,7 +13,6 @@ package gg.essential.gui.common
 
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.utils.withAlpha
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.combinators.map
@@ -28,7 +27,6 @@ import gg.essential.gui.layoutdsl.hoverScope
 import gg.essential.gui.layoutdsl.layoutAsBox
 import gg.essential.gui.layoutdsl.shadow
 import gg.essential.gui.util.hoverScope
-import gg.essential.universal.UMatrixStack
 import gg.essential.vigilance.utils.onLeftClick
 
 /** Used by a [Modifier] in a [styledButton] block in order to style text. */
@@ -73,18 +71,6 @@ class StyledButton(
                 event.stopImmediatePropagation()
             }
         }
-    }
-
-    @Deprecated(
-        "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-        replaceWith = ReplaceWith("extract(extractor)")
-    )
-    override fun draw(matrixStack: UMatrixStack) {
-        @Suppress("DEPRECATION")
-        beforeDraw(matrixStack)
-        extractComponent(ImmediateElementaExtractor(matrixStack))
-        @Suppress("DEPRECATION")
-        super.draw(matrixStack)
     }
 
     /** Copied from [MenuButton.extractComponent]. */

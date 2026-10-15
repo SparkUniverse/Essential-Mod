@@ -60,12 +60,13 @@ import gg.essential.model.util.UMatrixStack
 import gg.essential.model.util.UVertexConsumer
 import gg.essential.model.util.rotateBy
 import gg.essential.model.util.rotateSelfBy
-import java.util.UUID
 import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.sqrt
 import kotlin.random.Random
 import kotlin.random.nextInt
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * A sub-system for managing and rendering particles.
@@ -88,6 +89,7 @@ import kotlin.random.nextInt
  * source of time. This is so particles spawned by one cosmetic can play slightly faster so they can catch up with the
  * remote client that spawned them, similar to how cosmetic animations slowly catch up to be in sync as well.
  */
+@OptIn(ExperimentalUuidApi::class) // TODO: can be removed when we migrate to Kotlin 2.4
 class ParticleSystem(
     private val random: Random,
     private val collisionProvider: CollisionProvider,
@@ -245,20 +247,15 @@ class ParticleSystem(
     fun hasAnythingToRender(): Boolean =
         billboardRenderPasses.isNotEmpty()
 
-    // Needed for java call in Mixin_RenderParticleSystemOfClientWorld & others, due to value class parameter 'lightOverride'
-    fun render(matrixStack: UMatrixStack, cameraPos: Vec3, cameraRot: Quaternion, commandQueue: RenderBackend.CommandQueue, cameraUuid: UUID, cameraFirstPerson: Boolean, hideParticlesInFirstPerson: Boolean, onlyRenderFromSource: UUID? = null) =
-        render(matrixStack, cameraPos, cameraRot, commandQueue, cameraUuid, cameraFirstPerson,
-            hideParticlesInFirstPerson, onlyRenderFromSource, null)
-
     fun render(
         matrixStack: UMatrixStack,
         cameraPos: Vec3,
         cameraRot: Quaternion,
         commandQueue: RenderBackend.CommandQueue,
-        cameraUuid: UUID,
+        cameraUuid: Uuid,
         cameraFirstPerson: Boolean,
         hideParticlesInFirstPerson: Boolean,
-        onlyRenderFromSource: UUID? = null,
+        onlyRenderFromSource: Uuid? = null,
         lightOverride: Light? = null,
     ) {
         val cameraFacing = vec3(0f, 0f, -1f).rotateBy(cameraRot)
@@ -1332,7 +1329,7 @@ class ParticleSystem(
             matrixStack: UMatrixStack,
             vertexConsumer: UVertexConsumer,
             cameraFacing: Vec3,
-            cameraUuid: UUID,
+            cameraUuid: Uuid,
             cameraFirstPerson: Boolean,
             hideParticlesInFirstPerson: Boolean,
             lightOverride: Light?,

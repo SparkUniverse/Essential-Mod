@@ -92,28 +92,13 @@ class CapeCosmeticsManager(
                     return@send
                 }
 
-                // This is either a new user, or they're migrating from the two-state cape system
-                // FIXME: isNewInstallation can be unreliable (e.g. it'll be false if the user only accepts the tos on
-                //        second boot, or crashes on first boot) but that's fine because we can forcefully migrate
-                //        everyone after a day or so (when no more old clients are in use), this is just for the time
-                //        until then
                 val outfitManager = connectionManager.outfitManager
-                if (Essential.getInstance().isNewInstallation) {
-                    // If they are new and currently have capes disabled, then we'll equip the Cape Disabled
-                    // cosmetic in their active outfit to keep it that way.
-                    if (!capesVisible) {
-                        val selectedOutfit = outfitManager.getSelectedOutfit()
-                        if (selectedOutfit != null) {
-                            outfitManager.updateEquippedCosmetic(selectedOutfit.id, CosmeticSlot.CAPE, CAPE_DISABLED_COSMETIC_ID)
-                        }
-                    }
-                } else {
-                    // Otherwise, they're likely migrating from the two-state cape system
-                    // In this case, we'll reset all their capes (and thereby implicitly their cape-visibility).
-                    // We can't really guess what they really want it to be set to and have determined that resetting
-                    // will likely result in the least amount of confusion/annoyance over all.
-                    for (outfit in outfitManager.outfits.get()) {
-                        outfitManager.updateEquippedCosmetic(outfit.id, CosmeticSlot.CAPE, null)
+                // If they are new and currently have capes disabled, then we'll equip the Cape Disabled
+                // cosmetic in their active outfit to keep it that way.
+                if (!capesVisible) {
+                    val selectedOutfit = outfitManager.getSelectedOutfit()
+                    if (selectedOutfit != null) {
+                        outfitManager.updateEquippedCosmetic(selectedOutfit.id, CosmeticSlot.CAPE, CAPE_DISABLED_COSMETIC_ID)
                     }
                 }
             }

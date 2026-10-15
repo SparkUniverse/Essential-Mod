@@ -111,7 +111,7 @@ internal class LongArrayMask(
     }
 
     override fun mutableCopy(): MutableMask {
-        return LongArrayMask(width, height, data.clone())
+        return LongArrayMask(width, height, data.copyOf())
     }
 
     override fun equals(other: Any?): Boolean {

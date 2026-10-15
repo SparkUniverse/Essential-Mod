@@ -1,0 +1,42 @@
+com.mojang.blaze3d.platform.WindowEventHandler resizeGui() onResolutionChanged()
+com.mojang.blaze3d.systems.SamplerCache getSampler() get()
+com.mojang.blaze3d.vertex.DefaultVertexFormat ENTITY POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL
+net.minecraft.client.renderer.GameRenderer lambda$takeAutoScreenshot$1() method_3181()
+net.minecraft.client.renderer.LevelRenderer getLightCoords() getLightmapCoordinates()
+net.minecraft.client.renderer.entity.layers.RenderLayer submit() render()
+net.minecraft.client.renderer.state.gui.GuiRenderState net.minecraft.client.gui.render.state.GuiRenderState
+net.minecraft.client.renderer.state.gui.GuiTextRenderState net.minecraft.client.gui.render.state.TextGuiElementRenderState
+net.minecraft.client.renderer.state.gui.GuiTextRenderState ensurePrepared() prepare()
+net.minecraft.client.renderer.state.gui.GuiTextRenderState text orderedText
+net.minecraft.client.renderer.state.level.CameraRenderState net.minecraft.client.render.state.CameraRenderState
+net.minecraft.client.renderer.state.level.LevelRenderState net.minecraft.client.render.state.WorldRenderState
+net.minecraft.client.renderer.state.level.ParticlesRenderState net.minecraft.client.render.SubmittableBatch
+net.minecraft.client.gui.GuiGraphicsExtractor net.minecraft.client.gui.DrawContext
+net.minecraft.client.gui.GuiGraphicsExtractor blit() drawTexture()
+net.minecraft.client.gui.GuiGraphicsExtractor blitSprite() drawGuiTexture()
+net.minecraft.client.gui.GuiGraphicsExtractor pose() getMatrices()
+net.minecraft.client.gui.GuiGraphicsExtractor setTooltipForNextFrame() drawTooltip()
+net.minecraft.client.gui.GuiGraphicsExtractor setTooltipForNextFrame() drawOrderedTooltip()
+net.minecraft.client.gui.GuiGraphicsExtractor textRendererForWidget() getHoverListener()
+net.minecraft.client.gui.GuiGraphicsExtractor text() drawTextWithShadow()
+net.minecraft.client.gui.components.AbstractButton extractContents() drawIcon()
+net.minecraft.client.gui.components.AbstractButton extractDefaultLabel() drawLabel()
+net.minecraft.client.gui.components.AbstractButton extractDefaultSprite() drawButton()
+net.minecraft.client.gui.components.AbstractSelectionList$Entry extractContent() render()
+net.minecraft.client.gui.components.PlayerTabOverlay extractRenderState() render()
+net.minecraft.client.gui.components.Renderable extractRenderState() render()
+net.minecraft.client.gui.screens.PauseScreen lambda$createPauseMenu$7() method_72129()
+net.minecraft.client.gui.screens.Screen extractRenderStateWithTooltipAndSubtitles() renderWithTooltip()
+net.minecraft.client.gui.screens.Screen extractTransparentBackground() renderInGameBackground()
+net.minecraft.client.gui.screens.Screen extractBlurredBackground() applyBlur()
+net.minecraft.client.resources.server.DownloadedPackSource lambda$createRepositorySource$0() method_55526()
+net.minecraft.client.renderer.LevelRenderer lambda$addMainPass$0() method_62214()
+net.minecraft.client.renderer.rendertype.RenderTypes entityCutout() entityCutoutNoCull()
+net.minecraft.client.renderer.rendertype.RenderTypes entityCutoutCull() entityCutout()
+net.minecraft.client.Screenshot lambda$grab$1() method_22691()
+net.minecraft.client.gui.screens.multiplayer.ServerSelectionList$OnlineServerEntry this$0 field_19117
+net.minecraft.client.renderer.feature.NameTagFeatureRenderer renderTranslucent() render()
+net.minecraft.client.server.IntegratedServer lambda$halt$0() method_4816()
+
+net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
+net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry clientboundPlay()Lnet/fabricmc/fabric/api/networking/v1/PayloadTypeRegistry; playS2C()

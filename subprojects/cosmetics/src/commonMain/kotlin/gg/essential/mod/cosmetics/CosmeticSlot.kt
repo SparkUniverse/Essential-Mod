@@ -18,6 +18,8 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 @Serializable(with = CosmeticSlot.Serializer::class)
 data class CosmeticSlot private constructor(val id: String) {

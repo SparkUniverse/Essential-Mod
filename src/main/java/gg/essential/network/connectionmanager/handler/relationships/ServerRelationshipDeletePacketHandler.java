@@ -12,15 +12,21 @@
 package gg.essential.network.connectionmanager.handler.relationships;
 
 import gg.essential.connectionmanager.common.packet.relationships.ServerRelationshipDeletePacket;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
+import gg.essential.network.connectionmanager.relationship.RelationshipManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerRelationshipDeletePacketHandler extends PacketHandler<ServerRelationshipDeletePacket> {
+public class ServerRelationshipDeletePacketHandler implements PacketHandler<ServerRelationshipDeletePacket> {
+
+    private final RelationshipManager relationshipManager;
+
+    public ServerRelationshipDeletePacketHandler(RelationshipManager relationshipManager) {
+        this.relationshipManager = relationshipManager;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerRelationshipDeletePacket packet) {
-        connectionManager.getRelationshipManager().removeRelationship(packet.getRelationship());
+    public void handle(@NotNull final ServerRelationshipDeletePacket packet) {
+        relationshipManager.removeRelationship(packet.getRelationship());
     }
 
 }

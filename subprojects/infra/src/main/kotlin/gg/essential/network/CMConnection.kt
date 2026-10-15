@@ -12,6 +12,7 @@
 package gg.essential.network
 
 import gg.essential.connectionmanager.common.packet.Packet
+import gg.essential.network.connectionmanager.handler.PacketHandler
 import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -27,7 +28,7 @@ interface CMConnection {
 
     fun registerOnConnected(onConnected: () -> Unit)
 
-    fun <T : Packet> registerPacketHandler(cls: Class<T>, handler: (T) -> Unit)
+    fun <T : Packet> registerPacketHandler(cls: Class<T>, handler: PacketHandler<T>)
 
     fun call(packet: Packet): Call = Call(this, packet)
 

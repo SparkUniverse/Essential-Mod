@@ -41,6 +41,7 @@ import gg.essential.gui.account.factory.*;
 import gg.essential.gui.api.ComponentFactory;
 import gg.essential.gui.common.UI3DPlayer;
 import gg.essential.gui.elementa.state.v2.MutableState;
+import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl;
 import gg.essential.gui.elementa.state.v2.StateScheduler;
 import gg.essential.gui.image.ResourceImageFactory;
 import gg.essential.gui.notification.Notifications;
@@ -53,6 +54,7 @@ import gg.essential.key.EssentialKeybindingRegistry;
 import gg.essential.lib.gson.Gson;
 import gg.essential.lib.gson.GsonBuilder;
 import gg.essential.network.connectionmanager.ConnectionManager;
+import gg.essential.network.connectionmanager.McGameStates;
 import gg.essential.network.connectionmanager.skins.PlayerSkinLookup;
 import gg.essential.network.connectionmanager.telemetry.FeatureSessionTelemetry;
 import gg.essential.network.mojang.ManagedMojangProfileApi;
@@ -66,6 +68,9 @@ import gg.essential.util.*;
 import gg.essential.util.crash.StacktraceDeobfuscator;
 import gg.essential.util.lwjgl3.Lwjgl3Loader;
 import gg.essential.util.swing.SwingUtil;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.SupervisorKt;
 import me.kbrewster.eventbus.Subscribe;
 import me.kbrewster.eventbus.invokers.InvokerType;
 import me.kbrewster.eventbus.invokers.LMFInvoker;
@@ -136,12 +141,19 @@ public class Essential implements EssentialAPI {
     }
 
     private final File baseDir = createEssentialDir();
-    public final boolean isNewInstallation = !new File(baseDir, "config.toml").exists();
+
+    private final ReferenceHolderImpl refHolder = new ReferenceHolderImpl();
 
     private final Lwjgl3Loader lwjgl3 = new Lwjgl3Loader(baseDir.toPath().resolve("lwjgl3-natives"));
+    private final McGameStates gameStates = new McGameStates();
     private final MutableState<@Nullable McIntegratedServerManager> integratedServerManager = mutableStateOf(null);
     @NotNull
-    private final ConnectionManager connectionManager = new ConnectionManager(new NetworkHook(), baseDir, lwjgl3, integratedServerManager);
+    private final ConnectionManager connectionManager = new ConnectionManager(
+        CoroutineScopeKt.CoroutineScope(SupervisorKt.SupervisorJob(null).plus(DispatchersKt.getClient(Dispatchers.INSTANCE))),
+        baseDir,
+        lwjgl3,
+        integratedServerManager
+    );
     private final McWorldsManager worldsManager = new McWorldsManager(
         connectionManager,
         UMinecraft.getMinecraft().mcDataDir.toPath().resolve("saves"),
@@ -186,6 +198,11 @@ public class Essential implements EssentialAPI {
     @NotNull
     public MutableState<@Nullable McIntegratedServerManager> getIntegratedServerManager() {
         return this.integratedServerManager;
+    }
+
+    @NotNull
+    public McGameStates getGameStates() {
+        return this.gameStates;
     }
 
     @NotNull
@@ -350,7 +367,6 @@ public class Essential implements EssentialAPI {
         registerListener(new OptionsScreenOverlay());
         registerListener(connectionManager);
         registerListener(new WindowedFullscreenHandler());
-        registerListener(connectionManager.getSpsManager());
         registerListener(connectionManager.getSocialManager());
         registerListenerRequiresEssential(cosmeticEventEmitter = new CosmeticEventEmitter());
         registerListener(playerWearableManager = new PlayerWearableManager(connectionManager, connectionManager.getCosmeticsManager()));
@@ -378,6 +394,9 @@ public class Essential implements EssentialAPI {
         registerListener(UI3DPlayer.Companion);
         mcLocalResourcePackIndex.update(false);
         WindowTitleManager.INSTANCE.register();
+
+        gameStates.register(EVENT_BUS);
+        connectionManager.hookUpToGame(refHolder, gameStates);
 
         //#if MC<11400
         // Patcher screenshot manager conflicts with ours, so we disable it

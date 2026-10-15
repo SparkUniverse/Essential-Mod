@@ -19,7 +19,6 @@ import gg.essential.event.gui.GuiOpenEvent
 import gg.essential.event.network.server.ServerJoinEvent
 import gg.essential.event.network.server.ServerLeaveEvent
 import gg.essential.event.network.server.SingleplayerJoinEvent
-import gg.essential.event.sps.SPSStartEvent
 import gg.essential.gui.elementa.state.v2.MutableState
 import gg.essential.gui.elementa.state.v2.ReferenceHolderImpl
 import gg.essential.gui.elementa.state.v2.effect
@@ -93,9 +92,5 @@ class ServerStatusHandler {
     @Subscribe
     fun joinSinglePlayer(event: SingleplayerJoinEvent) {
         eventDrivenCurrentActivity.set(Activity(ActivityType.PLAYING, AddressUtil.SINGLEPLAYER))
-    }
-
-    @Subscribe
-    fun hostWorld(event: SPSStartEvent) {
     }
 }

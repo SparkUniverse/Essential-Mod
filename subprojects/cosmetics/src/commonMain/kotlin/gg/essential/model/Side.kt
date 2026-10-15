@@ -14,6 +14,7 @@ package gg.essential.model
 import gg.essential.serialization.SnakeAsUpperCaseSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmStatic
 
 /*
     The enum declaration order is in the order in which the sides are determined to be default.

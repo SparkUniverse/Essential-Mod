@@ -19,7 +19,6 @@ import gg.essential.elementa.constraints.*
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.effects.ScissorEffect
 import gg.essential.elementa.renderer.ElementaExtractor
-import gg.essential.elementa.renderer.ImmediateElementaExtractor
 import gg.essential.elementa.renderer.SpecialRenderer
 import gg.essential.gui.EssentialPalette
 import gg.essential.gui.elementa.state.v2.State
@@ -35,7 +34,6 @@ import gg.essential.gui.screenshot.image.ScreenshotImage
 import gg.essential.gui.screenshot.providers.RegisteredTexture
 import gg.essential.handlers.screenshot.ClientScreenshotMetadata
 import gg.essential.network.connectionmanager.media.IScreenshotManager
-import gg.essential.universal.UMatrixStack
 import gg.essential.universal.UResolution
 import gg.essential.util.animateColor
 import gg.essential.util.image.GpuTexture
@@ -72,17 +70,6 @@ class ScreenshotCanvas(
             }
 
             super.mouseMove(window)
-        }
-
-        @Deprecated(
-            "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-            replaceWith = ReplaceWith("extract(extractor)")
-        )
-        override fun draw(matrixStack: UMatrixStack) {
-            @Suppress("DEPRECATION")
-            vectorEditingOverlay.draw(matrixStack)
-            @Suppress("DEPRECATION")
-            super.draw(matrixStack)
         }
 
         override fun extractComponent(extractor: ElementaExtractor) {
@@ -153,17 +140,6 @@ class ScreenshotCanvas(
         } childOf this
 
         val overlay = object : UIComponent() {
-            @Deprecated(
-                "`draw`-style rendering is deprecated. Override `extractComponent` instead. Call `extract` to extract this component, its effects, and its children.",
-                replaceWith = ReplaceWith("extract(extractor)")
-            )
-            override fun draw(matrixStack: UMatrixStack) {
-                @Suppress("DEPRECATION")
-                beforeDraw(matrixStack)
-                extractComponent(ImmediateElementaExtractor(matrixStack))
-                @Suppress("DEPRECATION")
-                super.draw(matrixStack)
-            }
             override fun extractComponent(extractor: ElementaExtractor) {
                 val strokes = editHistory.history.getUntracked().filterIsInstance<PenTool.PenVectorStroke>()
                 val guiScale = extractor.guiScale

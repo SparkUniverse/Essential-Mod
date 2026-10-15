@@ -54,7 +54,8 @@ class ForkedImageClipboard : AutoCloseable {
         }
 
         private fun classpath(): String {
-            return extractedClipboardJar.toString() + System.getProperty("path.separator") + ForkedJvm.defaultClassPath()
+            return extractedClipboardJar.toString() + System.getProperty("path.separator") +
+                ForkedJvm.defaultClassPath(Clipboard::class.java, OperatingSystem::class.java)
         }
 
         @JvmStatic

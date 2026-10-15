@@ -29,7 +29,6 @@ import java.util.*
 
 abstract class CommandOpBase(name: String) : Command(name) {
 
-    val spsManager = Essential.getInstance().connectionManager.spsManager
     val worldManager: WorldManager
         get() = Essential.getInstance().worldsManager.integratedServerWorld.getUntracked()
             ?: throw IllegalStateException("Command should not be registered")
@@ -211,7 +210,6 @@ object CommandSession : Command("esession") {
     fun handleClose() {
         val currentServerData = UMinecraft.getMinecraft().currentServerData
 
-        val spsManager = connectionManager.spsManager
         val worldManager = Essential.getInstance().worldsManager.integratedServerWorld.getUntracked()
 
         when {

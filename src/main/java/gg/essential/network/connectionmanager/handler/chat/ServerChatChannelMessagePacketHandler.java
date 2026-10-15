@@ -21,7 +21,6 @@ import gg.essential.connectionmanager.common.packet.chat.ServerChatChannelMessag
 import gg.essential.gui.friends.SocialMenu;
 import gg.essential.gui.notification.Notifications;
 import gg.essential.mod.Skin;
-import gg.essential.network.connectionmanager.ConnectionManager;
 import gg.essential.network.connectionmanager.chat.ChatManager;
 import gg.essential.network.connectionmanager.handler.PacketHandler;
 import gg.essential.universal.USound;
@@ -46,12 +45,16 @@ import static gg.essential.gui.skin.SkinUtilsKt.showSkinReceivedToast;
 import static gg.essential.network.cosmetics.ConversionsKt.toMod;
 import static gg.essential.util.ExtensionsKt.getExecutor;
 
-public class ServerChatChannelMessagePacketHandler extends PacketHandler<ServerChatChannelMessagePacket> {
+public class ServerChatChannelMessagePacketHandler implements PacketHandler<ServerChatChannelMessagePacket> {
+
+    private final ChatManager chatManager;
+
+    public ServerChatChannelMessagePacketHandler(ChatManager chatManager) {
+        this.chatManager = chatManager;
+    }
 
     @Override
-    protected void onHandle(@NotNull final ConnectionManager connectionManager, @NotNull final ServerChatChannelMessagePacket packet) {
-        final ChatManager chatManager = connectionManager.getChatManager();
-
+    public void handle(@NotNull final ServerChatChannelMessagePacket packet) {
         List<@NotNull Message> sortedMessages = Arrays.stream(packet.getMessages()).sorted(Comparator.comparing(message -> ((Message) message).getCreatedAt()).reversed()).collect(Collectors.toList());
         for (@NotNull final Message message : sortedMessages) {
             final Optional<Channel> channelOptional = chatManager.getChannel(message.getChannelId());
