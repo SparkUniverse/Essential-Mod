@@ -26,7 +26,7 @@ includeBuild("build-logic")
 if (!System.getenv().containsKey("NO_GIT_SUBMODULES")) {
     includeBuild("loader") {
         dependencySubstitution {
-            for (variant in listOf("fabric", "launchwrapper", "modlauncher8", "modlauncher9")) {
+            for (variant in listOf("fabric", "launchwrapper", "modlauncher8", "modlauncher9", "fml10")) {
                 substitute(module("gg.essential:loader-$variant")).using(project(":stage0:$variant"))
                 substitute(module("gg.essential.loader:container-$variant")).using(project(":container:$variant"))
                 substitute(module("gg.essential.loader:stage2-$variant")).using(project(":stage2:$variant"))
@@ -114,9 +114,17 @@ listOfNotNull(
     "1.21.7-neoforge",
     "1.21.9-fabric",
     "1.21.11-fabric",
+    "1.21.11-forge",
+    "1.21.11-neoforge",
     "26.1.2-fabric",
+    "26.1.2-forge",
+    "26.1.2-neoforge",
     "26.2-fabric",
+    "26.2-forge",
+    "26.2-neoforge",
     "26.3-fabric",
+    "26.3-forge",
+    "26.3-neoforge",
 ).forEach { version ->
     include(":$version")
     project(":$version").apply {

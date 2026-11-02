@@ -91,21 +91,8 @@ abstract class EssentialProxyElement<T : UIComponent>(
         mountingControl.set(State { drawBehaviourState() != ProxyDrawBehaviour.PROXY_DRAWS })
     }
 
-    fun initAfterInitialLayout() {
-        if (essentialContainer == null) {
-            throw IllegalStateException("Proxy element for $essentialId was never bound. " +
-                    "Ensure `mountWithProxy` is being called unconditionally and/or the hard-coded label-to-id " +
-                    "mapping in `ScreenWithProxiesHandler` is feature-flagged correctly.")
-        }
-
-        // Apply position of Essential component to proxy
-        updateProxyStateWhileNotInControl()
-
-        // Detach from Essential component again (a dummy one is used for initial layout)
-        // Intentionally not resetting `positionStateSetByEssential` so we can recognize when a mod moves the button
-        // during screen initialization.
-        essentialContainer = null
-        essentialContainerMountingState = null
+    fun applyInitialLayout(essentialContainer: UIComponent) {
+        updateProxyStateWhileNotInControl(essentialContainer)
     }
 
     private var needsToDrawOnce = true
@@ -225,8 +212,11 @@ abstract class EssentialProxyElement<T : UIComponent>(
             applyFallbackPositionState()
             return
         }
+        updateProxyStateWhileNotInControl(component)
+    }
 
-        component.positionState().let {
+    private fun updateProxyStateWhileNotInControl(essentialContainer: UIComponent) {
+        essentialContainer.positionState().let {
             mapOfLastKnownPositionStates[essentialId] = it
             applyPositionState(it)
             positionStateSetByEssential = it

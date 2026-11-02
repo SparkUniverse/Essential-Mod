@@ -1129,12 +1129,12 @@ object EssentialPalette {
     /*
        Minecraft-Ten was generated using https://github.com/Chlumsky/msdf-atlas-gen/
        More specifically, the following command:
-       `.\msdf-atlas-gen.exe -font '.\Minecrafted Ten.ttf' -type hardmask -format png -imageout Minecraft-Ten.png -json Minecraft-Ten.json -fontname Minecraft-Ten -size 10 -pxalign on -pxrange 1 -pxpadding 0 -outerpxpadding 0 -fontscale 0.998`
+       `.\msdf-atlas-gen.exe -font '.\Minecrafted Ten.ttf' -type hardmask -format png -imageout minecraft-ten.png -json minecraft-ten.json -fontname Minecraft-Ten -size 10 -pxalign on -pxrange 1 -pxpadding 0 -outerpxpadding 0 -fontscale 0.998`
        The extra parameters at the end ensure that the font id grid-aligned and doesn't have unnecessary padding in the right.
        Then, 3 extra properties (baseCharHeight, belowLineHeight, shadowHeight) were added to the .json, to fully configure it.
      */
-    private val MINECRAFT_TEN_FONT by lazy { loadFont("Minecraft-Ten") }
-    private val MINECRAFT_FIVE_FONT by lazy { loadFont("Minecraft-Five") }
+    private val MINECRAFT_TEN_FONT by lazy { loadFont("minecraft-ten") }
+    private val MINECRAFT_FIVE_FONT by lazy { loadFont("minecraft-five") }
 
     val MINECRAFT_TEN by lazy { BasicFontRenderer(MINECRAFT_TEN_FONT) }
     val MINECRAFT_FIVE by lazy { BasicFontRenderer(MINECRAFT_FIVE_FONT) }

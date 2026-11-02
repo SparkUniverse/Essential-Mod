@@ -470,10 +470,20 @@ object OverlayManagerImpl : OverlayManager {
         private var originalMousePos: Pair<Double, Double>? = null
         private var originalMousePosEvent: Pair<Int, Int>? = null
 
-        fun isOverridingMousePos() = originalMousePos != null
+        // Reasoning behind originalMousePosEvent != null
+        // FancyMenu re-uses the captured fake coordinates for both the pre- and post-render events.
+        // https://github.com/Keksuccino/FancyMenu/blob/b8472ae133edfa8cfd117db2026333ac8691889b/common/src/main/java/de/keksuccino/fancymenu/mixin/mixins/common/client/MixinScreen.java#L60
+        // This means that their post render event is using the captured stale fake coordinates while we have already stopped overriding the position.
+        // By also checking originalMousePosEvent, we behave as if we are overriding the coordinates all the way until finalDraw, letting our mixins restore the original position
+        fun isOverridingMousePos() = originalMousePos != null || originalMousePosEvent != null
 
         fun withRealMousePos(block: () -> Unit) {
-            originalMousePos?.let { (x, y) ->
+            // See comment above isOverridingMousePos for reasoning on use of originalMousePosEvent
+            val original = originalMousePos ?: originalMousePosEvent?.let { (x, y) ->
+                // originalMousePosEvent has scaled coordinates, so we convert them back to raw
+                (x * max(1, UResolution.windowWidth) / UResolution.scaledWidth).toDouble() to (y * max(1, UResolution.windowHeight) / UResolution.scaledHeight).toDouble()
+            }
+            original?.let { (x, y) ->
                 val inX = UMouse.Raw.x
                 val inY = UMouse.Raw.y
                 GlobalMouseOverride.set(x, y)

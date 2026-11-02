@@ -223,12 +223,14 @@ abstract class GpuTextureImpl(private val format: GpuTexture.Format) : GpuTextur
         //$$     throw UnsupportedOperationException("Currently only DEPTH32 format is supported.")
         //$$ }
         //$$
+        //#if MC < 26.3
         //$$ // B3D's copyTextureToBuffer doesn't work properly for depth textures, it always uses the color attachment
         //$$ // of its internal framebuffer.
         //$$ // The Vulkan one seems fine.
         //$$ if (b3d is GlTexture) {
         //$$     return readPixelDepthsOpenGl(x, y, width, height)
         //$$ }
+        //#endif
         //$$
         //$$ val bufferSize = width * height * 4
         //$$ val buffer = RenderSystem.getDevice().createBuffer(
@@ -259,6 +261,7 @@ abstract class GpuTextureImpl(private val format: GpuTexture.Format) : GpuTextur
         //#endif
     }
 
+    //#if MC < 26.3
     private fun readPixelDepthsOpenGl(x: Int, y: Int, width: Int, height: Int): FloatBuffer {
         val prevReadFrameBufferBinding = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING)
         glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, depthReadFrameBuffer)
@@ -268,6 +271,7 @@ abstract class GpuTextureImpl(private val format: GpuTexture.Format) : GpuTextur
         glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, prevReadFrameBufferBinding)
         return result
     }
+    //#endif
 
     private class ByteBufferBitmap(
         override val width: Int,

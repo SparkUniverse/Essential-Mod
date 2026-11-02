@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.account
 
-import com.mojang.authlib.GameProfile
 import com.mojang.authlib.exceptions.InvalidCredentialsException
 import gg.essential.minecraftauth.exception.AuthenticationException
 import gg.essential.minecraftauth.microsoft.MicrosoftAuthenticationService
@@ -29,6 +28,7 @@ import gg.essential.util.UUIDUtil
 import java.lang.reflect.Type
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 
 class MicrosoftUserAuthentication {
 
@@ -208,4 +208,6 @@ class MicrosoftUserAuthentication {
         override fun serialize(src: Token, typeOfSrc: Type, context: JsonSerializationContext): JsonElement =
             context.serialize(src)
     }
+
+    data class GameProfile(val id: UUID, val name: String)
 }

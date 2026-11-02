@@ -198,6 +198,8 @@ object AutoUpdate : AutoUpdateManager {
     private fun getEssentialLoaderPlatform(): String {
         //#if FABRIC
         //$$ return "fabric"
+        //#elseif NEOFORGE && MC >= 1.21.11
+        //$$ return "fml10"
         //#else
         val version = VersionData.getMajorComponents(VersionData.getMinecraftVersion())[1].toInt()
         return when {
@@ -211,6 +213,8 @@ object AutoUpdate : AutoUpdateManager {
     private fun stage2GameVersion(): String {
         //#if FABRIC
         //$$ return "fabric_" + FabricLoader.getInstance().getModContainer("minecraft").map { it.metadata.version.friendlyString }.orElse("unknown")
+        //#elseif NEOFORGE && MC >= 1.21.11
+        //$$ return "neoforge_" + VersionData.getMinecraftVersion()
         //#else
         val version = VersionData.getMajorComponents(VersionData.getMinecraftVersion())[1].toInt()
         return "forge_" + when {

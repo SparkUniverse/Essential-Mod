@@ -49,6 +49,7 @@ open class BundlePlugin : Plugin<Project> {
         when {
             platform.isLegacyForge -> project.configureForLegacyForge(configurations)
             platform.isFabric -> project.configureForFabricLoader(configurations, platform)
+            platform.isNeoForge && platform.mcVersion >= 1_21_11 -> project.configureForModernFancyModLauncher(configurations)
             platform.isModLauncher -> project.configureForModLauncher(configurations, platform)
         }
     }
@@ -171,7 +172,11 @@ private fun Project.createBundleJarTask(platform: Platform, configurations: Conf
 
 // With EssentialLoader supporting Jar-in-Jar on legacy Forge, we now ship all our public libraries as separate jars in our jar,
 // much like we do on Fabric (just without fabric-language-kotlin).
-private fun Project.configureForLegacyForge(configurations: Configurations) = with(configurations) {
+private fun Project.configureForLegacyForge(configurations: Configurations) {
+    addApiElementsToJiJ(configurations)
+}
+
+private fun Project.addApiElementsToJiJ(configurations: Configurations) = with(configurations) {
     bundle.exclude("org.jetbrains.kotlin", "kotlin-stdlib-common") // replaced by kotlin-stdlib
 
     afterEvaluate { // need to delay so repos and deps are all set up
@@ -268,6 +273,15 @@ private fun Project.configureForModLauncher(configurations: Configurations, plat
     dependencies {
         jij(libs.findBundle("kotlin").orElseThrow())
         jij.exclude(group = "org.jetbrains", module = "annotations")
+    }
+}
+
+private fun Project.configureForModernFancyModLauncher(configurations: Configurations) {
+    addApiElementsToJiJ(configurations)
+
+    // Use ArchLoom's builtin `include` configuration to generate a JarJar metadata file for all our jij'd jars
+    project.configurations.named("include") {
+        extendsFrom(configurations.jij)
     }
 }
 

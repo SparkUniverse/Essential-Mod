@@ -73,7 +73,7 @@ class EssentialModelRenderer(
         //#endif
         cState: CosmeticsRenderState,
         lightInt: Int,
-        parts: Set<EnumPart> = EnumPart.entries.toSet(),
+        parts: Set<EnumPart> = EnumPart.entriesSet,
         setsPose: Boolean = false,
         needsRootTransform: Boolean = true,
     ) {

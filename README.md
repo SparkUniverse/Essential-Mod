@@ -65,6 +65,7 @@ four different versions:
 - `launchwrapper` for Forge on Minecraft 1.8.9 and 1.12.2
 - `modlauncher8` for Forge on Minecraft 1.16.5
 - `modlauncher9` for Forge on Minecraft 1.17 and above
+- `fml10` for NeoForge on Minecraft 1.21.11 and above
 
 For more technical details about these different platforms, see `loader/docs/platforms.md`.
 For more technical details about "container"/"pinned" mods, see `loader/docs/container-mods.md`.

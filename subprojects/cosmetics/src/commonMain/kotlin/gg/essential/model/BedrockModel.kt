@@ -202,7 +202,7 @@ class BedrockModel(
             Vector3.ZERO,
             null,
             emptySet(),
-            EnumPart.values().toSet(),
+            EnumPart.entriesSet,
         )
         modelState.apply(bones)
         val pose = retrievePose(bones, basePose)

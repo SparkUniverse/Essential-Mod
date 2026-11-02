@@ -31,9 +31,9 @@ import gg.essential.gui.layoutdsl.BasicYModifier
 import gg.essential.gui.layoutdsl.layout
 import gg.essential.gui.overlay.Layer
 import gg.essential.gui.overlay.LayerPriority
-import gg.essential.gui.proxies.ScreenWithProxiesHandler
-import gg.essential.gui.proxies.ScreenWithProxiesHandler.Companion.mountWithProxy
+import gg.essential.gui.proxies.ProxiesHandler
 import gg.essential.gui.proxies.ScreenWithVanillaProxyElementsExt
+import gg.essential.gui.proxies.mountWithProxy
 import gg.essential.util.GuiUtil
 import gg.essential.util.ModLoaderUtil
 import gg.essential.util.findButtonByLabel
@@ -53,7 +53,7 @@ class OptionsScreenOverlay {
             if (layer == null) {
                 layer = GuiUtil.createLayer(LayerPriority.AboveScreenContent(screen))
                 proxyHandler.layer = layer
-                init(screen, layer.window, proxyHandler)
+                proxyHandler.initElementa { init(screen, layer.window, it) }
             }
             this.layer = layer
             GuiUtil.addLayer(layer)
@@ -61,11 +61,11 @@ class OptionsScreenOverlay {
             val window = GuiUtil.addLayer(LayerPriority.AboveScreenContent(screen))
                 .also { layer = it }
                 .window
-            init(screen, window, proxyHandler)
+            init(screen, window, ProxiesHandler.None)
         }
     }
 
-    fun init(screen: GuiScreen, window: Window, proxyHandler: ScreenWithProxiesHandler?) {
+    fun init(screen: GuiScreen, window: Window, proxyHandler: ProxiesHandler) {
         // This mod removes the telemetry button, causing the credits and attribution button to move to the left.
         // This makes our options button look weird, so let's put it back to the position that it was in on 1.19.2.
         // Linear issue for reference: EM-1802

@@ -95,7 +95,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-//#if MC >= 26.2 && MC < 26.4
+//#if MC == 26.2
 //$$ import org.lwjgl.opengl.ARBClipControl;
 //$$ import org.lwjgl.opengl.GL;
 //#endif
@@ -116,7 +116,7 @@ import net.minecraftforge.fml.common.ModContainer;
 
 import static gg.essential.gui.elementa.state.v2.StateKt.mutableStateOf;
 
-public class Essential implements EssentialAPI {
+public class Essential extends EssentialKt implements EssentialAPI {
     public static final String MODID = "essential";
     public static final String NAME = "Essential";
     public static final String VERSION = "1.0.0";
@@ -284,19 +284,18 @@ public class Essential implements EssentialAPI {
         gameRules = new EssentialGameRules();
 
         // Workaround for Iris 1.11.1 on 26.2 not properly setting clip control on boot when a shader pack is active
-        EVENT_BUS.register(new Object() {
-            @Subscribe
-            public void handleDraw(GuiDrawScreenEvent.Priority event) {
-                //#if MC >= 26.4
-                //$$ TODO check if this is still needed
-                //#elseif MC >= 26.2
-                //$$ if (ModLoaderUtil.INSTANCE.isModLoaded("iris") && !GuiEssentialPlatform.Companion.getPlatform().isZZeroToOne() && GL.getCapabilities().GL_ARB_clip_control) {
-                //$$     ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_NEGATIVE_ONE_TO_ONE);
-                //$$ }
-                //#endif
-                EVENT_BUS.unregister(this);
-            }
-        });
+        // Fixed in Iris 1.11.4 (f3763381da48b3877824d94b4b54e9837b52d432), oldest 26.3 is 1.11.5
+        //#if MC == 26.2
+        //$$ EVENT_BUS.register(new Object() {
+        //$$     @Subscribe
+        //$$     public void handleDraw(GuiDrawScreenEvent.Priority event) {
+        //$$         if (ModLoaderUtil.INSTANCE.isModLoaded("iris") && !GuiEssentialPlatform.Companion.getPlatform().isZZeroToOne() && GL.getCapabilities().GL_ARB_clip_control) {
+        //$$             ARBClipControl.glClipControl(ARBClipControl.GL_LOWER_LEFT, ARBClipControl.GL_NEGATIVE_ONE_TO_ONE);
+        //$$         }
+        //$$         EVENT_BUS.unregister(this);
+        //$$     }
+        //$$ });
+        //#endif
     }
 
     public void registerListener(Object o) {

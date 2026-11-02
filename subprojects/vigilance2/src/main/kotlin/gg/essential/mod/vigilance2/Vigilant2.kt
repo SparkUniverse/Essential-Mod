@@ -42,6 +42,11 @@ open class Vigilant2 {
         }.apply { initialize() }
     }
 
+    fun save() {
+        val backend = backend ?: throw IllegalStateException("Not yet initialized")
+        backend.writeData()
+    }
+
     fun <T> property(path: String, type: PropertyType, defaultValue: T): MutableState<T> {
         val state = mutableStateOf(defaultValue)
         if ("." !in path) {

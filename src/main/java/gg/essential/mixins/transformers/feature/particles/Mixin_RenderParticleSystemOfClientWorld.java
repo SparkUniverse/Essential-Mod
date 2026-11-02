@@ -137,7 +137,7 @@ public abstract class Mixin_RenderParticleSystemOfClientWorld {
         //#if MC>=12104 && MC<12109
         //$$ VertexConsumerProvider.Immediate bufferIn,
         //#endif
-        //#if FORGELIKE
+        //#if FORGELIKE && MC < 1.21.9
         //#if MC>=11700
         //$$ net.minecraft.client.renderer.culling.Frustum frustum,
         //#else

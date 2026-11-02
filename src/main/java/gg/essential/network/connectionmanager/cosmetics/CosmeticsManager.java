@@ -286,7 +286,7 @@ public class CosmeticsManager implements NetworkedManager, ICosmeticsManager {
 
     @Subscribe
     public void onWorldJoin(ServerJoinEvent event) {
-        if (!connectionManager.isAuthenticated()) return;
+        if (!connectionManager.isOpen()) return;
 
         // Show a notification about cosmetics not working on offline-mode servers on the first join of an offline-mode server.
         if (!EssentialConfig.INSTANCE.getDisableCosmetics() && !shownOfflineModeWarning) {

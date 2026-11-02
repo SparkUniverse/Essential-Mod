@@ -62,7 +62,7 @@ dependencies {
     modApi(libs.elementa)
     modApi(libs.vigilance)
 
-    if (platform.mcVersion < 26_03_00) {
+    if (platform.mcVersion < (if (platform.isFabric) 26_03_00 else 1_21_11)) {
         // Miscellaneous Utility Libraries
         api("com.github.videogame-hacker:Koffee:88ba1b0") {
             exclude(module = "asm-commons")

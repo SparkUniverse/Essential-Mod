@@ -15,12 +15,7 @@ import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.UIComponent
 import gg.essential.elementa.components.Window
 import gg.essential.gui.elementa.state.v2.MutableState
-import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.elementa.state.v2.State
-import gg.essential.gui.elementa.state.v2.stateOf
-import gg.essential.gui.layoutdsl.LayoutScope
-import gg.essential.gui.layoutdsl.Modifier
-import gg.essential.gui.layoutdsl.box
 import gg.essential.gui.overlay.Layer
 import gg.essential.handlers.OptionsScreenOverlay
 import gg.essential.handlers.PauseMenuDisplay
@@ -33,12 +28,31 @@ class ScreenWithProxiesHandler(
     private val buttonIds: Map<String, Int>,
     private val flagIds: Map<String, Int>,
     private val playerIds: Map<String, Int>,
-    private val initialLayout: (Window, ScreenWithProxiesHandler) -> Unit,
+    private val initialLayout: (Window, ProxiesHandler) -> Unit,
 ) {
+    private val proxyIds = buttonIds.keys + flagIds.keys + playerIds.keys
     private val proxiesById = mutableMapOf<String, EssentialProxyElement<*>>()
-    private val elementaById = mutableMapOf<String, Pair<UIComponent, MutableState<State<Boolean>>>>()
-    private var initialLayoutPass = false
     private val access = screen as GuiScreenAccessor
+
+    private val elementaComponents = ElementaComponents(proxyIds)
+
+    private class ElementaComponents(val validProxyIds: Set<String>) : ProxiesHandler {
+        val byId = mutableMapOf<String, Pair<UIComponent, MutableState<State<Boolean>>>>()
+        override fun register(id: String, container: UIComponent, mounted: MutableState<State<Boolean>>) {
+            if (id !in validProxyIds) {
+                throw IllegalArgumentException("No proxy found for `$id`. Did you forget to add it to the label-to-id mapping in `ScreenWithProxiesHandler`?")
+            }
+            byId[id] = Pair(container, mounted)
+        }
+    }
+
+    fun initElementa(builder: (ProxiesHandler) -> Unit) {
+        builder(elementaComponents)
+        for ((id, elementa) in elementaComponents.byId) {
+            val (container, mounted) = elementa
+            proxiesById[id]?.acceptNewEssentialContainer(container, mounted)
+        }
+    }
 
     var layer: Layer? = null
 
@@ -65,13 +79,18 @@ class ScreenWithProxiesHandler(
         val dummyWindow = Window(ElementaVersion.V10)
 
         // Setup initial layout
-        initialLayoutPass = true
-        initialLayout(dummyWindow, this)
-        initialLayoutPass = false
+        val dummyComponents = ElementaComponents(proxyIds)
+        initialLayout(dummyWindow, dummyComponents)
         // With all components in place, invalidate any constraints that might have been queried prematurely
         dummyWindow.invalidateCachedConstraints()
         // Apply layout to proxies
-        proxies.forEach { it.initAfterInitialLayout() }
+        proxies.forEach { proxy ->
+            val (container, _) = dummyComponents.byId[proxy.essentialId]
+                ?: throw IllegalStateException("Proxy element for ${proxy.essentialId} was never bound. " +
+                        "Ensure `mountWithProxy` is being called unconditionally and/or the hard-coded label-to-id " +
+                        "mapping in `ScreenWithProxiesHandler` is feature-flagged correctly.")
+            proxy.applyInitialLayout(container)
+        }
 
         // Once all proxies have been positioned, add them to the Minecraft screen
         // (we only add them after positioning them, in case a mod modifies the `addDrawableChild` method and expects
@@ -79,7 +98,7 @@ class ScreenWithProxiesHandler(
         proxies.forEach { addProxy(it) }
 
         // If we have already set up the overlay previously, re-attach those Elementa components to the new proxies
-        for ((id, elementa) in elementaById) {
+        for ((id, elementa) in elementaComponents.byId) {
             val (container, mounted) = elementa
             proxiesById[id]?.acceptNewEssentialContainer(container, mounted)
         }
@@ -113,25 +132,6 @@ class ScreenWithProxiesHandler(
             ScreenWithProxiesHandler(screen, optionsMenuButtons, emptyMap(), emptyMap()) { window, handler ->
                 OptionsScreenOverlay().init(screen, window, handler)
             }
-
-        fun LayoutScope.mountWithProxy(proxyHandler: ScreenWithProxiesHandler?, id: String, modifier: Modifier = Modifier, block: LayoutScope.() -> Unit) {
-            val mounted = mutableStateOf(stateOf(true))
-            lateinit var container: UIComponent
-            if_({ mounted()() }) {
-                // use box to create a container to hold the components and send to the proxies
-                container = box(modifier) {
-                    block() // may setup any components, even none or conditional ones
-                }
-            }
-            if (proxyHandler != null) {
-                val proxy = proxyHandler.proxiesById[id]
-                    ?: throw IllegalArgumentException("No proxy found for `$id`. Did you forget to add it to the label-to-id mapping in `ScreenWithProxiesHandler`?")
-                if (!proxyHandler.initialLayoutPass) {
-                    proxyHandler.elementaById[id] = Pair(container, mounted)
-                }
-                proxy.acceptNewEssentialContainer(container, mounted)
-            }
-        }
 
         fun isCurrentScreenFancyMenu() = UScreen.currentScreen?.javaClass?.name?.startsWith("de.keksuccino.fancymenu.") ?: false
 

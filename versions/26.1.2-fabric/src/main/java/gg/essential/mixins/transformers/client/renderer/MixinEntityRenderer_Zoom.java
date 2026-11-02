@@ -19,7 +19,14 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Camera.class)
 public class MixinEntityRenderer_Zoom {
-    @ModifyExpressionValue(method = "calculateFov", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;modifyFovBasedOnDeathOrFluid(FF)F"))
+    // NeoForge adds an extra `useFovSetting` argument
+    //#if NEOFORGE && MC == 26.1.2
+    //$$ private static final String TARGET =  "Lnet/minecraft/client/Camera;modifyFovBasedOnDeathOrFluid(FFZ)F";
+    //#else
+    private static final String TARGET =  "Lnet/minecraft/client/Camera;modifyFovBasedOnDeathOrFluid(FF)F";
+    //#endif
+
+    @ModifyExpressionValue(method = "calculateFov", at = @At(value = "INVOKE", target = TARGET))
     private float applyZoomModifiers(float f) {
         return ZoomHandler.getInstance().applyModifiers(f);
     }

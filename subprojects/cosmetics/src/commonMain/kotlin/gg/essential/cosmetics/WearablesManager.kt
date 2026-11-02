@@ -132,7 +132,7 @@ class WearablesManager(
         light: Light,
         pose: PlayerPose,
         skin: RenderBackend.Texture,
-        parts: Set<EnumPart> = EnumPart.values().toSet(),
+        parts: Set<EnumPart> = EnumPart.entriesSet,
     ) {
         val atlas = translucentTextureAtlas
         for ((_, model) in models) {
@@ -159,7 +159,7 @@ class WearablesManager(
         model: ModelInstance,
         pose: PlayerPose,
         skin: RenderBackend.Texture,
-        parts: Set<EnumPart> = EnumPart.values().toSet(),
+        parts: Set<EnumPart> = EnumPart.entriesSet,
     ) {
         val cosmetic = model.cosmetic
 

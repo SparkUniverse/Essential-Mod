@@ -31,7 +31,9 @@ import kotlin.io.path.*
 
 //#if FORGE
 import net.minecraftforge.common.ForgeVersion
-//#if MC>=11400
+//#if MC >= 26.1
+//$$ import net.minecraftforge.fml.ModList
+//#elseif MC >= 1.14
 //$$ import kotlin.streams.toList
 //$$ import net.minecraftforge.fml.loading.LoadingModList
 //#else
@@ -42,7 +44,11 @@ import net.minecraftforge.fml.common.Loader
 
 //#if NEOFORGE
 //$$ import net.neoforged.fml.loading.LoadingModList
+//#if MC >= 1.21.11
+//$$ import net.neoforged.neoforge.common.NeoForgeVersion
+//#else
 //$$ import net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion
+//#endif
 //#endif
 
 import java.nio.file.FileSystems
@@ -160,7 +166,11 @@ object ModLoaderUtil {
         //$$     val version = modContainer.metadata.version.friendlyString
         //#else
         //#if MC>=11400
+        //#if FORGE && MC >= 26.1
+        //$$ return ModList.getModFiles().flatMap { fileInfo ->
+        //#else
         //$$ return LoadingModList.get().modFiles.flatMap { fileInfo ->
+        //#endif
         //$$     fileInfo.mods.map { fileInfo.file.filePath to it }
         //$$ }.mapNotNull { (sourceFileArg, modContainer) ->
         //$$     var sourceFile = sourceFileArg
@@ -341,6 +351,9 @@ object ModLoaderUtil {
     fun isModLoaded(modId: String): Boolean {
         //#if FABRIC
         //$$ return FabricLoader.getInstance().isModLoaded(modId)
+        //#elseif FORGE && MC >= 26.1
+        //$$ // Note: Not using `isLoaded` because that NPEs when called too early
+        //$$ return ModList.getModFileById(modId) != null
         //#elseif MC>=11400
         //$$ return LoadingModList.get().getModFileById(modId) != null
         //#else
@@ -349,12 +362,14 @@ object ModLoaderUtil {
     }
 
     /**
-     * This method is not safe to call in early init on legacy forge.
+     * This method is not safe to call in early init on Forge prior to 1.14 or from 26.1.
      * Test usage thoroughly.
      */
     fun getModVersion(modId: String): ModVersion? {
         //#if FABRIC
         //$$ return FabricLoader.getInstance().getModContainer(modId).orElse(null)?.metadata?.version?.let(::ModVersion)
+        //#elseif FORGE && MC >= 26.1
+        //$$ return ModList.getModContainerById(modId).orElse(null)?.modInfo?.version?.let(::ModVersion)
         //#elseif MC>=11400
         //$$ return LoadingModList.get().mods.find { it.modId == modId }?.version?.let(::ModVersion)
         //#else
@@ -381,7 +396,7 @@ object ModLoaderUtil {
             //#if FABRIC
             //$$ return native.compareTo(net.fabricmc.loader.api.Version.parse(other))
             //#else
-            //$$ TODO
+            //$$ return native.compareTo(org.apache.maven.artifact.versioning.DefaultArtifactVersion(other))
             //#endif
         //$$ }
         //#endif

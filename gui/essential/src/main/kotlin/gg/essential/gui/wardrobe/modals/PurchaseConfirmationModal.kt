@@ -12,7 +12,9 @@
 package gg.essential.gui.wardrobe.modals
 
 import gg.essential.gui.EssentialPalette
+import gg.essential.gui.common.OutlineButtonStyle
 import gg.essential.gui.common.modal.EssentialModal2
+import gg.essential.gui.common.textStyle
 import gg.essential.gui.elementa.state.v2.State
 import gg.essential.gui.elementa.state.v2.combinators.letState
 import gg.essential.gui.elementa.state.v2.memo
@@ -33,6 +35,7 @@ import gg.essential.gui.layoutdsl.image
 import gg.essential.gui.layoutdsl.row
 import gg.essential.gui.layoutdsl.shadow
 import gg.essential.gui.layoutdsl.spacer
+import gg.essential.gui.layoutdsl.tag
 import gg.essential.gui.layoutdsl.text
 import gg.essential.gui.layoutdsl.width
 import gg.essential.gui.layoutdsl.wrappedText
@@ -150,14 +153,21 @@ class PurchaseConfirmationModal(
     }
 
     override fun LayoutScope.layoutButtons() {
-        primaryAndCancelButtons(
-            "Purchase",
-            "Cancel",
-            {
-                this@PurchaseConfirmationModal.primaryAction()
-                close()
+        row(Arrangement.spacedBy(8f)) {
+            cancelButton("Cancel", Modifier)
+            outlineButton(
+                Modifier.width(91f).shadow().tag(PrimaryAction),
+                OutlineButtonStyle.BLUE,
+                action = {
+                    this@PurchaseConfirmationModal.primaryAction()
+                    close()
+                },
+            ) { currentStyle ->
+                row {
+                    text("Purchase", Modifier.textStyle(currentStyle))
+                }
             }
-        )
+        }
     }
 
     companion object {

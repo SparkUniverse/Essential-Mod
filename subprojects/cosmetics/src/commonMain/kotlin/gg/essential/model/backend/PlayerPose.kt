@@ -126,7 +126,7 @@ data class PlayerPose(
 
     companion object {
         // EnumPart.ROOT is not posed
-        private val enumPartsForPosing = EnumPart.values().filterNot { it == EnumPart.ROOT }.toSet()
+        private val enumPartsForPosing = EnumPart.entriesSet - EnumPart.ROOT
 
         fun fromMap(map: Map<EnumPart, Part>, child: Boolean) =
             PlayerPose(

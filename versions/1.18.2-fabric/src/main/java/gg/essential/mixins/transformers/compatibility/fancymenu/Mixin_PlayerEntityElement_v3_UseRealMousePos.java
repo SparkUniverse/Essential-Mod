@@ -25,7 +25,12 @@ import org.spongepowered.asm.mixin.Pseudo;
 @Mixin(PlayerEntityElement.class) // https://github.com/Keksuccino/FancyMenu/blob/d30f69792a6e7d27c7e60e07971df6b99367d940/common/src/main/java/de/keksuccino/fancymenu/customization/element/elements/playerentity/PlayerEntityElement.java
 public class Mixin_PlayerEntityElement_v3_UseRealMousePos {
 
+    // FIXME remap bug: should be able to remap this because it overrides a remapped method
+    //#if MC >= 26.1
+    //$$ @WrapMethod(method = "extractRenderState"
+    //#else
     @WrapMethod(method = "render"
+    //#endif
             //#if MC < 1.20
             , remap = false
             //#endif

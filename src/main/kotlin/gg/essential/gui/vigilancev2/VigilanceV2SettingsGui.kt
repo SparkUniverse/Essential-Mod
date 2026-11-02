@@ -106,15 +106,13 @@ class VigilanceV2SettingsGui @JvmOverloads constructor(
                 currentCategoryName,
                 searchState,
                 scrollbar,
-                sidebarSections = listOfNotNull<LayoutScope.() -> Unit>(
+                sidebarSections = listOf(
                     {
-                        listOfNotNull(
+                        listOf(
                             "Changelog" to URI("https://essential.gg/changelog"),
-                            null,
-                            null,
-                            ("Wiki" to URI("https://essential.gg/wiki")),
-                            ("Discord" to URI("https://discord.gg/essential")),
-                            ("Twitter" to URI("https://x.com/EssentialMod")),
+                            "Wiki" to URI("https://essential.gg/wiki"),
+                            "Discord" to URI("https://discord.gg/essential"),
+                            "Twitter" to URI("https://x.com/EssentialMod"),
                         ).forEach { (text, uri) -> sidebarLink(text, uri) }
 
                         val rulesManager = Essential.getInstance().connectionManager.rulesManager
@@ -126,7 +124,6 @@ class VigilanceV2SettingsGui @JvmOverloads constructor(
                             }
                         }
                     },
-                    null,
                     { versionInformation() },
                 ),
                 bottomSidebarContent = { bottomSidebarContent() },

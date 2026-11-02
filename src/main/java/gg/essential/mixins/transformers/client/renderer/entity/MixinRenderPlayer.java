@@ -33,8 +33,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.EnumSet;
-
 //#if MC>=12109
 //$$ import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 //$$ import net.minecraft.entity.PlayerLikeEntity;
@@ -165,7 +163,7 @@ public abstract class MixinRenderPlayer
         //#endif
         CosmeticsRenderState cState = new CosmeticsRenderState.Live(player);
         // render only cosmetics connected to LEFT_ARM and no other EnumParts
-        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.LEFT_ARM), false, false);
+        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumPart.singleElementSet(EnumPart.LEFT_ARM), false, false);
         EmoteWheel.isPlayerArmRendering = false;
     }
 
@@ -205,7 +203,7 @@ public abstract class MixinRenderPlayer
         //#endif
         CosmeticsRenderState cState = new CosmeticsRenderState.Live(player);
         // render only cosmetics connected to RIGHT_ARM and no other EnumParts
-        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumSet.of(EnumPart.RIGHT_ARM), false, false);
+        essentialModelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, EnumPart.singleElementSet(EnumPart.RIGHT_ARM), false, false);
         EmoteWheel.isPlayerArmRendering = false;
     }
 

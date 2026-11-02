@@ -181,7 +181,7 @@ abstract class AbstractPlayerRenderer(
                 null,
                 emptySet(),
                 Vector3(),
-                EnumPart.values().toSet(),
+                EnumPart.entriesSet,
             )
 
         playerModel.render(stack, playerQueue, playerModel.model.defaultRenderGeometry, renderMetadata)

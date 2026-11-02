@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class Mixin_FixKeyBindConflictInScreensThatAllowPlayerMovement {
 
     //#if FORGE
-    @Inject(method = "isActive()Z", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "isActive", at = @At("HEAD"), cancellable = true, remap = false)
     public void essential$onGetActive(CallbackInfoReturnable<Boolean> cir) {
         GuiScreen screen = UScreen.getCurrentScreen();
         if (screen instanceof EssentialScreenMayAllowPlayerInput && ((EssentialScreenMayAllowPlayerInput) screen).allowsPlayerInput()) {

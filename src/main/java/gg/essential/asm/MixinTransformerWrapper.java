@@ -27,7 +27,7 @@ public class MixinTransformerWrapper implements IMixinTransformer {
         this.extraTransformers = extraTransformers;
     }
 
-    //#if FABRIC
+    //#if FABRIC || NEOFORGE && MC >= 1.21.11
     //$$ @Override
     //$$ public boolean couldTransformClass(MixinEnvironment environment, String name) {
     //$$     return true;

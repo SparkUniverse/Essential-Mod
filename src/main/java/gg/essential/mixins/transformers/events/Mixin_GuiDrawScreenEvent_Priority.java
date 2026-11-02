@@ -52,9 +52,19 @@ public abstract class Mixin_GuiDrawScreenEvent_Priority {
     //#endif
 
     //#if NEOFORGE
+    //#if MC >= 26.2
+    //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/neoforged/neoforge/client/ClientHooks;extractScreen(Lnet/minecraft/client/gui/screens/Screen;Ljava/util/Stack;Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V";
+    //#elseif MC >= 26.1
+    //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/neoforged/neoforge/client/ClientHooks;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V";
+    //#else
     //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/neoforged/neoforge/client/ClientHooks;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;IIF)V";
+    //#endif
     //#elseif FORGE
-    //#if MC>=12000
+    //#if MC >= 26.2
+    //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/minecraft/client/gui/Gui;drawScreen(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V";
+    //#elseif MC >= 26.1
+    //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/minecraftforge/client/ForgeHooksClient;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V";
+    //#elseif MC >= 1.20
     //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/minecraftforge/client/ForgeHooksClient;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/GuiGraphics;IIF)V";
     //#elseif MC>=11700
     //$$ private static final String FORGE_DRAW_SCREEN = "Lnet/minecraftforge/client/ForgeHooksClient;drawScreen(Lnet/minecraft/client/gui/screens/Screen;Lcom/mojang/blaze3d/vertex/PoseStack;IIF)V";
@@ -102,7 +112,14 @@ public abstract class Mixin_GuiDrawScreenEvent_Priority {
     //$$ @WrapWithCondition(method = RENDER, at = @At(value = "INVOKE", target = VANILLA_DRAW_SCREEN))
     //#endif
     private boolean recordArgsForPriorityDrawScreenEvent(
+        //#if FORGE && MC >= 26.2
+        //$$ net.minecraft.client.gui.Gui self,
+        //#else
         GuiScreen screen,
+        //#endif
+        //#if NEOFORGE && MC >= 26.2
+        //$$ java.util.Stack<Screen> backgroundLayers,
+        //#endif
         //#if MC>=12000
         //$$ DrawContext context,
         //#elseif MC>=11400
@@ -112,7 +129,11 @@ public abstract class Mixin_GuiDrawScreenEvent_Priority {
         int mouseY,
         float partialTicks
     ) {
+        //#if FORGE && MC >= 26.2
+        //$$ this.screen = self.screen();
+        //#else
         this.screen = screen;
+        //#endif
         //#if MC>=12000
         //$$ this.drawContext = new UDrawContext(context, new UMatrixStack(context.getMatrices()));
         //#elseif MC>=11400

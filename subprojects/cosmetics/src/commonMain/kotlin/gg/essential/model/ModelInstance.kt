@@ -97,7 +97,7 @@ class ModelInstance(
                 state.getPositionAdjustment(cosmetic),
                 state.sides[cosmetic.id],
                 state.hiddenBones[cosmetic.id] ?: emptySet(),
-                EnumPart.values().toSet() - state.hiddenParts.getOrDefault(cosmetic.id, emptySet()),
+                EnumPart.entriesSet - state.hiddenParts.getOrDefault(cosmetic.id, emptySet()),
             )
             modelState.apply(model.bones)
 

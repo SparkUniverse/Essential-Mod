@@ -12,402 +12,272 @@
 package gg.essential.gui.friends.message.v2
 
 import com.sparkuniverse.toolbox.chat.enums.ChannelType
-import gg.essential.elementa.components.UIBlock
-import gg.essential.elementa.components.UIContainer
 import gg.essential.elementa.components.UIImage
-import gg.essential.elementa.components.Window
-import gg.essential.elementa.constraints.*
-import gg.essential.elementa.constraints.animation.*
-import gg.essential.elementa.dsl.*
-import gg.essential.elementa.state.BasicState
-import gg.essential.elementa.state.toConstraint
 import gg.essential.gui.EssentialPalette
-import gg.essential.gui.common.*
-import gg.essential.gui.common.modal.OpenLinkModal
-import gg.essential.gui.common.shadow.EssentialUIText
-import gg.essential.gui.elementa.state.v2.toV1
+import gg.essential.gui.common.IconButton
+import gg.essential.gui.common.LoadingIcon
+import gg.essential.gui.elementa.state.v2.mutableStateOf
 import gg.essential.gui.friends.message.MessageUtils
-import gg.essential.gui.layoutdsl.*
+import gg.essential.gui.layoutdsl.Alignment
+import gg.essential.gui.layoutdsl.Arrangement
+import gg.essential.gui.layoutdsl.BasicWidthModifier
+import gg.essential.gui.layoutdsl.LayoutScope
+import gg.essential.gui.layoutdsl.Modifier
+import gg.essential.gui.layoutdsl.alignHorizontal
+import gg.essential.gui.layoutdsl.box
+import gg.essential.gui.layoutdsl.childBasedHeight
+import gg.essential.gui.layoutdsl.color
+import gg.essential.gui.layoutdsl.fillWidth
+import gg.essential.gui.layoutdsl.heightAspect
+import gg.essential.gui.layoutdsl.hoverColor
+import gg.essential.gui.layoutdsl.hoverScope
+import gg.essential.gui.layoutdsl.layoutAsBox
+import gg.essential.gui.layoutdsl.onLeftClick
+import gg.essential.gui.layoutdsl.outline
+import gg.essential.gui.layoutdsl.row
+import gg.essential.gui.layoutdsl.shadow
+import gg.essential.gui.layoutdsl.text
+import gg.essential.gui.layoutdsl.whenTrue
+import gg.essential.gui.layoutdsl.width
+import gg.essential.gui.layoutdsl.withHoverState
 import gg.essential.gui.notification.Notifications
 import gg.essential.gui.notification.error
-import gg.essential.gui.screenshot.constraints.AspectPreservingFillConstraint
 import gg.essential.gui.screenshot.copyScreenshotToClipboard
 import gg.essential.gui.screenshot.saveImageAsScreenshot
-import gg.essential.gui.util.hoveredState
-import gg.essential.gui.util.stateBy
-import gg.essential.universal.ChatColor
-import gg.essential.universal.UKeyboard
-import gg.essential.util.*
+import gg.essential.util.Game
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
-import gg.essential.vigilance.utils.onLeftClick
+import gg.essential.util.httpGetToInputStream
+import gg.essential.util.loadUIImage
+import gg.essential.util.onRightClick
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
 import javax.imageio.ImageIO
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isRegularFile
+import kotlin.math.min
 
 class ImageEmbedImpl(
     val mediaId: String,
     wrapper: MessageWrapper,
 ) : ImageEmbed(wrapper) {
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Client)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Game)
+    private var loadJob: Job? = null
 
-    private val loadingState = BasicState(false)
-    private var loadedImage: BufferedImage? = null
-    private var loadingJob: Job? = null
     override var url: URL? = null
 
-    private val aspectRatio = BasicState(16 / 9f)
-    private val highlightedState = BasicState(false)
-    private val focusedView by FocusedView()
+    private val loadState = mutableStateOf<LoadState>(LoadState.Loading)
+    private val highlighted = mutableStateOf(false)
 
-    private val loadingEmbed by UIBlock(EssentialPalette.LIGHT_DIVIDER).constrain {
-        width = RelativeConstraint()
-        height = AspectConstraint(9 / 16f)
-    }.bindParent(this, loadingState)
-
-    private val loadingIcon by LoadingIcon(2.0) childOf loadingEmbed
+    private val loadedImage: BufferedImage?
+        get() = when (val state = loadState.getUntracked()) {
+            is LoadState.Loaded -> state.image
+            else -> null
+        }
 
     init {
+        val isAnnouncement = wrapper.channelType == ChannelType.ANNOUNCEMENT
 
-        constrain {
-            x = 10.pixels(alignOpposite = wrapper.sentByClient)
-            y = SiblingConstraint(4f)
-            width = MessageUtils.getMessageWidth(wrapper.channelType == ChannelType.ANNOUNCEMENT)
-            height = ChildBasedMaxSizeConstraint()
+        layoutAsBox(BasicWidthModifier { MessageUtils.getMessageWidth(isAnnouncement) }.childBasedHeight()) {
+            bind(loadState) { state ->
+                when (state) {
+                    LoadState.Loading -> loadingPlaceholder()
+                    LoadState.Failed -> failedPlaceholder()
+                    is LoadState.Loaded -> loadedImage(state)
+                }
+            }
         }
 
-        if (loadingJob == null) {
-            prepareAndLoad()
-        }
-
+        load()
     }
 
-
-    private fun prepareAndLoad() {
-        loadingState.set(true)
+    private fun load() {
+        loadJob?.cancel()
+        loadState.set(LoadState.Loading)
 
         val localPaths = platform.screenshotManager.getUploadedLocalPathsCache(mediaId)
 
-        loadingJob?.cancel()
-        loadingJob = coroutineScope.launch {
-            url = platform.cmConnection.getGatewayService("media").baseUrl().resolve(mediaId)?.toUrl()
-                ?: throw IllegalStateException("url is null")
-            val bufferedImage = withContext(Dispatchers.IO) {
-                localPaths.firstNotNullOfOrNull { fetchLocalImage(it) } ?: fetchRemoteImage(url!!)
+        loadJob = coroutineScope.launch {
+            val newState = try {
+                val baseUrl = platform.cmConnection.getGatewayService("media").baseUrl()
+                url = baseUrl.resolve(mediaId)?.toUrl()
+
+                val image = withContext(Dispatchers.IO) {
+                    localPaths.firstNotNullOfOrNull { readLocalImage(it) } ?: readRemoteImage(baseUrl)
+                }
+
+                val uiImage = loadUIImage(image).apply {
+                    textureMagFilter = UIImage.TextureScalingMode.LINEAR
+                    textureMinFilter = UIImage.TextureScalingMode.LINEAR
+                }
+
+                LoadState.Loaded(image, uiImage)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                LOGGER.warn("Failed to load image $mediaId", e)
+                LoadState.Failed
             }
-            val uiImage = bufferedImage?.let { loadUIImage(it) }
-            loadImage(bufferedImage, uiImage)
+
+            loadState.set(newState)
+        }
+    }
+
+    private fun readLocalImage(path: Path): BufferedImage? {
+        if (!path.isRegularFile()) {
+            LOGGER.debug("Local image path does not point to a file: {}", path)
+            return null
+        }
+
+        return try {
+            path.inputStream().use { ImageIO.read(it) }
+        } catch (e: Exception) {
+            LOGGER.debug("Failed to read local image $path", e)
+            null
+        }
+    }
+
+    private suspend fun readRemoteImage(baseUrl: HttpUrl): BufferedImage {
+        val imageUrl = baseUrl.resolve("$mediaId/redirect")
+            ?: throw IOException("Failed to resolve image url for $mediaId")
+
+        val image = httpGetToInputStream(imageUrl.toString()).use { ImageIO.read(it) }
+        return image ?: throw IOException("Unsupported image format for $mediaId")
+    }
+
+    private fun LayoutScope.placeholder(modifier: Modifier, block: LayoutScope.() -> Unit) {
+        box(Modifier.fillWidth().heightAspect(1 / DEFAULT_ASPECT_RATIO).then(modifier), block)
+    }
+
+    private fun LayoutScope.loadingPlaceholder() {
+        placeholder(Modifier.color(EssentialPalette.LIGHT_DIVIDER)) {
+            LoadingIcon(2.0)()
+        }
+    }
+
+    private fun LayoutScope.failedPlaceholder() {
+        val colorModifier = Modifier.withHoverState { hovered ->
+            Modifier.color {
+                if (hovered() || messageWrapper.appearHovered()) {
+                    EssentialPalette.BUTTON_HIGHLIGHT
+                } else {
+                    EssentialPalette.COMPONENT_BACKGROUND_HIGHLIGHT
+                }
+            }
+        }
+
+        placeholder(colorModifier.hoverScope()) {
+            row(Arrangement.spacedBy(10f)) {
+                text(
+                    "Image failed to load",
+                    Modifier.shadow(EssentialPalette.TEXT_SHADOW),
+                    centeringContainsShadow = false,
+                )
+
+                IconButton(EssentialPalette.RETRY_7X)(
+                    Modifier
+                        .width(17f)
+                        .heightAspect(1f)
+                        .color(EssentialPalette.COMPONENT_BACKGROUND)
+                        .hoverColor(EssentialPalette.BUTTON)
+                        .hoverScope()
+                        .shadow(Color.BLACK)
+                        .onLeftClick { load() }
+                )
+            }
+        }
+    }
+
+    private fun LayoutScope.loadedImage(state: LoadState.Loaded) {
+        // Images taller than 16:9 are narrowed so that they are never taller than a 16:9 image would be
+        val widthFraction = min(1f, state.aspectRatio / DEFAULT_ASPECT_RATIO)
+        val alignment = if (messageWrapper.sentByClient) Alignment.End else Alignment.Start
+
+        val modifier = Modifier
+            .fillWidth(fraction = widthFraction)
+            .heightAspect(1 / state.aspectRatio)
+            .alignHorizontal(alignment)
+            .whenTrue(highlighted, Modifier.outline(EssentialPalette.MESSAGE_HIGHLIGHT, 3f, drawInsideChildren = true))
+            .onLeftClick {
+                platform.pushModal(doFadeInTransition = false) { manager ->
+                    ImagePreviewModal(manager, state.uiImage, state.aspectRatio, url)
+                }
+            }
+
+        val imageComponent = state.uiImage(modifier)
+
+        // TODO: Add `Modifier.onRightClick`.
+        imageComponent.onRightClick {
+            messageWrapper.openOptionMenu(it, this@ImageEmbedImpl)
         }
     }
 
     override fun copyImageToClipboard() {
-        val loadedImage = loadedImage
-        if (loadedImage != null && loadedImage != noImage) {
-            coroutineScope.launch(Dispatchers.IO) {
-                val tempFile = Files.createTempFile("essential-screenshot", "png").toFile()
-                ImageIO.write(loadedImage, "png", tempFile)
-                withContext(Dispatchers.Client) {
-                    copyScreenshotToClipboard(tempFile.toPath())
+        val image = loadedImage ?: return
+
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val tempFile = Files.createTempFile("essential-screenshot", ".png")
+
+                try {
+                    ImageIO.write(image, "png", tempFile.toFile())
+
+                    withContext(Dispatchers.Game) {
+                        copyScreenshotToClipboard(tempFile)
+                    }
+                } finally {
+                    tempFile.deleteIfExists()
                 }
-                tempFile.delete()
+            } catch (e: IOException) {
+                LOGGER.error("Failed to copy image $mediaId to clipboard", e)
+                Notifications.error("Failed to copy picture", "")
             }
         }
     }
 
     override fun saveImageToScreenshotBrowser() {
-        val loadedImage = loadedImage
-        if (loadedImage != null && loadedImage != noImage) {
-            coroutineScope.launch {
-                saveImageAsScreenshot(loadedImage)
-            }
+        val image = loadedImage ?: return
+
+        coroutineScope.launch {
+            saveImageAsScreenshot(image)
         }
     }
 
     override fun beginHighlight() {
-        highlightedState.set(true)
+        highlighted.set(true)
     }
 
     override fun releaseHighlight() {
-        highlightedState.set(false)
+        highlighted.set(false)
     }
 
-    private suspend fun download(url: URL): BufferedImage? {
-        val original = httpGetToBytes(url.toString())
+    private sealed interface LoadState {
+        object Loading : LoadState
 
-        try {
-            ImageIO.read(ByteArrayInputStream(original))?.let { return it }
-        } catch (e: Exception) {
-            LOGGER.debug("Error parsing image", e)
+        class Loaded(val image: BufferedImage, val uiImage: UIImage) : LoadState {
+            val aspectRatio = image.width / image.height.toFloat()
         }
 
-        // Follow metadata if present
-        val responseString = String(original)
-        val embedUrlMatcher = MessageUtils.imageEmbedRegex.find(responseString) ?: return noImage
-        val embedUrl = embedUrlMatcher.groups["url"]?.value ?: return noImage
-        if (!MessageUtils.URL_REGEX.matches(embedUrl)) {
-            return noImage
-        }
-
-        val embedUrlBytes = httpGetToBytes(embedUrl)
-
-        return try {
-            ImageIO.read(ByteArrayInputStream(embedUrlBytes))
-        } catch (e: Exception) {
-            LOGGER.debug("Error parsing image", e)
-            null
-        }
-    }
-
-    /**
-     * Attempts to fetch local image and returns BufferedImage if successful
-     */
-    private fun fetchLocalImage(localPath: Path): BufferedImage? {
-        return try {
-            if (!localPath.isRegularFile()) {
-                LOGGER.debug("Local image path does not point to a file: {}", localPath)
-                return null
-            }
-            localPath.inputStream().use { ImageIO.read(it) }
-        } catch (e: Exception) {
-            LOGGER.error("Error loading local image using path: $localPath", e)
-            null
-        }
-    }
-
-    /**
-     * Attempts to download remote image and returns BufferedImage if successful
-     */
-    private suspend fun fetchRemoteImage(url: URL): BufferedImage? {
-        return try {
-            download(url)
-        } catch (e: IOException) {
-            LOGGER.debug("Error downloading image", e)
-            null
-        }
-    }
-
-    private fun loadImage(loadedImage: BufferedImage?, uiImage: UIImage?) {
-        run maybeLoadUIImage@{
-            loadingState.set(false)
-
-            this.loadedImage = loadedImage
-
-            if (loadedImage == noImage) {
-                return@maybeLoadUIImage
-            }
-
-            val imageContainer by UIContainer().apply {
-                layout(Modifier.fillWidth()
-                    .then(stateBy { Modifier.heightAspect( (1/aspectRatio()).coerceAtMost(9/16f)) })
-                ) {}
-            } childOf this
-
-            if (uiImage == null) {
-                FailedEmbed() childOf imageContainer
-            } else {
-                loadedImage?.let { aspectRatio.set(it.width / it.height.toFloat()) }
-
-                displayImageEmbed(imageContainer, uiImage)
-            }
-
-        }
-    }
-
-    private var previewing = false
-
-
-    private fun getWindow(): Window {
-        return Window.of(this)
-    }
-
-    inner class FocusedView : UIContainer() {
-
-        private val block = UIBlock(Color(0, 0, 0, 0)).constrain {
-            height = 100.percent
-            width = 100.percent
-        } childOf this
-
-        private val floatImageContainer by UIContainer().constrain {
-            x = CenterConstraint()
-            y = CenterConstraint()
-            width = 1.pixel
-            height = 1.pixel
-        } childOf this
-
-        private val floatImage by generateEmptyImage().centered().constrain {
-            width = AspectPreservingFillConstraint(aspectRatio)
-            height = AspectPreservingFillConstraint(aspectRatio)
-        }.apply {
-            textureMagFilter = UIImage.TextureScalingMode.LINEAR
-            textureMinFilter = UIImage.TextureScalingMode.LINEAR
-            onKeyType { _, keyCode ->
-                if (keyCode == UKeyboard.KEY_ESCAPE) {
-                    exitPreview()
-                }
-            }
-            onMouseClick {
-                grabWindowFocus()
-                it.stopImmediatePropagation()
-            }
-        } childOf floatImageContainer
-
-        private val openOriginal by EssentialUIText().constrain {
-            y = SiblingConstraint(3f) boundTo floatImage
-            x = 0.pixels boundTo floatImage
-            color = Color(0, 0, 0, 0).toConstraint()
-        }.apply {
-            bindText(hoveredState().map {
-                if (it) {
-                    "${ChatColor.UNDERLINE}"
-                } else {
-                    ""
-                } + "Open Original"
-            })
-        }.onLeftClick {
-            if (url != null) {
-                OpenLinkModal.openUrl(url!!.toURI())
-            } else {
-                Notifications.error("Failed to open link", "")
-                LOGGER.error("Failed to open link as url is null")
-            }
-        } childOf this
-
-        init {
-            constrain {
-                width = 100.percent
-                height = 100.percent
-            }
-            onLeftClick {
-                exitPreview()
-            }
-        }
-
-        fun setup(image: UIImage) {
-            image.supply(floatImage)
-        }
-
-        fun enterPreview() {
-            if (previewing) {
-                return
-            }
-
-            previewing = true
-            getWindow().addChild(this)
-            floatImage.grabWindowFocus()
-            block.animate {
-                setColorAnimation(Animations.OUT_EXP, animationTime, Color(0, 0, 0, 200).toConstraint())
-            }
-            openOriginal.animate {
-                setColorAnimation(Animations.OUT_EXP, animationTime, EssentialPalette.TEXT_HIGHLIGHT.toConstraint())
-            }
-            floatImageContainer.animate {
-                setWidthAnimation(Animations.OUT_EXP, animationTime, 75.percentOfWindow)
-                setHeightAnimation(Animations.OUT_EXP, animationTime, 75.percentOfWindow)
-            }
-        }
-
-        private fun exitPreview(callback: () -> Unit = {}) {
-            releaseWindowFocus()
-
-            floatImageContainer.animate {
-                setWidthAnimation(Animations.OUT_EXP, animationTime, 1.pixel)
-                setHeightAnimation(Animations.OUT_EXP, animationTime, 1.pixel)
-            }
-            openOriginal.animate {
-                setColorAnimation(Animations.OUT_EXP, animationTime, Color(0, 0, 0, 0).toConstraint())
-            }
-
-            block.animate {
-                setColorAnimation(Animations.OUT_EXP, animationTime, Color(0, 0, 0, 0).toConstraint()).onComplete {
-                    callback()
-                    previewing = false
-                    this@FocusedView.hide(instantly = true)
-                }
-            }
-        }
-
-        private fun generateEmptyImage(): UIImage {
-            return UIImage(CompletableFuture.completedFuture(BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)))
-        }
-    }
-
-    inner class FailedEmbed : UIBlock(EssentialPalette.getMessageColor(hoveredState() or messageWrapper.appearHovered.toV1(this@ImageEmbedImpl), false, SendState.Failed)) {
-        init {
-            layoutAsBox(Modifier.childBasedWidth().childBasedHeight()) {
-                column(Modifier.childBasedWidth(10f).childBasedHeight(8f), Arrangement.spacedBy(0f, FloatPosition.CENTER)) {
-                    spacer(height = 1f) // button shadow
-                    row(Arrangement.spacedBy(10f)) {
-                        text("Image failed to load.", Modifier.shadow(EssentialPalette.TEXT_SHADOW))
-                        retryButton(Modifier.width(17f).heightAspect(1f))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun displayImageEmbed(container: UIContainer, image: UIImage) {
-        image.apply {
-            textureMagFilter = UIImage.TextureScalingMode.LINEAR
-            textureMinFilter = UIImage.TextureScalingMode.LINEAR
-            focusedView.setup(this)
-        }.onLeftClick {
-            focusedView.enterPreview()
-        }.onMouseClick {
-            if (it.mouseButton != 1) return@onMouseClick
-            messageWrapper.openOptionMenu(it, this@ImageEmbedImpl)
-        }
-
-        val borderModifier = Modifier.color(EssentialPalette.MESSAGE_HIGHLIGHT)
-        val sideBorderModifier = borderModifier.width(3f).fillHeight()
-        val topBottomBorderModifier = borderModifier.height(3f).fillWidth()
-
-        container.layout {
-            box(
-                Modifier.then(BasicHeightModifier { AspectPreservingFillConstraint(aspectRatio) })
-                    .then(BasicWidthModifier { AspectPreservingFillConstraint(aspectRatio) })
-                    .alignHorizontal(if (messageWrapper.sentByClient) Alignment.End else Alignment.Start)
-            ) {
-                image(Modifier.fillParent())
-                if_(highlightedState) {
-                    box(sideBorderModifier.alignHorizontal(Alignment.Start))
-                    box(sideBorderModifier.alignHorizontal(Alignment.End))
-                    box(topBottomBorderModifier.alignVertical(Alignment.Start))
-                    box(topBottomBorderModifier.alignVertical(Alignment.End))
-                }
-            }
-        }
-    }
-
-    private fun LayoutScope.retryButton(modifier: Modifier = Modifier) {
-        IconButton(EssentialPalette.RETRY_7X)(modifier.shadow(Color.BLACK).onLeftClick {
-            this@ImageEmbedImpl.clearChildren()
-            prepareAndLoad()
-        }).apply {
-            setColor(hoveredState().map { if (it) EssentialPalette.BUTTON else EssentialPalette.COMPONENT_BACKGROUND }.toConstraint())
-        }
+        object Failed : LoadState
     }
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(ImageEmbedImpl::class.java)
 
-        private const val animationTime = 0.25f
-
-        // Used to denote that no image should be displayed. This is returned by download()
-        // when the web page is successfully fetched, but no image is found.
-        private val noImage = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)
+        private const val DEFAULT_ASPECT_RATIO = 16 / 9f
     }
 }

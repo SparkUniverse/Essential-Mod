@@ -284,7 +284,7 @@ object EssentialConfig : Vigilant2(), GuiEssentialPlatform.Config {
 
     val acknowledgedPermanentSuspension = property("Hidden.acknowledged_permanent_suspension", false)
 
-    val collectOptionalTelemetryWithSource = mutableStateOf(/*state*/(false) to /*updateInfra*/false)
+    val collectOptionalTelemetryWithSource = mutableStateOf(/*state*/false to /*updateInfra*/false)
 
     val chatFilterWithSource = mutableStateOf(/*state*/true to /*updateInfra*/false)
 

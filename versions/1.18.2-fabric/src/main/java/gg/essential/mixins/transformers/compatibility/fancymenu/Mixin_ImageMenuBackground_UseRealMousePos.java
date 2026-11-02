@@ -27,7 +27,12 @@ import org.spongepowered.asm.mixin.Pseudo;
 @Mixin(ImageMenuBackground.class) // https://github.com/Keksuccino/FancyMenu/blob/d30f69792a6e7d27c7e60e07971df6b99367d940/common/src/main/java/de/keksuccino/fancymenu/customization/background/backgrounds/image/ImageMenuBackground.java
 public class Mixin_ImageMenuBackground_UseRealMousePos {
 
+    // FIXME remap bug: should be able to remap this because it overrides a remapped method
+    //#if MC >= 26.1
+    //$$ @WrapMethod(method = "extractRenderState"
+    //#else
     @WrapMethod(method = "render"
+    //#endif
             //#if MC < 1.20
             , remap = false
             //#endif

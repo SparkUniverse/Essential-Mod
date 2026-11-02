@@ -1,7 +1,7 @@
 [versions]
-universalcraft = "536"
+universalcraft = "538"
 elementa = "787"
-vigilance = "306"
+vigilance = "314"
 mixinextras = "0.4.0"
 commonmark = "0.17.1"
 

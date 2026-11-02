@@ -11,7 +11,6 @@
  */
 package gg.essential.gui.account.factory
 
-import com.mojang.authlib.GameProfile
 import com.mojang.authlib.exceptions.InvalidCredentialsException
 import gg.essential.Essential
 import gg.essential.elementa.components.Window
@@ -42,7 +41,6 @@ import kotlin.io.path.exists
 class MicrosoftAccountSessionFactory(private val savePath: Path, oldSavePath: Path) : ManagedSessionFactory {
 
     private val gson = GsonBuilder().apply {
-        registerTypeAdapter(GameProfile::class.java, GameProfileSerializer())
         registerTypeAdapter(Instant::class.java, InstantSerializer())
     }.create()
 
@@ -177,21 +175,6 @@ class MicrosoftAccountSessionFactory(private val savePath: Path, oldSavePath: Pa
         var auth: MicrosoftUserAuthentication
     ) {
         fun toSession() = USession(uuid, name, accessToken)
-    }
-
-    private class GameProfileSerializer : JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
-        override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): GameProfile {
-            json as JsonObject
-            val id = json["id"]?.let { context.deserialize<UUID>(it, UUID::class.java) }
-            val name = json["name"]?.asString
-            return GameProfile(id, name)
-        }
-
-        override fun serialize(src: GameProfile, typeOfSrc: Type, context: JsonSerializationContext) =
-            JsonObject().apply {
-                src.id?.let { add("id", context.serialize(it)) }
-                src.name?.let { add("name", context.serialize(it)) }
-            }
     }
 
     private class InstantSerializer : JsonSerializer<Instant>, JsonDeserializer<Instant> {

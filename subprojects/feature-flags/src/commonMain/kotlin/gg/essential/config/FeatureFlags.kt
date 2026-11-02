@@ -11,8 +11,6 @@
  */
 package gg.essential.config
 
-import kotlin.jvm.JvmField
-
 /**
  * Various feature flags which control the behavior of Essential.
  *

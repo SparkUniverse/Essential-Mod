@@ -56,7 +56,7 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import org.spongepowered.asm.mixin.Unique;
 //#endif
 
-import java.util.EnumSet;
+import java.util.Set;
 
 //#if MC>=11600
 //$$ @Mixin(WorldRenderer.class)
@@ -214,7 +214,7 @@ public abstract class Mixin_RenderExtraClientCosmeticGeometryInFirstPerson {
         //#endif
 
         // render only parts connected to ROOT and no other EnumParts
-        EnumSet<EnumPart> parts = EnumSet.of(EnumPart.ROOT);
+        Set<EnumPart> parts = EnumPart.singleElementSet(EnumPart.ROOT);
 
         //#if MC>=11600
         //$$ modelRenderer.render(matrixStack, vertexConsumerProvider, null, cState, light, parts, false, false);

@@ -13,6 +13,11 @@ package gg.essential.util
 
 import gg.essential.util.GuiEssentialPlatform.Companion.platform
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainCoroutineDispatcher
+
+@Suppress("unused") // receiver is specified to mirror builtin dispatchers
+val Dispatchers.Game: MainCoroutineDispatcher
+    get() = platform.gameThreadDispatcher
 
 @Suppress("unused") // receiver is specified to mirror builtin dispatchers
 @Deprecated("Equivalent to `Dispatchers.Game.immediate` (except in case of nested calls, see the \"Event loop\" section of `Dispatchers.Unconfined` kdocs). " +

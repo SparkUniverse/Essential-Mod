@@ -337,7 +337,7 @@ class EmoteWheel : WindowScreen(
 
             // We allow the user to play emotes if they were connected to the CM before (they have emote wheels loaded).
             val connectionManager = Essential.getInstance().connectionManager
-            if (connectionManager.emoteWheelManager.orderedEmoteWheels.getUntracked().isEmpty() && !connectionManager.isAuthenticated) {
+            if (connectionManager.emoteWheelManager.orderedEmoteWheels.getUntracked().isEmpty() && !connectionManager.isOpen) {
                 Notifications.error(
                     "Essential Network Error",
                     "Unable to establish connection with the Essential Network."

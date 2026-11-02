@@ -22,11 +22,7 @@ import java.awt.Color
 import net.minecraft.client.gui.render.state.GuiRenderState
 import gg.essential.universal.UMinecraft
 import gg.essential.util.renderGuiRenderStateToTexture
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.RenderPipelines
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.texture.AbstractTexture
-import net.minecraft.util.Identifier
 import gg.essential.gui.proxies.TintVanillaButtonsEffectShared.*
 import gg.essential.gui.proxies.TintVanillaButtonsEffectShared.Companion.NON_WHITE_TINT_PIPELINE
 import gg.essential.gui.proxies.TintVanillaButtonsEffectShared.Companion.averageButtonColor
@@ -37,6 +33,7 @@ import gg.essential.universal.render.UGpuSampler
 import gg.essential.universal.render.UGpuTexture
 import gg.essential.universal.render.UGpuTextureView
 import gg.essential.universal.render.URenderPassDescriptor
+import gg.essential.util.McElementaExtractor
 import gg.essential.util.NEAREST
 import me.kbrewster.eventbus.Subscribe
 
@@ -199,34 +196,19 @@ class TintVanillaButtonsEffect {
                 drawContext.matrices.popMatrix()
 
                 // now enqueue the draw to the vanilla context
-
-                // pass in the textureView to the drawTexture() call via a temporary texture registration
-                val textureManager = MinecraftClient.getInstance().textureManager
-                val identifier = Identifier.of("essential", "__tmp_texture__tint_vanilla_buttons_effect")
-                textureManager.registerTexture(identifier, object : AbstractTexture() {
-                    init {
-                        glTextureView = UGraphics.getPlatformAdapter().textureView(this@Page.texture)
-                    }
-
-                    override fun close() {} // we don't want the later `destroyTexture` to close our texture
-                })
-
-                // draw the texture to the vanilla context, which won't actually read the referenced texture until later
-                vanillaContext.mc.drawTexture(
-                    RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA,
-                    identifier,
-                    // x, y
-                    vanillaDrawArea.xMC.toInt(), vanillaDrawArea.yMC.toInt(),
-                    // u, v
-                    placedRect.x.toFloat(), -placedRect.y.toFloat(),
-                    // width, height
-                    vanillaDrawArea.widthMC.toInt(), vanillaDrawArea.heightMC.toInt(),
-                    // uWidth, vHeight
-                    placedRect.width, -placedRect.height,
-                    // textureWidth, textureHeight
-                    pageWidth, pageHeight
+                val extractor = McElementaExtractor(vanillaContext)
+                extractor.blit(
+                    vanillaDrawArea.left, vanillaDrawArea.top,
+                    vanillaDrawArea.right, vanillaDrawArea.bottom,
+                    placedRect.left / pageWidth.toFloat(), 1 - placedRect.top / pageHeight.toFloat(),
+                    placedRect.right / pageWidth.toFloat(), 1 - placedRect.bottom / pageHeight.toFloat(),
+                    texture,
+                    UGpuSampler.NEAREST,
+                    textureContentImmutable = false,
+                    premultipliedAlpha = true,
+                    Color.WHITE,
                 )
-                textureManager.destroyTexture(identifier)
+                extractor.close()
             }
         }
 
@@ -280,6 +262,10 @@ class TintVanillaButtonsEffect {
             val area = width * height
         }
         data class PlacedRect(val x: Int, val y: Int, val width: Int, val height: Int, val color: Color) {
+            val left: Int get() = x
+            val top: Int get() = y
+            val right: Int get() = x + width
+            val bottom: Int get() = y + height
             fun toMC(): PlacedRect {
                 val scale = UResolution.scaleFactor.toInt()
                 return copy(

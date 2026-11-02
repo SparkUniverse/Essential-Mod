@@ -18,8 +18,10 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.FieldVisitor
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.TypePath
 import org.objectweb.asm.TypeReference
 import org.objectweb.asm.signature.SignatureReader
@@ -100,7 +102,7 @@ abstract class NullableAnnotationProcessor @Inject constructor(
                 if (methodSpec.parameters.isNotEmpty()) {
                     val parameters = methodSpec.parameters.toMutableMap()
                     methodVisitor = object : MethodVisitor(Opcodes.ASM9, methodVisitor) {
-                        private var parameterIndex = 0
+                        private val paramNames = mutableListOf<String?>()
                         override fun visitParameter(name: String?, access: Int) {
                             super.visitParameter(name, access)
 
@@ -108,23 +110,41 @@ abstract class NullableAnnotationProcessor @Inject constructor(
                                 return // synthetic parameters do not have annotations
                             }
 
-                            val paramSpec = parameters.remove(name)
-                            if (paramSpec != null) {
+                            paramNames.add(name)
+                        }
+
+                        private val localNames = mutableMapOf<Int, String>()
+                        override fun visitLocalVariable(name: String, descriptor: String, signature: String?, start: Label, end: Label, index: Int) {
+                            super.visitLocalVariable(name, descriptor, signature, start, end, index)
+
+                            if (name == "this" || "$" in name) {
+                                return // synthetic parameters do not have annotations
+                            }
+
+                            localNames[index] = name
+                        }
+
+                        override fun visitEnd() {
+                            super.visitEnd()
+
+                            // It seems like the proper parameter names don't make it through NeoForge's patching, so we'll
+                            // instead try to infer them from the local variable names.
+                            var paramNames: List<String?> = paramNames
+                            if (paramNames.isEmpty()) {
+                                paramNames = localNames.entries.sortedBy { it.key }.take(Type.getArgumentCount(descriptor)).map { it.value }
+                            }
+
+                            for ((name, paramSpec) in parameters) {
+                                val parameterIndex = paramNames.indexOf(name)
+                                if (parameterIndex == -1) {
+                                    throw IOException("Failed to find parameters $name in method $name in $classFile (found: $paramNames)")
+                                }
                                 visitTypeAnnotation(
                                     TypeReference.newFormalParameterReference(parameterIndex).value,
                                     paramSpec.typePath?.typePath,
                                     NULLABLE,
                                     true,
                                 ).visitEnd()
-                            }
-                            parameterIndex++
-                        }
-
-                        override fun visitEnd() {
-                            super.visitEnd()
-
-                            if (parameters.isNotEmpty()) {
-                                throw IOException("Failed to find parameters $parameters in method $name in $classFile")
                             }
                         }
                     }

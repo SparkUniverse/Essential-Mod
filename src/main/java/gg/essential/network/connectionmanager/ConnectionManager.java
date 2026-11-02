@@ -403,10 +403,6 @@ public class ConnectionManager extends ConnectionManagerKt {
         return connection != null && connection.isOpen();
     }
 
-    public boolean isAuthenticated() {
-        return this.connection != null;
-    }
-
     @Override
     public void registerOnConnected(@NotNull Function0<Unit> onConnected) {
         this.managers.add(new NetworkedManager() {

@@ -122,7 +122,7 @@ fun openGiftModal(item: Item.CosmeticOrEmote, state: WardrobeState) {
             PurchaseConfirmationModal(
                 modalManager,
                 List(multiplier) { item to priceInfo.letState { it?.baseCost ?: 0 } },
-                priceInfo.letState { (it?.realCost ?: 0) * multiplier }
+                priceInfo.letState { (it?.realCost ?: 0) * multiplier },
             ) { this.replaceWith(continuation.resumeImmediately(Unit)) }
         }
         giftItemToFriends(item, selectedUsers, state)
@@ -256,7 +256,8 @@ suspend fun ModalFlow.selectFriendsToGiftModal(
 
         extraContent = {
             val quantityText = selectedCount.map { "${it}x ${item.name}" }
-            val costText = memo { CoinsManager.COIN_FORMAT.format((item.getCost(state)() ?: 0) * selectedCount()) }
+            val cost = memo { (item.getCost(state)() ?: 0) * selectedCount() }
+            val costText = cost.letState { CoinsManager.COIN_FORMAT.format(it) }
             val shadowModifier = Modifier.shadow(EssentialPalette.BLACK)
 
             if_(validFriends.isNotEmpty()) {

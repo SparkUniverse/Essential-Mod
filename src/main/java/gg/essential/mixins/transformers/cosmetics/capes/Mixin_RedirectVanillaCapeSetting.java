@@ -44,7 +44,7 @@ public class Mixin_RedirectVanillaCapeSetting {
         }
 
         ConnectionManager connectionManager = Essential.getInstance().getConnectionManager();
-        if (!connectionManager.isAuthenticated()) {
+        if (!connectionManager.isOpen()) {
             return; // not authed, don't mess with it
         }
 

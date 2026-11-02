@@ -46,8 +46,8 @@ import gg.essential.gui.layoutdsl.shadow
 import gg.essential.gui.layoutdsl.spacer
 import gg.essential.gui.layoutdsl.then
 import gg.essential.gui.modals.updateAvailableModal
-import gg.essential.gui.proxies.ScreenWithProxiesHandler
-import gg.essential.gui.proxies.ScreenWithProxiesHandler.Companion.mountWithProxy
+import gg.essential.gui.proxies.ProxiesHandler
+import gg.essential.gui.proxies.mountWithProxy
 import gg.essential.gui.screenshot.components.ScreenshotBrowser
 import gg.essential.gui.sps.launchInviteOrHostModalFlow
 import gg.essential.gui.util.pollingStateV2
@@ -63,7 +63,7 @@ import gg.essential.vigilance.utils.onLeftClick
 
 class RightSideBarNew(
     menuType: PauseMenuDisplay.MenuType,
-    private val proxyHandler: ScreenWithProxiesHandler?,
+    private val proxyHandler: ProxiesHandler,
     private val isMinimal: State<Boolean>,
     private val accountManager: AccountManager,
 ) : UIContainer() {

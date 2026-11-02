@@ -105,8 +105,6 @@ object MessageUtils {
         return result
     }
 
-    val imageEmbedRegex = Regex("<meta property=\"og:image\" content=\"(?<url>.+?)\"")
-
     const val dotWidth = 3f
     const val messagePadding = 20f
 

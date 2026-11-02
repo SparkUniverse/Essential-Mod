@@ -147,7 +147,7 @@ class TOSModal(
                 replaceWith(continuation.resume(true))
             },
         ) { currentStyle ->
-            text({ if (isConnecting()) "Connecting..." else ("Agree & Continue") }, Modifier.textStyle(currentStyle))
+            text({ if (isConnecting()) "Connecting..." else "Agree & Continue" }, Modifier.textStyle(currentStyle))
         }
     }
 

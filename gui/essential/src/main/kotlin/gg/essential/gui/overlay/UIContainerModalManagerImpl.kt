@@ -33,7 +33,8 @@ import java.awt.Color
  * A [ModalManager] which is backed by a [UIContainer].
  */
 open class UIContainerModalManagerImpl(
-    backgroundColor: Color = Color.BLACK.withAlpha(150)
+    backgroundColor: Color = Color.BLACK.withAlpha(150),
+    private val doFadeInTransition: Boolean = true,
 ) : UIContainer(), ModalManager {
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Client)
 
@@ -95,7 +96,7 @@ open class UIContainerModalManagerImpl(
         setupModal(modal)
         modal.onOpen()
 
-        if (!didFade) {
+        if (doFadeInTransition && !didFade) {
             didFade = true
 
             isCurrentlyFadingIn = true

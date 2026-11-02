@@ -112,7 +112,7 @@ public class Mixin_GuiKeyTypedEvent {
     //$$ @Dynamic("OptiFine calls ForgeHooksClient.onScreenKeyPressed via reflection. This is the second call in the method")
     //$$ @Inject(method = "keyPress", at = @At(value = "FIELD", target = OPTIFINE_ONSCREENKEYPRESSED, ordinal = 1, remap = false), cancellable = true)
     //#if MC>=12109
-    //$$ private void optifineKeyPressed(CallbackInfo ci, @Local(ordinal = 0) Screen screen, @Local(ordinal = 0, argsOnly = true) KeyInput keyInput) {
+    //$$ private void optifineKeyPressed(CallbackInfo ci, @Local(ordinal = 0) Screen screen, @Local(ordinal = 0, argsOnly = true) KeyEvent keyInput) {
         //#if MC >= 26.3
         //$$ int key = keyInput.keycode();
         //$$ int scancode = keyInput.key();
@@ -130,7 +130,7 @@ public class Mixin_GuiKeyTypedEvent {
     //$$ @Dynamic("OptiFine calls ForgeHooksClient.onScreenCharTyped via reflection. It is called multiple times")
     //$$ @Inject(method = "charTyped", at = @At(value = "INVOKE", target = OPTIFINE_CALL, remap = false), cancellable = true)
     //#if MC>=12109
-    //$$ private void optifineCharTyped(CallbackInfo ci, @Local(ordinal = 0) Screen screen, @Local(ordinal = 0, argsOnly = true) CharacterInput charInput) {
+    //$$ private void optifineCharTyped(CallbackInfo ci, @Local(ordinal = 0) Screen screen, @Local(ordinal = 0, argsOnly = true) CharacterEvent charInput) {
     //$$     int codePoint = charInput.codepoint();
     //#else
     //$$ private void optifineCharTyped(CallbackInfo ci, @Local(ordinal = 0) Screen screen, @Local(ordinal = 0, argsOnly = true) int codePoint) {

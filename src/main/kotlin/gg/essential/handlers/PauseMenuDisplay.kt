@@ -70,7 +70,7 @@ import gg.essential.gui.notification.error
 import gg.essential.gui.notification.toastButton
 import gg.essential.gui.overlay.Layer
 import gg.essential.gui.overlay.LayerPriority
-import gg.essential.gui.proxies.ScreenWithProxiesHandler
+import gg.essential.gui.proxies.ProxiesHandler
 import gg.essential.gui.proxies.ScreenWithVanillaProxyElementsExt
 import gg.essential.gui.util.addTag
 import gg.essential.universal.UMinecraft
@@ -125,7 +125,7 @@ class PauseMenuDisplay {
             if (layer == null) {
                 layer = GuiUtil.createLayer(LayerPriority.AboveScreenContent(screen))
                 proxyHandler.layer = layer
-                initContent(screen, layer.window, proxyHandler)
+                proxyHandler.initElementa { initContent(screen, layer.window, it) }
             }
             this.layer = layer
             GuiUtil.addLayer(layer)
@@ -133,11 +133,11 @@ class PauseMenuDisplay {
             val window = GuiUtil.addLayer(LayerPriority.AboveScreenContent(screen))
                 .also { layer = it }
                 .window
-            initContent(screen, window, (screen as? ScreenWithVanillaProxyElementsExt)?.`essential$getProxyHandler`())
+            initContent(screen, window, ProxiesHandler.None)
         }
     }
 
-    fun initContent(screen: GuiScreen, window: Window, proxyHandler: ScreenWithProxiesHandler?) {
+    fun initContent(screen: GuiScreen, window: Window, proxyHandler: ProxiesHandler) {
         run { // for indent
             window.addTag(MenuButton.WindowSupportsButtonRetexturingMarker)
 

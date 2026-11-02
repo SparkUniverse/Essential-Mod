@@ -24,6 +24,7 @@ val platform: Platform by extensions
 
 val dependency = when {
     platform.isFabric -> "gg.essential:loader-fabric"
+    platform.isNeoForge && platform.mcVersion >= 1_21_11 -> "gg.essential:loader-fml10"
     platform.isModLauncher && platform.mcVersion >= 11700 -> "gg.essential:loader-modlauncher9"
     platform.isModLauncher -> "gg.essential:loader-modlauncher8"
     platform.isLegacyForge -> "gg.essential:loader-launchwrapper"
@@ -48,6 +49,11 @@ tasks.jar {
                 "TweakOrder" to "0",
             )
         }
+    }
+
+    if (platform.isNeoForge && platform.mcVersion >= 1_21_11) {
+        dependsOn(loader)
+        from({ loader.map { zipTree(it) } })
     }
 
     if (platform.isFabric) {

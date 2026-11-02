@@ -85,9 +85,9 @@ interface GuiEssentialPlatform {
 
     val notifications: NotificationsManager
 
-    fun createModalManager(): ModalManager
-    fun pushModal(builder: (ModalManager) -> Modal): Modal {
-        val manager = createModalManager()
+    fun createModalManager(doFadeInTransition: Boolean = true): ModalManager
+    fun pushModal(doFadeInTransition: Boolean = true, builder: (ModalManager) -> Modal): Modal {
+        val manager = createModalManager(doFadeInTransition)
         val modal = builder(manager)
         manager.queueModal(modal)
         return modal

@@ -29,7 +29,7 @@ public class EssentialContainerUtil {
     public static boolean isContainerPresent() {
         //#if FABRIC
         //$$ return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("essential-container");
-        //#elseif MC>=11700
+        //#elseif FORGE && MC >= 1.17 || NEOFORGE && MC >= 1.17 && MC < 1.21.11
         //$$ return cpw.mods.modlauncher.Launcher.INSTANCE.findLayerManager()
         //$$     .flatMap(it -> it.getLayer(cpw.mods.modlauncher.api.IModuleLayerManager.Layer.SERVICE))
         //$$     .map(ModuleLayer::modules)
@@ -44,6 +44,8 @@ public class EssentialContainerUtil {
     public static void updateStage1IfOutdated(Path gameDir) throws Exception {
         //#if FABRIC
         //$$ String variant = "fabric";
+        //#elseif NEOFORGE && MC >= 1.21.11
+        //$$ String variant = "fml10";
         //#elseif MC>=11700
         //$$ String variant = "modlauncher"; // note: not using `modlauncher9` to stay compatible with old stage0
         //#elseif MC>=11600

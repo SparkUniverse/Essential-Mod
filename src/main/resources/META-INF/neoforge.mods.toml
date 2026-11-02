@@ -8,3 +8,9 @@ version="${file.jarVersion}"
 displayName="Essential"
 displayURL="https://essential.gg/"
 description="Enhances your Minecraft with powerful features. Host worlds for free. Chat with friends. Create custom outfits. React with emotes. And many quality of life improvements!"
+
+[[mixins]]
+config = "mixins.essential.json"
+
+[[mixins]]
+config = "mixins.essential.tests.json"

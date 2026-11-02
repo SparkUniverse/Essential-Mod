@@ -24,11 +24,11 @@ class BitGridMixin {
     @Redirect(
         method = ["*"],
         at =
-            //#if FABRIC && MC >= 26.3
+            //#if MC >= 26.3 && !FORGE
             //$$ [
             //#endif
             At("INVOKE", target = "owner=/^kotlin\\/UByteArray$/ name=/^get-impl\$/")
-            //#if FABRIC && MC >= 26.3
+            //#if MC >= 26.3 && !FORGE
             //$$ ]
             //#endif
     )

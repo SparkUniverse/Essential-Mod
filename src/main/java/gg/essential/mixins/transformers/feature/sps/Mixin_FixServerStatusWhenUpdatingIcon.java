@@ -28,8 +28,10 @@ public class Mixin_FixServerStatusWhenUpdatingIcon {
     //#if MC >= 1.12
     @Inject(
         method = {
-            // FIXME for unknown reasons archloom's mappings for this method are incorrect on NeoForge 1.21.7/8
-            //#if NEOFORGE && MC >= 1.21.7 && MC <= 1.21.8
+            // FIXME for unknown reasons archloom's mappings for this method are incorrect on NeoForge 1.21.7-11
+            //#if NEOFORGE && MC == 1.21.11
+            //$$ "lambda$takeAutoScreenshot$9",
+            //#elseif NEOFORGE && MC >= 1.21.7 && MC <= 1.21.8
             //$$ "lambda$takeAutoScreenshot$6",
             //#else
             //#if MC >= 1.16.5

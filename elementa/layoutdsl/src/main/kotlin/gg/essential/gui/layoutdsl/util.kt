@@ -94,7 +94,7 @@ private class DefaultAlignmentConstraint(private val alignment: Alignment) : XCo
 
 fun UIComponent.setDefaultChildAlignment(x: Alignment = Alignment.Center, y: Alignment = Alignment.Center) {
     fun SuperConstraint<Float>.isDefault(): Boolean =
-        this is DefaultAlignmentConstraint || this is PixelConstraint && value == 0f && !alignOpposite && !alignOutside
+        this is DefaultAlignmentConstraint || this.constrainTo == null && this is PixelConstraint && value == 0f && !alignOpposite && !alignOutside
 
     fun conformChild(child: UIComponent) {
         if (child.constraints.x.isDefault()) child.setX(DefaultAlignmentConstraint(x))

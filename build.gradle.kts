@@ -118,10 +118,19 @@ dependencies {
     }
 
     // for fancy menu v3 injecting
-    if (mcVersion >= 1_20_00) {
+    if (mcVersion >= 26_00_00) {
+        repositories.modrinth()
+        when {
+            platform.isFabric -> modCompileOnly("maven.modrinth:fancymenu:ezkGhzrK")
+            platform.isForge || // not supported by FancyMenu anymore, we'll just use the NeoForge version for compiling
+                    platform.isNeoForge -> modCompileOnly("maven.modrinth:fancymenu:gkIEo6K2")
+        }
+    } else if (mcVersion >= 1_20_00) {
         repositories.modrinth()
         when {
             platform.isFabric -> modCompileOnly("maven.modrinth:fancymenu:L92PEacB")
+            // 1.20.6 is when Forge switched from srg to mojmap runtime mappings
+            platform.isForge && mcVersion >= 1_20_06 -> modCompileOnly("maven.modrinth:fancymenu:F7OqbH45")
             platform.isForge -> modCompileOnly("maven.modrinth:fancymenu:MbyfTTsz")
             platform.isNeoForge && mcVersion >= 1_20_04 -> modCompileOnly("maven.modrinth:fancymenu:EX9HJeRD")
         }
@@ -317,4 +326,25 @@ if (platform.isUnobfuscated) {
         addMinecraftJarProcessor(NullableAnnotationProcessor::class.java, "essential:nullable_annotations", nullableAnnotationsSpec)
     }
 }
+// Similar to above, but Forge and NeoForge already have non-null-by-default in 1.21.11. And since that's still
+// obfuscated, we don't yet have proper parameter names there. So instead of maintaining a copy of above with unreadable
+// parameter names, we'll just disable jspecify nullability annotations altogether on that version.
+if (platform.isForgeLike && platform.mcVersion == 1_21_11) {
+    // See https://github.com/neoforged/NeoForge/issues/2900#issuecomment-3703786855
+    kotlin.compilerOptions.freeCompilerArgs.add("-Xnullability-annotations=@org.jspecify.annotations:warn")
+}
 
+
+tasks.processResources {
+    filesMatching("assets/**") {
+        fun validPathChar(c: Char): Boolean =
+            // See vanilla `Identifier.validPathChar` method
+            c == '_' || c == '-' || c in 'a'..'z' || c in '0'..'9' || c == '/' || c == '.'
+
+        val path = relativePath.toString()
+        val invalid = path.firstOrNull { !validPathChar(it) }
+        if (invalid != null) {
+            throw IllegalArgumentException("Asset at `$path` contains character `$invalid` which is not allowed in resource packs.")
+        }
+    }
+}

@@ -30,3 +30,4 @@ fun Currency.format(price: Double) = when (this) {
         "${this.currencyCode} $price"
     }
 }
+

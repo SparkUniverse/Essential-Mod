@@ -114,7 +114,7 @@ class CosmeticsState(
             val partsToHide: Set<EnumPart>
             if (property.hideAllCosmetics) {
                 // notably EnumPart.ROOT, added here, is essential for use with the propertyHidesEntireCosmetic() function
-                partsToHide = EnumPart.values().toSet()
+                partsToHide = EnumPart.entriesSet
             } else {
                 partsToHide = mutableSetOf()
                 if (property.hideHeadCosmetics) partsToHide.add(EnumPart.HEAD)
@@ -281,7 +281,7 @@ class CosmeticsState(
             Vector3.ZERO,
             sides[model.cosmetic.id],
             hiddenBones[model.cosmetic.id] ?: emptySet(),
-            EnumPart.values().toSet(),
+            EnumPart.entriesSet,
         )
         modelState.apply(model.bones)
         val boneToSlots = cosmetic.property<CosmeticProperty.ArmorHandlingV2>()?.data?.conflicts

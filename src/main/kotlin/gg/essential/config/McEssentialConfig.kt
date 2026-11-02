@@ -105,7 +105,7 @@ object McEssentialConfig {
                 }
             }
             val connectionManager = Essential.getInstance().connectionManager
-            if (!connectionManager.isAuthenticated) {
+            if (!connectionManager.isOpen) {
                 displayNotConnectedInformation()
                 restoreVisibilityFromSystemSource()
                 return@onChange
@@ -135,7 +135,7 @@ object McEssentialConfig {
         ) {
             setting.onChange(referenceHolder) { (state, updateInfra) ->
                 if (!updateInfra) return@onChange
-                if (Essential.getInstance().connectionManager.isAuthenticated) {
+                if (Essential.getInstance().connectionManager.isOpen) {
                     Essential.getInstance().connectionManager.connectionScope.launch {
                         val successful = Essential.getInstance().connectionManager.call(
                             packet(state)
@@ -179,7 +179,7 @@ object McEssentialConfig {
                 return@onChange
             }
             val connectionManager = Essential.getInstance().connectionManager
-            if (!connectionManager.isAuthenticated) {
+            if (!connectionManager.isOpen) {
                 displayNotConnectedInformation()
                 restoreCollectOptionalTelemetryFromSystemSource()
                 return@onChange
@@ -207,7 +207,7 @@ object McEssentialConfig {
                 return@onChange
             }
             val connectionManager = Essential.getInstance().connectionManager
-            if (!connectionManager.isAuthenticated) {
+            if (!connectionManager.isOpen) {
                 displayNotConnectedInformation()
                 restoreToggleableChatFilterFromSystemSource()
                 return@onChange

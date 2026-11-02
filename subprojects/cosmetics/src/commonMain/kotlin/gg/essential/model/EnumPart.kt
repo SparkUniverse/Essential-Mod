@@ -13,6 +13,8 @@ package gg.essential.model
 
 import kotlin.jvm.JvmStatic
 import gg.essential.model.ModelParser.Companion.ROOT_BONE_NAME
+import java.util.Collections
+import java.util.EnumSet
 
 /** Different bones cosmetics can be bound to */
 enum class EnumPart(
@@ -40,6 +42,16 @@ enum class EnumPart(
     ;
 
     companion object {
+        private val SINGLE_ELEMENT_SETS: List<Set<EnumPart>> = entries.map { Collections.unmodifiableSet(EnumSet.of(it)) }
+
+        @JvmStatic
+        val entriesSet: Set<EnumPart> = Collections.unmodifiableSet(EnumSet.allOf(EnumPart::class.java))
+
+        @JvmStatic
+        fun singleElementSet(part: EnumPart): Set<EnumPart> {
+            return SINGLE_ELEMENT_SETS[part.ordinal]
+        }
+
         @JvmStatic
         fun fromBoneName(name: String): EnumPart? {
             // Don't use .toLowercase since it will create a ton more objects

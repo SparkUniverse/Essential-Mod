@@ -64,6 +64,9 @@ public class Plugin implements IMixinConfigPlugin {
             //#if MC>=11600 && MC<11700
             //$$ new gg.essential.asm.compat.RandomPatchesTransformer(),
             //#endif
+            //#if MC >= 26.2
+            //$$ new gg.essential.asm.compat.ImmediatelyFastTransformer(),
+            //#endif
     };
 
     static {
@@ -227,6 +230,11 @@ public class Plugin implements IMixinConfigPlugin {
         // Patcher has this fix too, and applying it twice would break it again
         if (mixinClassName.contains("Mixin_FixSelfieNameplateOrientation") && hasClass("club.sk1er.patcher.Patcher")) {
             return false;
+        }
+
+        // We want this mixin to only apply during integration tests. See mixin for more info.
+        if (mixinClassName.contains("ImmediatelyFastGlyphRendererCompatIntegrationTest")) {
+            return IntegrationTestsPlugin.ENABLED;
         }
 
         return true;

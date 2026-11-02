@@ -27,6 +27,7 @@ val platform: Platform by extensions
 
 val loaderVariant = when {
     platform.isFabric -> "fabric"
+    platform.isNeoForge && platform.mcVersion >= 1_21_11 -> "fml10"
     platform.isModLauncher && platform.mcVersion >= 11700 -> "modlauncher9"
     platform.isModLauncher -> "modlauncher8"
     platform.isLegacyForge -> "launchwrapper"

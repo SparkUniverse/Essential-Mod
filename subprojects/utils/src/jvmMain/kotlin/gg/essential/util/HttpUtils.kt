@@ -20,6 +20,7 @@ import gg.essential.util.har.HttpLoggingEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.asDeferred
@@ -42,13 +43,23 @@ import javax.net.ssl.X509TrustManager
 import kotlin.coroutines.resumeWithException
 import kotlin.io.path.outputStream
 
+private val harFileLoggerShutdownHook: Thread
+private var harFileLoggerJob: Job? = SupervisorJob().also { job ->
+    harFileLoggerShutdownHook = Thread {
+        job.cancel()
+        runBlocking { job.join() }
+    }
+    Runtime.getRuntime().addShutdownHook(harFileLoggerShutdownHook)
+}
+@Synchronized
+fun takeOwnershipOfHarFileLoggerJob(): Job {
+    Runtime.getRuntime().removeShutdownHook(harFileLoggerShutdownHook)
+    val job = harFileLoggerJob ?: throw IllegalStateException("Ownership was already transferred")
+    harFileLoggerJob = null
+    return job
+}
 private val harFileLogger = HarFileLogger(
-    CoroutineScope(SupervisorJob().also { job ->
-        Runtime.getRuntime().addShutdownHook(Thread {
-            job.cancel()
-            runBlocking { job.join() }
-        })
-    }),
+    CoroutineScope(harFileLoggerJob!!),
     HarFile.Creator("Essential", VersionInfo().essentialVersion),
 )
 

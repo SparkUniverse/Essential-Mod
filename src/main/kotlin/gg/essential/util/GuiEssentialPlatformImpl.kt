@@ -179,8 +179,8 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
     override val notifications: NotificationsManager
         get() = NotificationsImpl
 
-    override fun createModalManager(): ModalManager {
-        return ModalManagerImpl(OverlayManagerImpl)
+    override fun createModalManager(doFadeInTransition: Boolean): ModalManager {
+        return ModalManagerImpl(OverlayManagerImpl, doFadeInTransition = doFadeInTransition)
     }
 
     override fun onResourceManagerReload(runnable: Runnable) {
@@ -487,7 +487,7 @@ class GuiEssentialPlatformImpl : GuiEssentialPlatform {
     //#endif
 
     override val irisReversesZ: Boolean
-        //#if MC >= 26.2
+        //#if MC >= 26.2 && !FORGE
         //$$ get() {
         //$$     val irisVersion = ModLoaderUtil.getModVersion("iris")
         //$$     if (irisVersion != null && irisVersion.compareTo("1.11.4") < 0) {

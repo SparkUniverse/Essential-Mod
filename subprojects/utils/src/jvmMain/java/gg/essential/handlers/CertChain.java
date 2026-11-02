@@ -83,17 +83,18 @@ public class CertChain {
                 .load("microsoft-rsa-root-ca-2017") // New Microsoft root CA
                 // Sectigo (aka Comodo) is included because some SSL.com intermediate CAs are cross-signed by them
                 // and some web servers only serve that chain and not one for SSL.com's own root CAs
-                .load("sslcom/Sectigo-AAA-Root")
-                .load("sslcom/SSLcom-RootCA-ECC-384-R2")
-                .load("sslcom/SSLcom-RootCA-EV-ECC-384-R2")
-                .load("sslcom/SSLcom-RootCA-EV-RSA-4096-R2")
-                .load("sslcom/SSLcom-RootCA-EV-RSA-4096-R3")
-                .load("sslcom/SSLcom-RootCA-RSA-4096-R2")
-                .load("sslcom/SSLcom-TLS-Root-2022-ECC")
-                .load("sslcom/SSLcom-TLS-Root-2022-RSA")
-                .load("sslcom/SSLcomEVRootCertificationAuthorityECC")
-                .load("sslcom/SSLcomRootCertificationAuthorityECC")
-                .load("sslcom/SSLcomRootCertificationAuthorityRSA")
+                .load("sslcom/sectigo-aaa-root")
+                .load("sslcom/sslcom-rootca-ecc-384-r2")
+                .load("sslcom/sslcom-rootca-ev-ecc-384-r2")
+                .load("sslcom/sslcom-rootca-ev-rsa-4096-r2")
+                .load("sslcom/sslcom-rootca-ev-rsa-4096-r3")
+                .load("sslcom/sslcom-rootca-rsa-4096-r2")
+                .load("sslcom/sslcom-tls-root-2022-ecc")
+                .load("sslcom/sslcom-tls-root-2022-rsa")
+                .load("sslcom/sslcomevrootcertificationauthorityecc")
+                .load("sslcom/sslcomrootcertificationauthorityecc")
+                .load("sslcom/sslcomrootcertificationauthorityrsa")
+                .load("usertrust-rsa-certification-authority") // Sectigo root CA, used by OVHcloud object storage
                 ;
     }
 
